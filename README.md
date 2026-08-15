@@ -165,6 +165,8 @@ python main.py --rebuild-registry             # 从 templates/ 重建 Skill 注�
 - **对话一直返回 Mock 占位？** 说明未配置可用 LLM，去「设置」页填 Key/模型。
 - **科研 Skill 输出是占位符？** 用 `--provider openai` 或 `--provider ollama` 配置真实模型。
 
+  ==本项目由AI编程实现==
+
 ---
 
 ## 🛠️ 开发说明
