@@ -1,0 +1,20 @@
+# ResearchMate - 轻量化本地部署依赖
+# 说明：SQLite 单文件存储，无需 PostgreSQL/pgvector/GROBID；无 LLM Key 时自动降级。
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.6
+sqlalchemy>=2.0.35
+pydantic>=2.10
+pydantic-settings>=2.5.2
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+python-multipart>=0.0.12
+openai>=1.51.0
+httpx>=0.27.2
+requests>=2.32.3
+python-docx>=1.1.2
+markdown>=3.7
+beautifulsoup4>=4.12.3
+python-dotenv>=1.0.1
+bcrypt>=4.0.0
+litellm>=1.40.0
+pymupdf>=1.24.0

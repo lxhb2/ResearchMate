@@ -1,0 +1,294 @@
+{
+  "schema_version": "1.0",
+  "categories": [
+    "literature",
+    "paper_writing",
+    "experiment_review",
+    "idea_evaluate",
+    "research_closed_loop"
+  ],
+  "source_libraries": [
+    "Imbad0202/academic-research-skills",
+    "K-Dense-AI/scientific-agent-skills",
+    "Yuan1z0825/nature-skills",
+    "fcakyon/phd-skills",
+    "Orchestra-Research/AI-research-SKILLs",
+    "HKUSTDial/Supervisor-Skills"
+  ],
+  "skills": [
+    {
+      "name": "academic-paper",
+      "github_source": "Imbad0202/academic-research-skills",
+      "trigger_keyword": [
+        "写论文",
+        "学术论文",
+        "论文大纲",
+        "写摘要",
+        "修改论文",
+        "write paper",
+        "academic paper",
+        "paper outline"
+      ],
+      "description": "学术论文写作：从配置访谈、结构规划、论证构建到分段起草与引用检查，辅助完成符合 IMRaD 结构与引用规范的论文初稿。",
+      "prompt_template": "按学术论文写作流程推进：\n1. 配置访谈：明确论文类型、学科、引用格式、输出格式；\n2. 结构规划：设计论文结构与各章节篇幅分配；\n3. 论证构建：建立「主张－证据」链，确保逻辑连贯；\n4. 分段起草：逐节推进，并做语言润色；\n5. 引用合规 + 双语摘要（并行）；\n6. 自查：五维评分并给出修改建议。\n\n学科规范优先于个人风格；不写无证据支撑的断言。",
+      "input_schema": {
+        "topic": "string",
+        "paper_type": "string",
+        "citation_format": "string",
+        "sections": "list[string]"
+      },
+      "output_schema": {
+        "body": "markdown",
+        "references": "list[string]",
+        "abstract": "string"
+      },
+      "category": "paper_writing",
+      "constraints": "- 不编造数据与引用；引用需可回查。\n- 学科/期刊规范优先于写作风格。\n- 明确标注待补充的实验数据与验证环节。",
+      "version": "3.2.0",
+      "enabled": true
+    },
+    {
+      "name": "peer-review",
+      "github_source": "Imbad0202/academic-research-skills",
+      "trigger_keyword": [
+        "同行评审",
+        "预审",
+        "论文评审",
+        "peer review",
+        "投稿前检查",
+        "审稿意见"
+      ],
+      "description": "多视角同行评审：模拟编辑 + 审稿人 + 挑战者视角，按 0-100 评分并提供可操作的修改建议，用于论文投稿前的自我审查。",
+      "prompt_template": "以「编辑 + 3 位动态审稿人 + 挑战者」的多视角对论文做评审：\n1. 逐维度打分（0-100），映射为 Accept / Minor / Major / Reject；\n2. 挑战者视角找出论证薄弱处与反例；\n3. 给出可操作、分条列的修改建议。\n\n评审保持只读、建设性，不替代真实审稿流程。",
+      "input_schema": {
+        "manuscript": "string",
+        "venue": "string"
+      },
+      "output_schema": {
+        "score": "number",
+        "decision": "string",
+        "comments": "list[string]"
+      },
+      "category": "experiment_review",
+      "constraints": "- 评审意见只读、建设性，不替代真实审稿。\n- 评分需给出依据。",
+      "version": "1.8",
+      "enabled": true
+    },
+    {
+      "name": "scientific-writing",
+      "github_source": "K-Dense-AI/scientific-agent-skills",
+      "trigger_keyword": [
+        "科学写作",
+        "结果解读",
+        "方法描述",
+        "生成图表说明",
+        "scientific writing",
+        "写作润色"
+      ],
+      "description": "科学写作与表达：把研究结果整理成规范的科学文本，包括图表措辞、方法描述与结果解读，提升可读性与可复现性。",
+      "prompt_template": "面向科研写作，将用户输入整理为：\n1. 精确的方法描述（可复现）；\n2. 客观的结果解读（不过度推断）；\n3. 规范的图表说明（figure/table caption）；\n4. 适合目标读者的语言与结构。",
+      "input_schema": {
+        "draft": "string",
+        "audience": "string",
+        "style": "string"
+      },
+      "output_schema": {
+        "body": "markdown"
+      },
+      "category": "paper_writing",
+      "constraints": "- 结果解读不得超出数据要求，避免过度推断。\n- 方法描述须可复现。",
+      "version": "1.1",
+      "enabled": true
+    },
+    {
+      "name": "supervisor",
+      "github_source": "HKUSTDial/Supervisor-Skills",
+      "trigger_keyword": [
+        "评审",
+        "把关",
+        "缺陷诊断",
+        "风险提示",
+        "supervisor",
+        "可行性评估",
+        "复检"
+      ],
+      "description": "评审后置模块：对任何科研产出做缺陷诊断、可行性评估与风险提示，贴合风险控制思维。作为可选阶段在各科研任务完成后调用。",
+      "prompt_template": "作为严谨的科研评审专家（Supervisor），对科研产出做系统化评审：\n1. 缺陷诊断：逻辑漏洞、证据缺口、引用可信度；\n2. 可行性评估：数据可得性、成本、时间、技术门槛；\n3. 风险提示：与结论相悖的证据、伦理合规、统计效力。\n每条结论标注严重程度（高/中/低）并给出可执行建议。",
+      "input_schema": {
+        "content": "string",
+        "topic": "string"
+      },
+      "output_schema": {
+        "body": "markdown",
+        "severity": "string"
+      },
+      "category": "research_closed_loop",
+      "constraints": "- 评审意见建设性、只读，不替代研究者决策。\n- 明确标注需要人工复核的高风险项。",
+      "version": "1.0",
+      "enabled": true
+    },
+    {
+      "name": "research-closed-loop",
+      "github_source": "Orchestra-Research/AI-research-SKILLs",
+      "trigger_keyword": [
+        "研究闭环",
+        "全流程研究",
+        "research project",
+        "科研项目",
+        "完整研究",
+        "自研闭环"
+      ],
+      "description": "研究闭环编排器：串联 选题→文献→假设→实验→写作→评审 的完整科研闭环，管理多阶段状态与进度。",
+      "prompt_template": "作为科研项目编排器，把用户目标拆成闭环阶段：\n1. 选题与构思；\n2. 文献调研；\n3. 假设与实验设计；\n4. 数据与实验；\n5. 分析与写作；\n6. 评审与迭代。\n给出每个阶段的目标、产出物清单与下一阶段入口，并维护持久记忆（research-state）。",
+      "input_schema": {
+        "goal": "string",
+        "stage": "string"
+      },
+      "output_schema": {
+        "roadmap": "list[string]",
+        "next_steps": "list[string]"
+      },
+      "category": "research_closed_loop",
+      "constraints": "- 阶段可并行/可跳过，标注依赖关系。\n- 依赖真实数据与文献，不臆造结果。",
+      "version": "1.0",
+      "enabled": true
+    },
+    {
+      "name": "hypothesis",
+      "github_source": "fcakyon/phd-skills",
+      "trigger_keyword": [
+        "假设生成",
+        "研究假设",
+        "提出假设",
+        "hypothesis",
+        "机制解释",
+        "研究问题"
+      ],
+      "description": "从文献线索与研究问题生成可追踪的研究假设，给出假设、机制解释与初步研究方案，并预留可证伪的检验路径。",
+      "prompt_template": "从关键词、研究问题或论文线索出发：\n1. 提取事实线索；\n2. 形成候选假设与机制解释；\n3. 给出初步研究方案；\n4. 明确哪些结果会使假设受到质疑（可证伪性）。",
+      "input_schema": {
+        "question": "string",
+        "evidence": "string"
+      },
+      "output_schema": {
+        "hypotheses": "list[object]",
+        "plan": "string"
+      },
+      "category": "idea_evaluate",
+      "constraints": "- 假设需可证伪，明确指出反证条件。\n- 不编造支撑证据。",
+      "version": "1.0",
+      "enabled": true
+    },
+    {
+      "name": "literature-review",
+      "github_source": "K-Dense-AI/scientific-agent-skills",
+      "trigger_keyword": [
+        "文献综述",
+        "综述",
+        "综述论文",
+        "写综述",
+        "研究现状",
+        "相关研究",
+        "literature review",
+        "review paper"
+      ],
+      "description": "面向科研小白的文献综述写作：从检索词组织、文献筛选到综述结构编排，辅助完成一篇可核验的文献综述初稿。",
+      "prompt_template": "围绕用户给定的综述主题：\n1. 设计检索关键词与检索式，给出可复现的检索策略；\n2. 按主题/方法/时间线组织文献，形成分类框架；\n3. 归纳各派的共识、分歧与研究空白；\n4. 生成规范的参考文献列表（保留来源以便回查）。\n\n面向科研小白，用清晰的结构降低阅读门槛。",
+      "input_schema": {
+        "topic": "string",
+        "scope": "string",
+        "num_refs": "number"
+      },
+      "output_schema": {
+        "body": "markdown",
+        "references": "list[string]"
+      },
+      "category": "literature",
+      "constraints": "- 不编造文献；每条引用需可回查。\n- 明确标注观点来源与证据强度。",
+      "version": "1.0",
+      "enabled": true
+    },
+    {
+      "name": "deep-research",
+      "github_source": "Imbad0202/academic-research-skills",
+      "trigger_keyword": [
+        "文献综述",
+        "literature review",
+        "深度研究",
+        "调研",
+        "survey",
+        "选题调研",
+        "证据梳理"
+      ],
+      "description": "深度文献调研：把研究主题拆成检索方向，逐步整理候选文献、主要观点与引用来源，输出可核验的调研报告。适用于文献综述、选题调研、证据梳理。",
+      "prompt_template": "将用户的研究主题拆解为若干检索方向。对每个方向：\n1. 识别核心概念、定义与边界；\n2. 查找代表性工作与关键方法流派；\n3. 对比不同来源的观点与证据，标注仍有争议或缺少证据之处；\n4. 保留标题、作者、年份、来源链接与待核验状态，方便回到原文核对。\n\n最终输出一份结构化调研报告，并明确哪些判断已有依据、哪些仍需人工核验。",
+      "input_schema": {
+        "user_text": "string",
+        "depth": "number",
+        "top_k": "number"
+      },
+      "output_schema": {
+        "body": "markdown",
+        "sources": "list[string]"
+      },
+      "category": "literature",
+      "constraints": "- 不编造引用；来源信息必须可回查。\n- 最终判断由研究者完成，AI 只做整理与证据梳理。\n- 标注哪些结论缺少证据或存在争议。",
+      "version": "2.8",
+      "enabled": true
+    },
+    {
+      "name": "idea-evaluation",
+      "github_source": "fcakyon/phd-skills",
+      "trigger_keyword": [
+        "想法评估",
+        "选题评估",
+        "这个想法值得研究吗",
+        "idea evaluation",
+        "评估研究",
+        "是否可行"
+      ],
+      "description": "研究选题与想法评估：从新颖性、可行性、数据可得性、与现有文献的关系等维度评估一个研究想法，给出继续/调整/放弃的建议。",
+      "prompt_template": "从多维度评估用户的研究想法：\n1. 新颖性：与现有文献相比是否有增量贡献；\n2. 可行性：数据、算力、成本、时间与技术门槛；\n3. 数据可得性：所需数据是否可获得；\n4. 风险：与主流证据相悖或难以验证的部分。\n\n给出建议（继续/调整/放弃）与可执行的动作。",
+      "input_schema": {
+        "idea": "string",
+        "context": "string"
+      },
+      "output_schema": {
+        "verdict": "string",
+        "scores": "object",
+        "suggestions": "list[string]"
+      },
+      "category": "idea_evaluate",
+      "constraints": "- 评估不替代检索；需标注需进一步核实的假设。\n- 建议要具体可执行。",
+      "version": "1.0",
+      "enabled": true
+    },
+    {
+      "name": "experiment-review",
+      "github_source": "fcakyon/phd-skills",
+      "trigger_keyword": [
+        "实验评审",
+        "实验设计检查",
+        "统计检验",
+        "结果分析",
+        "experiment review",
+        "复现性"
+      ],
+      "description": "实验方案与结果评审：对实验设计、统计分析、结果解读做系统评审，检查缺陷、统计效力与可复现性问题。",
+      "prompt_template": "对用户提供的实验方案/结果做系统评审：\n1. 实验设计：明确实验单元、处理条件、干扰因素与对照组；\n2. 统计分析：检查样本量、统计效力、所用药/检验是否匹配假设；\n3. 结果解读：判断结论是否超出数据支持；\n4. 可复现性：指出难以复现的环节与缺失信息。\n\n逐条给出问题、严重程度（高/中/低）与改进建议。",
+      "input_schema": {
+        "plan": "string",
+        "data": "string",
+        "metrics": "list[string]"
+      },
+      "output_schema": {
+        "body": "markdown",
+        "issues": "list[object]"
+      },
+      "category": "experiment_review",
+      "constraints": "- 不臆造统计结论；指出需由真实数据验证之处。\n- 明确标注统计效力不足等风险。",
+      "version": "1.0",
+      "enabled": true
+    }
+  ]
+}
