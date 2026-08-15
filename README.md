@@ -1,83 +1,174 @@
-# ResearchMate MVP
+# ResearchMate 科研助手
 
-A local literature management & AI-assisted writing tool for researchers. Single-user, local deployment.
+面向科研人员的**本地化 AI 学术助手**：文献库管理、语义检索、智能阅读、写作辅助、对话问答、工作流编排与科研 Skill 集成。**单机单用户、数据完全本地存储、轻量化**，无云端、无服务器依赖。
 
-## Features
+---
 
-- **Library**: Upload PDFs, auto-parse via GROBID, vectorize into 4 dimensions (background / method / result / conclusion).
-- **Smart Reader**: PDF rendering, highlight/notes, selection toolbar (translate / explain / highlight), per-paper AI Q&A and summaries.
-- **Writing Wizard**: 6-step guided authoring (topic → outline → materials → draft → abstract → export) with RAG material recommendations from your library, exporting to Word (.docx).
-- **General Chat**: Conversational assistant with optional library-RAG and web-search toggles.
+## ✨ 功能特性
 
-## Architecture
+- **文献库**：上传 PDF，本地解析并自动拆分为 **6 个语义维度**（标题关键词 / 背景 / 方法 / 结果 / 结论 / 创新点）
+- **语义检索**：6 维向量语义搜索（内存余弦计算）+ 关键词降级，无 Embedding API 也能用
+- **智能阅读器**：PDF 阅读、划词翻译/解释/高亮、笔记批注；「论文分析」页合并 AI 拆分维度 + 你的阅读笔记
+- **写作助手**：写作项目管理、笔记追加、引用生成（GB7714 等）
+- **对话（顶层 Agent）**：统一对话入口，自动路由——科研 Skill / 专用 Agent（文献/数据/实验/写作）/ 智能问答
+- **翻译 / 术语**：论文翻译、术语查询
+- **Agent 工作流**：模板库（默认固定模板 + 自定义模板）、对话式执行、白板式拖拽、自然语言生成工作流
+- **科研 Skill 集成**：10 个 Skill（综述/写作/评审/选题/实验等），注册表管理 + 调度 + 持久记忆 + 评审
+- **备份 / 恢复**：SQLite + PDF 一键打包备份
+- **CLI**：`python main.py --research "..."` 直接跑科研任务
+
+---
+
+## 📁 目录结构
 
 ```
 ResearchMate/
-├── backend/        FastAPI + SQLAlchemy + pgvector
-├── frontend/       React + Vite + TypeScript + Ant Design
-└── docker-compose.yml   PostgreSQL (pgvector) + GROBID
+├── backend/                后端（FastAPI + SQLAlchemy + SQLite）
+│   ├── app/                应用代码（路由 / 服务 / Agent 工作流 / 顶层Agent）
+│   ├── research_skills/    科研 Skill 模块（注册表 / 调度 / 记忆 / 评审，自包含）
+│   ├── main.py             CLI 入口
+│   ├── requirements.txt    依赖清单
+│   └── .env.example        配置模板
+├── frontend/               前端（React + Vite + TS + Ant Design）
+│   └── dist/               构建产物（绿色包/单端口模式使用）
+├── start.sh                Linux / macOS 启动脚本
+└── start.bat               Windows 启动脚本
 ```
 
-## Prerequisites
+---
 
-- Python 3.11+
-- Node.js 18+
-- Docker & Docker Compose (for PostgreSQL+pgvector and GROBID)
-- An OpenAI-compatible LLM API key (and embedding endpoint)
+## 🚀 快速开始
 
-## Setup
+### 方式一：绿色便携包（推荐，无需环境）
 
-### 1. Start infrastructure
+解压后在项目根目录：
 
-```bash
-docker compose up -d
-```
+- **Windows**：双击 `start.bat`，浏览器访问 `http://localhost:8000/`
+- **Linux / macOS**：
+  ```bash
+  chmod +x start.sh
+  ./start.sh
+  ```
+  首次运行自动创建虚拟环境、安装依赖。
 
-This launches:
-- PostgreSQL 15 with pgvector at `localhost:5432` (user/db: `researchmate`).
-- GROBID at `http://localhost:8070`.
-
-### 2. Configure the backend
+### 方式二：源码运行
 
 ```bash
 cd backend
-cp .env.example .env
-# edit .env: set LLM_API_KEY, LLM_BASE_URL, LLM_MODEL, EMBEDDING_MODEL
-```
-
-Install and run:
-
-```bash
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# 单端口（后端 + 前端 dist 一起托管）
+FRONTEND_DIST=../frontend/dist uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-On first start the backend automatically enables the `vector` extension and creates all tables.
+> 换端口：设环境变量 `PORT`（如 `PORT=8012`），或改 start 脚本里的端口。
 
-### 3. Run the frontend
+---
+
+## ⚙️ 配置教程
+
+### 1. 数据库（默认零配置）
+
+轻量化默认使用 **SQLite 单文件** `backend/researchmate.db`，**无需** PostgreSQL / pgvector / GROBID。首次启动自动建表、自动建默认用户。
+
+### 2. 大模型（LLM）配置
+
+有两种方式，**运行时「设置」页 优先**：
+
+#### 方式 A：应用内「设置」页（推荐，可随时改）
+打开应用 → 顶部/侧边「设置」→ 填写：
+- **接口地址（Base URL）**、**API Key**、**模型名称**
+- 点「连接测试」验证 → 保存
+
+支持一切 OpenAI 兼容接口（OpenAI、DeepSeek、通义、Kimi、本地 vLLM/Ollama 兼容层等）。
+
+#### 方式 B：环境变量 `.env`（默认值）
+复制后端配置模板并在其中填写：
+```bash
+cd backend
+cp .env.example .env
+# 编辑 .env，至少设置：
+LLM_API_KEY=sk-你的key
+LLM_BASE_URL=https://api.openai.com/v1   # 兼容接口地址
+LLM_MODEL=gpt-4o
+```
+
+> **不配置也能用**：无 Key 时自动降级为**离线 Mock 模式**；文献检索自动降级为**关键词匹配**。
+
+### 3. 使用本地 Ollama（可选）
+
+- 安装并启动 Ollama：`ollama pull llama3`（或 qwen2.5 等）
+- 在「设置」页填：Base URL `http://localhost:11434`、模型 `llama3`
+- 或 `.env` 中：
+  ```bash
+  LLM_BASE_URL=http://localhost:11434
+  LLM_MODEL=llama3
+  ```
+
+### 4. 科研 Skill 模块的 LLM（CLI 用）
+
+CLI 科研任务走 `RESEARCH_LLM_PROVIDER`（`ollama | openai | mock | auto`）：
+```bash
+# 本地 Ollama
+RESEARCH_LLM_PROVIDER=ollama RESEARCH_OLLAMA_MODEL=llama3 python main.py --research "..."
+# OpenAI 兼容
+RESEARCH_LLM_PROVIDER=openai RESEARCH_OPENAI_API_KEY=sk-xxx python main.py --research "..."
+# 离线占位（无需 Key）
+RESEARCH_LLM_PROVIDER=mock python main.py --research "..."
+```
+
+### 5. 其他常用配置（`.env`）
+
+| 变量 | 说明 | 默认 |
+| --- | --- | --- |
+| `AUTO_LOGIN` | 自动登录（单机部署跳过登录页） | `true` |
+| `AUTO_LOGIN_USERNAME` / `_PASSWORD` | 默认账号 | `researcher` / `researchmate` |
+| `DATABASE_URL` | 数据库地址 | `sqlite:///./researchmate.db` |
+| `FRONTEND_DIST` | 前端 dist 目录（单端口托管时设） | 空 |
+| `SECRET_KEY` | JWT 密钥（生产请改） | 占位 |
+| `EMBEDDING_MODEL` / `EMBEDDING_DIM` | 向量模型与维度 | `text-embedding-3-small` / `1536` |
+
+---
+
+## 🖥️ CLI 用法
 
 ```bash
-cd frontend
-npm install
-npm run dev
+cd backend
+python main.py --list-skills                 # 列出已注册的科研 Skill
+python main.py --research "文献综述：一人公司商业模型，结合OPC概念" --provider mock
+python main.py --feed                         # 原有情报采集模式
+python main.py --research "..." --provider ollama   # 指定 LLM 提供方
+python main.py --research "..." --review      # 执行后用 Supervisor 评审
+python main.py --rebuild-registry             # 从 templates/ 重建 Skill 注册表
 ```
 
-Open http://localhost:5173. Register an account, then upload a PDF.
+---
 
-## Usage flow
+## 💾 数据存储位置
 
-1. **Library** → upload a PDF. It enters `processing` then becomes `ready`.
-2. **Reader** → click a ready paper. Select text to translate/explain/highlight; use the AI tab to ask questions about the paper; generate a full summary.
-3. **Write** → click the Write nav item. Walk through the 6 steps; in step 3 you can pull relevant materials from your library; in step 6 export to Word.
-4. **Chat** → general assistant; toggle "Library" to ground answers in your uploaded papers.
+| 数据 | 位置 |
+| --- | --- |
+| 数据库 | `backend/researchmate.db`（SQLite 单文件） |
+| PDF 文件 | `backend/storage/pdfs/` |
+| 科研产物（Markdown） | `backend/output/research/`（含 findings.md / research-state.yaml 记忆） |
+| 情报产物 | `backend/output/feed/` |
 
-## Configuration notes
+> 备份 = 复制以上文件；应用内置「备份/恢复」可一键打包为 ZIP。
 
-- Any OpenAI-compatible endpoint works (OpenAI, Azure OpenAI, local vLLM/ollama with an OpenAI shim). Set `LLM_BASE_URL`, `LLM_MODEL`, `EMBEDDING_MODEL` accordingly. The embedding dimension defaults to `1536` (text-embedding-3-small); if you change it, also update `EMBEDDING_DIM` in `.env` and the `Vector(...)` column in the model.
-- PDF files are stored under `backend/storage/pdfs/`.
-- The GROBID parse + LLM dimension extraction + embedding all run in a FastAPI background task after upload.
+---
 
-## API
+## ❓ FAQ
 
-Interactive docs at http://localhost:8000/docs once the backend is running. All routes are prefixed with `/api/v1` and require a JWT bearer token except `/auth/register` and `/auth/login`.
+- **启动后浏览器打不开？** 确认端口未被占用，或改 `PORT` 后重开。
+- **文献检索没结果？** 未配 Embedding Key 时为关键词检索，可先上传并处理论文再检索。
+- **对话一直返回 Mock 占位？** 说明未配置可用 LLM，去「设置」页填 Key/模型。
+- **科研 Skill 输出是占位符？** 用 `--provider openai` 或 `--provider ollama` 配置真实模型。
+
+---
+
+## 🛠️ 开发说明
+
+- 架构分层：`app/routers`（API）→ `app/services`（业务）→ `app/agent`（Agent/工作流）→ `research_skills`（Skill 模块，自包含）
+- 前端构建：`cd frontend && npm install && npm run build`（产物在 `frontend/dist`）
+- 交互式 API 文档：后端启动后访问 `http://localhost:8000/docs`

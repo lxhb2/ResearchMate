@@ -18,7 +18,6 @@ output/
 
 # ---- 环境 / 密钥 ----
 .env
-.env.example
 
 # ---- 打包产物 ----
 release/
