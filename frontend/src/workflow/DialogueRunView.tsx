@@ -23,6 +23,7 @@ import {
 import ReactMarkdown from 'react-markdown'
 import { workflowApi, type WorkflowTemplate, type WorkflowRunResult } from '../api/workflow'
 import { getErrorMessage } from '../api/client'
+import { formatMarkdownContent } from '../utils/format'
 
 const { Text, Paragraph } = Typography
 
@@ -236,7 +237,7 @@ export default function DialogueRunView({
   }, [messages])
 
   return (
-    <div style={{ display: 'flex', gap: 16, height: 'calc(100vh - 120px)' }}>
+    <div style={{ display: 'flex', gap: 16, height: '100%' }}>
       {/* 左侧：工作流预览 */}
       <div style={{ width: 260, border: '1px solid #f0f0f0', borderRadius: 8, padding: 12, overflow: 'auto', background: '#fafafa' }}>
         <Space style={{ marginBottom: 8 }}>
@@ -335,7 +336,7 @@ export default function DialogueRunView({
                   }}
                 >
                   {m.kind === 'output' ? (
-                    <ReactMarkdown>{m.text}</ReactMarkdown>
+                    <ReactMarkdown>{formatMarkdownContent(m.text)}</ReactMarkdown>
                   ) : (
                     <span style={{ whiteSpace: 'pre-wrap' }}>{m.text}</span>
                   )}

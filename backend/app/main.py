@@ -23,6 +23,9 @@ from app.routers import (
     settings as settings_router,
     agent_workflow,
     backup,
+    agent,
+    imports,
+    graph,
 )
 from app.utils.security import hash_password
 
@@ -34,6 +37,50 @@ def _ensure_storage():
 def _init_db():
     # 建表（SQLite/PostgreSQL 通用；轻量化默认 SQLite 单文件）
     Base.metadata.create_all(bind=engine)
+    _migrate_sqlite()
+
+
+def _migrate_sqlite() -> None:
+    """轻量迁移：SQLite 下 create_all 不会给已有表追加新列，这里手动补齐。
+
+    - papers.analysis_status：AI 分析进度。旧库中已存在的文献按旧流水线
+      「ready 即分析完成」处理，默认补 'done'；新上传由模型默认 'pending'。
+    - papers.summary：AI 全文总结缓存。
+    - papers.last_page：上次阅读页码（长期记忆）。
+    - paper_chunks.char_start/char_end：citation 溯源所需的原文字符偏移。
+    （paper_chat_messages 是新表，create_all 会自动建，无需迁移。）
+    """
+    from sqlalchemy import text
+
+    if not str(engine.url).startswith("sqlite"):
+        return
+    # papers 表：列名 -> 补列 DDL（NOT NULL 列需带 DEFAULT）
+    paper_adds: dict[str, str] = {
+        "analysis_status": "ALTER TABLE papers ADD COLUMN analysis_status "
+        "VARCHAR(20) NOT NULL DEFAULT 'done'",
+        "summary": "ALTER TABLE papers ADD COLUMN summary TEXT",
+        "last_page": "ALTER TABLE papers ADD COLUMN last_page INTEGER",
+    }
+    # paper_chunks 表：列名 -> 补列 DDL
+    chunk_adds: dict[str, str] = {
+        "char_start": "ALTER TABLE paper_chunks ADD COLUMN char_start INTEGER",
+        "char_end": "ALTER TABLE paper_chunks ADD COLUMN char_end INTEGER",
+    }
+    try:
+        with engine.begin() as conn:
+            cols = [row[1] for row in conn.execute(text("PRAGMA table_info(papers)"))]
+            if cols:
+                for col, ddl in paper_adds.items():
+                    if col not in cols:
+                        conn.execute(text(ddl))
+            chunk_cols = [row[1] for row in conn.execute(text("PRAGMA table_info(paper_chunks)"))]
+            if chunk_cols:
+                for col, ddl in chunk_adds.items():
+                    if col not in chunk_cols:
+                        conn.execute(text(ddl))
+    except Exception:  # noqa: BLE001
+        # 迁移失败不阻塞启动（新库首次建表时本就包含这些列）
+        pass
 
 
 def _ensure_default_user(db: Session) -> None:
@@ -66,6 +113,20 @@ _init_db()
 with SessionLocal() as db:
     _ensure_default_user(db)
 
+# 插件生态：启动时装载全部已启用插件（技能/工具/MCP 配置注册进对应注册表）
+def _load_plugins() -> None:
+    try:
+        from app.agent.plugin_manager import get_plugin_manager
+
+        result = get_plugin_manager().load_all()
+        if result.get("failed"):
+            print(f"[plugins] 装载失败：{result['failed']}")
+    except Exception as e:  # noqa: BLE001
+        print(f"[plugins] 启动装载异常：{e}")
+
+
+_load_plugins()
+
 prefix = settings.API_V1_PREFIX
 app.include_router(auth.router, prefix=prefix)
 app.include_router(papers.router, prefix=prefix)
@@ -79,6 +140,9 @@ app.include_router(term.router, prefix=prefix)
 app.include_router(settings_router.router, prefix=prefix)
 app.include_router(agent_workflow.router, prefix=prefix)
 app.include_router(backup.router, prefix=prefix)
+app.include_router(agent.router, prefix=prefix)
+app.include_router(imports.router, prefix=prefix)
+app.include_router(graph.router, prefix=prefix)
 
 
 def _resolve_frontend_dist() -> str:

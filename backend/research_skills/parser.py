@@ -172,9 +172,13 @@ def parse_skill_dir(path: str) -> dict:
         triggers = _extract_trigger(body, sections)
 
     # 系统提示：正文 System Prompt 段，否则整段正文
-    system_prompt = _find_section(sections, "system prompt", "instructions", "workflow")
-    if not system_prompt:
+    # metadata.prompt_mode == "full" 时强制使用完整正文（上游仓库技能的正文即完整指令）
+    if str(meta.get("prompt_mode", "")).lower() == "full":
         system_prompt = body.strip()
+    else:
+        system_prompt = _find_section(sections, "system prompt", "instructions", "workflow")
+        if not system_prompt:
+            system_prompt = body.strip()
 
     return {
         "name": name,
@@ -212,7 +216,11 @@ def parse_skill_md_text(text: str, default_name: str = "") -> dict:
         "github_source": str(meta.get("github_source", "")).strip(),
         "trigger_keyword": triggers,
         "description": str(fm.get("description", "")).strip(),
-        "prompt_template": _find_section(sections, "system prompt", "instructions", "workflow") or body.strip(),
+        "prompt_template": (
+            body.strip()
+            if str(meta.get("prompt_mode", "")).lower() == "full"
+            else (_find_section(sections, "system prompt", "instructions", "workflow") or body.strip())
+        ),
         "input_schema": meta.get("input_schema") or _find_section(sections, "input parameters", "input"),
         "output_schema": meta.get("output_schema") or _find_section(sections, "output format", "output"),
         "category": str(meta.get("category", "research_closed_loop")).strip(),

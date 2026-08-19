@@ -25,6 +25,7 @@ _build/
 .trae-html-share-packages/
 **/packaging/**/build/
 **/packaging/**/dist/
+*.zip
 
 # ---- 前端 tsc 构建副产物 ----
 *.tsbuildinfo

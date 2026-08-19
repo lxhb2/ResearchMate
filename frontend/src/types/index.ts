@@ -20,7 +20,14 @@ export interface Paper {
   abstract: string | null
   source: string
   file_path: string | null
+  tags?: string[] | null
   status: 'processing' | 'ready' | 'error'
+  /** AI 语义分析进度（六维拆分 + 向量化），与 status 解耦 */
+  analysis_status?: 'pending' | 'done' | 'failed' | null
+  /** AI 全文总结缓存（长期记忆：重开界面直接恢复） */
+  summary?: string | null
+  /** 上次阅读页码（长期记忆：重开阅读器自动恢复位置） */
+  last_page?: number | null
   full_text?: string | null
   created_at: string
   updated_at: string
@@ -58,10 +65,13 @@ export interface Annotation {
   id?: string
   user_id?: string
   paper_id: string
-  type: 'highlight' | 'underline' | 'note' | 'summary'
+  type: 'highlight' | 'underline' | 'note' | 'summary' | 'ink'
   content: string | null
   page_number: number | null
   position: Record<string, unknown> | null
+  color?: string | null
+  comment?: string | null
+  tags?: string[] | null
   created_at?: string
 }
 

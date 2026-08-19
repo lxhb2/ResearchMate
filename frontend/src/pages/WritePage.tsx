@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Steps,
@@ -15,16 +15,23 @@ import {
   Row,
   Col,
   Divider,
+  Modal,
+  List,
 } from 'antd'
 import {
   BulbOutlined,
   SaveOutlined,
   DownloadOutlined,
   PlusOutlined,
+  PushpinOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons'
 import ReactMarkdown from 'react-markdown'
 import type { Project, ProjectSection } from '../types'
 import { projectsApi } from '../api/projects'
+import { annotationsApi, type PinCard } from '../api/search'
+import type { ReviewCitation } from '../api/papers'
+import LitReviewModal from '../components/LitReviewModal'
 import { getErrorMessage } from '../api/client'
 
 const { TextArea } = Input
@@ -70,6 +77,13 @@ export default function WritePage() {
 
   // 步骤4
   const [draft, setDraft] = useState('')
+  // 草稿 TextArea 引用：支持「从卡片笔记插入」在光标处插入（Q1-1）
+  const draftRef = useRef<React.ComponentRef<typeof TextArea>>(null)
+  // 卡片笔记插入弹窗
+  const [pinCards, setPinCards] = useState<PinCard[]>([])
+  const [showPinCards, setShowPinCards] = useState(false)
+  // 生成综述段落弹窗（Q1-2）
+  const [showReviewModal, setShowReviewModal] = useState(false)
 
   // 步骤5
   const [abstract, setAbstract] = useState('')
@@ -227,6 +241,62 @@ export default function WritePage() {
   const saveDraft = async () => {
     await persist({ content: draft })
     message.success('草稿已保存')
+  }
+
+  // ---- 从卡片笔记插入（Q1-1）----
+  const openPinCards = async () => {
+    try {
+      setPinCards(await annotationsApi.listPinCards())
+      setShowPinCards(true)
+    } catch (err) {
+      message.error(getErrorMessage(err))
+    }
+  }
+
+  // 在草稿光标处插入卡片内容 + 引用锚文本（(Author, Year, p. X)）
+  const insertPinCard = (card: PinCard) => {
+    const body = (card.note || card.snippet || '').trim()
+    const anchor = card.anchor || ''
+    const text = `\n\n${body} ${anchor}`
+    const ta = draftRef.current?.resizableTextArea?.textArea
+    const start = ta?.selectionStart ?? draft.length
+    const end = ta?.selectionEnd ?? start
+    const next = draft.slice(0, start) + text + draft.slice(end)
+    setDraft(next)
+    const pos = start + text.length
+    requestAnimationFrame(() => {
+      ta?.focus()
+      try {
+        ta?.setSelectionRange(pos, pos)
+      } catch {
+        /* 忽略光标设置失败 */
+      }
+    })
+    setShowPinCards(false)
+    message.success(`已插入：${card.paper_title}${anchor}`)
+  }
+
+  // ---- 插入综述段落（Q1-2）：把生成的综述作为正式内容块插入草稿并保存 ----
+  const insertReview = async (text: string, citations: ReviewCitation[]) => {
+    const body = (text || '').trim()
+    const ta = draftRef.current?.resizableTextArea?.textArea
+    const start = ta?.selectionStart ?? draft.length
+    const end = ta?.selectionEnd ?? start
+    const block = `\n\n${body}\n`
+    const next = draft.slice(0, start) + block + draft.slice(end)
+    setDraft(next)
+    const pos = start + block.length
+    requestAnimationFrame(() => {
+      ta?.focus()
+      try {
+        ta?.setSelectionRange(pos, pos)
+      } catch {
+        /* 忽略光标设置失败 */
+      }
+    })
+    setShowReviewModal(false)
+    if (project) await persist({ content: next })
+    message.success(`已插入综述段落（引用 ${citations.length} 条），并保存到项目内容`)
   }
 
   // ---- 步骤5 ----
@@ -420,6 +490,12 @@ export default function WritePage() {
           title="第四步 — 撰写草稿"
           extra={
             <Space>
+              <Button icon={<FileTextOutlined />} onClick={() => setShowReviewModal(true)}>
+                生成综述段落
+              </Button>
+              <Button icon={<PushpinOutlined />} onClick={openPinCards}>
+                从卡片笔记插入
+              </Button>
               <Button onClick={() => onGenerateDraft()} loading={busy}>生成全部章节</Button>
               <Button type="primary" icon={<SaveOutlined />} onClick={saveDraft}>
                 保存
@@ -431,6 +507,7 @@ export default function WritePage() {
             <Col xs={24} lg={12}>
               <Typography.Text strong>Markdown 编辑器</Typography.Text>
               <TextArea
+                ref={draftRef}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 style={{ minHeight: 500, fontFamily: 'monospace' }}
@@ -519,6 +596,46 @@ export default function WritePage() {
           </Button>
         </Card>
       )}
+
+      {/* 从卡片笔记插入弹窗（Q1-1）：点击卡片 → 插入到草稿光标处（带引用锚文本） */}
+      <Modal
+        title="从卡片笔记插入"
+        open={showPinCards}
+        onCancel={() => setShowPinCards(false)}
+        footer={null}
+        width={640}
+      >
+        {pinCards.length === 0 ? (
+          <Empty description="还没有卡片笔记。在阅读器中选中文字并点击「📌 钉成卡片」即可创建。" />
+        ) : (
+          <List
+            dataSource={pinCards}
+            style={{ maxHeight: 420, overflow: 'auto' }}
+            renderItem={(card) => (
+              <List.Item
+                style={{ cursor: 'pointer' }}
+                onClick={() => insertPinCard(card)}
+                title="点击插入到草稿光标处"
+              >
+                <List.Item.Meta
+                  title={
+                    <Space size={6} wrap>
+                      <Tag color="blue">p{card.page ?? '-'}</Tag>
+                      <Typography.Text strong>{card.note || card.snippet}</Typography.Text>
+                    </Space>
+                  }
+                  description={
+                    <Space size={6} wrap>
+                      <Typography.Text type="secondary">{card.paper_title}</Typography.Text>
+                      <Typography.Text type="secondary">{card.anchor}</Typography.Text>
+                    </Space>
+                  }
+                />
+              </List.Item>
+            )}
+          />
+        )}
+      </Modal>
     </div>
   )
 }

@@ -5,9 +5,20 @@ from pydantic import BaseModel
 
 class AnnotationCreate(BaseModel):
     paper_id: str
-    type: str  # highlight|underline|note|summary
+    type: str  # highlight|underline|note|summary|ink
     content: Optional[str] = None
     page_number: Optional[int] = None
+    position: Optional[dict[str, Any]] = None
+    color: Optional[str] = None
+    comment: Optional[str] = None
+    tags: Optional[list[str]] = None
+
+
+class AnnotationUpdate(BaseModel):
+    content: Optional[str] = None
+    comment: Optional[str] = None
+    color: Optional[str] = None
+    tags: Optional[list[str]] = None
     position: Optional[dict[str, Any]] = None
 
 

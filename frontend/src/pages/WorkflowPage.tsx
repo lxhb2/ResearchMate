@@ -344,9 +344,20 @@ export default function WorkflowPage() {
     load()
   }
 
+  // 白板/运行视图占满内容区高度（内部各自滚动）；模板库/生成视图走自然流滚动
+  const fullView = view === 'whiteboard' || view === 'execute'
+
   return (
-    <div>
-      <Typography.Title level={3}>Agent 工作流</Typography.Title>
+    <div
+      style={
+        fullView
+          ? { height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }
+          : undefined
+      }
+    >
+      <Typography.Title level={3} style={fullView ? { margin: '0 0 12px', flexShrink: 0 } : undefined}>
+        Agent 工作流
+      </Typography.Title>
       {view === 'library' && (
         <LibraryView
           templates={templates}
@@ -358,12 +369,16 @@ export default function WorkflowPage() {
         />
       )}
       {view === 'execute' && selected && (
-        <DialogueRunView template={selected} onBack={backToLibrary} />
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <DialogueRunView template={selected} onBack={backToLibrary} />
+        </div>
       )}
       {view === 'generate' && <GenerateView onBack={backToLibrary} />}
       {view === 'whiteboard' && (
         <Suspense fallback={<Spin />}>
-          <LazyWhiteboardView onBack={backToLibrary} />
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <LazyWhiteboardView onBack={backToLibrary} />
+          </div>
         </Suspense>
       )}
     </div>

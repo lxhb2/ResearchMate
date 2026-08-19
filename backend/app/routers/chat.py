@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends
+import json
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -6,7 +8,7 @@ from app.dependencies import get_current_user
 from app.models.user import User
 from app.schemas.conversation import ConversationOut, ChatRequest
 from app.models.conversation import Conversation
-from app.services import search_service, settings_service
+from app.services import settings_service
 
 from app.agent.llm_adapter import LLMAdapter
 from app.agent.top_agent import TopAgent
@@ -23,82 +25,42 @@ def _build_llm(db: Session, user_id) -> LLMAdapter:
         return LLMAdapter.mock()
 
 
-@router.post("/chat")
-def chat(body: ChatRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    # Load or create conversation
-    conv = None
+def _get_or_create_conv(db: Session, user_id, body: ChatRequest) -> Conversation:
     if body.conversation_id:
         conv = db.get(Conversation, body.conversation_id)
-        if not conv or conv.user_id != user.id:
+        if not conv or conv.user_id != user_id:
             from fastapi import HTTPException
             raise HTTPException(status_code=404, detail="Conversation not found")
-    else:
-        conv = Conversation(
-            user_id=user.id,
-            title=body.message[:50],
-            messages=[],
-        )
-        db.add(conv)
-        db.flush()
+        return conv
+    conv = Conversation(user_id=user_id, title=body.message[:50], messages=[])
+    db.add(conv)
+    db.flush()
+    return conv
 
+
+@router.post("/chat")
+def chat(body: ChatRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """全局权限 Agent 对话：记忆注入 + 工具调用 + 智能推荐 + 路由。"""
+    conv = _get_or_create_conv(db, user.id, body)
     messages = list(conv.messages or [])
     messages.append({"role": "user", "content": body.message})
 
-    # ---- 顶层 Agent 意图路由（科研 skill / 专用 Agent / 兜底走原对话）----
-    route = None
-    route_meta = {}
-    if not body.use_library:  # 仅当未强制走检索增强时，先尝试顶层路由
-        try:
-            agent = TopAgent(db, user.id, llm=_build_llm(db, user.id))
-            route = agent.execute(body.message)
-        except Exception:  # noqa: BLE001
-            route = None
-
-    if route and route.get("path") not in ("chat", None):
-        answer = route.get("answer", "")
-        route_meta = {
-            "intent": route.get("path"),
-            "route_label": route.get("route_label", ""),
-            "artifact_path": route.get("artifact_path"),
-        }
-    else:
-        # ---- 原对话链路（检索增强 + LLM）----
-        system_parts = ["You are a helpful research assistant."]
-        context_text = ""
-
-        if body.use_library:
-            hits = search_service.semantic_search(db, query=body.message, top_k=5, user_id=user.id)
-            if hits:
-                ctx = "\n\n".join(
-                    f"[{h['dimension']}] (from: {h['paper_title']}) {h['content']}" for h in hits
-                )
-                system_parts.append(
-                    "The following are relevant excerpts retrieved from the user's personal library. "
-                    "Use them to ground your answer when relevant, and cite by paper title."
-                )
-                context_text = ctx
-
-        if body.web_search:
-            system_parts.append(
-                "If you have web browsing tool capabilities, use them to find up-to-date information. "
-                "Otherwise, rely on your own knowledge."
-            )
-
-        system = "\n".join(system_parts)
-        if context_text:
-            system += f"\n\nLibrary context:\n{context_text}"
-
-        llm_messages = [{"role": "system", "content": system}] + [
-            m for m in messages if m.get("role") in ("user", "assistant")
-        ]
-
-        # 统一走 LLMAdapter：有 key 时用 litellm，无 key 时自动降级为 mock，避免 500
-        llm = _build_llm(db, user.id)
-        try:
-            answer = llm.chat(llm_messages, temperature=0.4, max_tokens=1500)
-        except Exception:  # noqa: BLE001
-            answer = LLMAdapter.mock().chat(llm_messages, temperature=0.4, max_tokens=1500)
-        route_meta = {"intent": "chat", "route_label": "智能问答"}
+    # 统一走全局权限 Agent（科研 skill / 专用 Agent / 全局工具循环）
+    agent = TopAgent(db, user.id, llm=_build_llm(db, user.id))
+    out = agent.handle(
+        body.message,
+        use_library=body.use_library,
+        web_search=body.web_search,
+        contexts=body.contexts,
+    )
+    answer = out.get("answer", "")
+    route_meta = {
+        "intent": out.get("path", "chat"),
+        "route_label": out.get("route_label", "智能问答"),
+        "artifact_path": out.get("artifact_path"),
+        "recommendation": out.get("recommendation"),
+        "tool_trace": out.get("tool_trace"),
+    }
 
     messages.append({"role": "assistant", "content": answer})
     conv.messages = messages
@@ -110,3 +72,42 @@ def chat(body: ChatRequest, db: Session = Depends(get_db), user: User = Depends(
         "conversation": ConversationOut.model_validate(conv),
         "route": route_meta,
     }
+
+
+@router.post("/chat/stream")
+def chat_stream(body: ChatRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """流式问答：全局 Agent 决策后分块流出最终回答（含工具调用结果与记忆）。"""
+    conv = _get_or_create_conv(db, user.id, body)
+    messages = list(conv.messages or [])
+    messages.append({"role": "user", "content": body.message})
+
+    agent = TopAgent(db, user.id, llm=_build_llm(db, user.id))
+
+    def gen():
+        full = ""
+        try:
+            for chunk in agent.stream(
+                body.message,
+                use_library=body.use_library,
+                web_search=body.web_search,
+                contexts=body.contexts,
+            ):
+                full += chunk
+                yield f"data: {json.dumps({'delta': chunk})}\n\n"
+            # 流结束后持久化到数据库
+            messages.append({"role": "assistant", "content": full})
+            conv.messages = messages
+            db.commit()
+        except Exception as exc:  # noqa: BLE001
+            # 流中异常：把真实错误作为 delta 输出，避免连接中断后前端只显示
+            # 笼统的 "An unexpected error occurred"
+            err = f"处理失败：{exc}"
+            full += f"\n\n⚠️ {err}"
+            yield f"data: {json.dumps({'delta': f'\n\n⚠️ {err}'})}\n\n"
+            try:
+                db.rollback()
+            except Exception:  # noqa: BLE001
+                pass
+        yield f"data: {json.dumps({'conversation_id': conv.id})}\n\n"
+
+    return StreamingResponse(gen(), media_type="text/event-stream")

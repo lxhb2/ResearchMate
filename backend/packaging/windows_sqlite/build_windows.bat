@@ -53,13 +53,16 @@ mkdir "%PKG%\backend"
 mkdir "%PKG%\storage\pdfs"
 xcopy /e /i /q "%BACKEND%\packaging\windows_sqlite\dist\ResearchMate.exe" "%PKG%\backend\" >nul
 copy /y "%~dp0start.bat" "%PKG%\start.bat" >nul
+copy /y "%~dp0ResearchMate.vbs" "%PKG%\ResearchMate.vbs" >nul
+copy /y "%~dp0stop.bat" "%PKG%\stop.bat" >nul
 copy /y "%~dp0README.txt" "%PKG%\README.txt" >nul
 
 echo.
 echo ============================================================
 echo  BUILD COMPLETE!
 echo  Portable dir : %PKG%
-echo  Zip it and send to users. They just double-click start.bat.
+echo  Zip it and send to users.
+echo  They just double-click ResearchMate.vbs (fully hidden, no console).
 echo ============================================================
 endlocal
 pause

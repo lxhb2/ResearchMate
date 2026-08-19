@@ -8,6 +8,8 @@ class ChatRequest(BaseModel):
     message: str
     use_library: bool = False
     web_search: bool = False
+    # @ 引用上下文：[{"type": "skill|memory|tool|module", "name": "..."}]
+    contexts: list[dict] = []
 
 
 class MessageOut(BaseModel):

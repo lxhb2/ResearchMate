@@ -92,6 +92,8 @@ class LLMClient:
                 api_base=self.base_url,
                 temperature=temperature,
                 max_tokens=max_tokens,
+                timeout=120,          # 不设时 litellm 默认 600s，服务不可达会长时间挂起
+                num_retries=0,        # 不可达时快速失败，避免内部重试拖慢响应
             )
             return resp.choices[0].message.content or ""
         except ImportError:

@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-"""ResearchMate 统一 CLI 入口（科研 Skill 集成 + 原情报模式占位）。
+"""ResearchMate 统一 CLI 入口（科研 Skill 集成 + 插件化情报采集）。
 
 用法示例：
   python main.py --research "文献综述：一人公司商业模型，结合OPC概念"
   python main.py --research "..." --skill deep-research --review
-  python main.py --feed        # 原有情报采集模式（本项目未内置 RSS 采集，见下）
+  python main.py --feed        # 情报采集：走 feed-digest 插件的 rss_fetch 工具
   python main.py --list-skills
   python main.py --rebuild-registry
 
-说明：当前 /workspace 后端为 ResearchMate 学术助手，未包含 RSS 情报采集链路。
---feed 保留原采集模式的入口契约；若后续接入情报采集，只需在 feed_handler 中
-调用原有逻辑，不影响本模块。
+说明：RSS 情报采集由预装的 feed-digest 插件提供（plugins/feed-digest/，
+运行目录 storage/agent/plugins/feed-digest/）。停用插件后 --feed 自动降级为提示。
 """
 import argparse
 import sys
@@ -19,14 +18,47 @@ import sys
 sys.path.insert(0, __file__ and __file__.rsplit("/", 1)[0] or ".")
 
 
-def feed_handler():
-    """原有情报采集模式入口（占位）。
+def feed_handler() -> int:
+    """情报采集模式：调用 feed-digest 插件的 rss_fetch 工具抓取 RSS 并落盘简报。
 
-    非科研任务继续走原有情报处理链路；本模块严格隔离，不改动原有逻辑。
-    若项目已包含 RSS 采集，在此调用原采集函数并输出到 ./output/feed/。
+    能力完全由插件提供；插件被停用/卸载时降级为提示信息，不影响其他功能。
     """
-    print("Feed 模式：未检测到已内置的 RSS 情报采集链路。")
-    print("提示：科研 Skill 模块已隔离到 ./research_skills/，不影响原采集逻辑。")
+    try:
+        from app.agent.plugin_manager import get_plugin_manager
+        from app.agent import tools as tools_mod
+
+        get_plugin_manager().load_all()
+        tool = tools_mod.get_tool("rss_fetch")
+        if tool is None:
+            raise RuntimeError("feed-digest 插件未启用")
+        out = tool.run(tools_mod.ToolContext(), {"limit": 12})
+    except Exception as e:  # noqa: BLE001
+        print(f"Feed 模式：情报采集插件不可用（{e}）")
+        print("提示：在应用「设置 → 插件」启用 feed-digest 插件即可恢复 RSS 情报采集。")
+        return 0
+
+    import os
+    import time
+
+    lines = [f"# 科研情报简报 · {time.strftime('%Y-%m-%d')}", ""]
+    for feed in out.get("feeds", []):
+        if not feed.get("ok"):
+            lines.append(f"- ⚠️ 抓取失败：{feed.get('url')}（{feed.get('error', '')[:80]}）")
+            continue
+        lines.append(f"## {feed.get('url')}")
+        for item in feed.get("items", []):
+            link = f" — {item['link']}" if item.get("link") else ""
+            lines.append(f"- {item.get('title', '')}{link}")
+        lines.append("")
+
+    text = "\n".join(lines)
+    print(text)
+    outdir = "output/feed"
+    os.makedirs(outdir, exist_ok=True)
+    path = os.path.join(outdir, time.strftime("%Y%m%d") + "-feed.md")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text + "\n")
+    print(f"\n情报简报已写入 ./{path}（共 {out.get('total', 0)} 条）")
     return 0
 
 

@@ -77,11 +77,16 @@ class WorkflowNode(BaseModel):
     next_if_true: Optional[str] = Field(default=None, description="条件成立时跳转节点")
     next_if_false: Optional[str] = Field(default=None, description="条件不成立时跳转节点")
 
-    # ---- 通用流转 / 重试 ----
+    # ---- 通用流转 / 重试 / 错误处理 ----
     next: Optional[str] = Field(default=None, description="默认下一节点")
     retry: int = Field(default=0, ge=0, description="失败重试次数")
     retry_delay: float = Field(default=0.0, ge=0.0, description="重试间隔秒数")
     timeout: Optional[float] = Field(default=None, ge=0, description="单次执行超时秒数")
+    # 错误处理策略（借鉴 n8n On Error / Dify Error Handling）：
+    # - stop（默认）    ：失败时抛错终止整个工作流
+    # - continue        ：失败时用 default_value 作为节点输出，流程继续
+    on_error: Literal["stop", "continue"] = Field(default="stop", description="失败策略")
+    default_value: Optional[Any] = Field(default=None, description="on_error=continue 时的默认输出")
 
     @field_validator("tool")
     @classmethod

@@ -1,0 +1,11 @@
+{
+  "name": "feed-digest",
+  "version": "1.0.0",
+  "display_name": "情报采集（RSS）",
+  "description": "抓取 RSS/Atom 订阅源并生成科研情报摘要。补齐 CLI --feed 占位：作为插件提供 rss_fetch 工具与 feed-digest 技能。",
+  "author": "ResearchMate",
+  "provides": {
+    "skills": ["skills"],
+    "tools": ["tools/feed_tools.py"]
+  }
+}

@@ -12,9 +12,12 @@ import zipfile
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse
+from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.database import engine
+from app.database import engine, get_db
+from app.dependencies import get_current_user
+from app.models.user import User
 
 router = APIRouter(prefix="/backup", tags=["backup"])
 
@@ -55,7 +58,7 @@ def _safe_copy_sqlite() -> bytes:
 
 
 @router.get("/export")
-def export_backup():
+def export_backup(user: User = Depends(get_current_user)):
     """导出全部本地数据为一个 zip（数据库 + PDF 文件）。"""
     try:
         db_bytes = _safe_copy_sqlite()
@@ -84,7 +87,10 @@ def export_backup():
 
 
 @router.post("/restore")
-def restore_backup(file: UploadFile = File(...)):
+def restore_backup(
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+):
     """从备份 zip 恢复数据（覆盖现有数据库与 PDF 目录）。
 
     注意：恢复会覆盖当前所有数据，请先自行确认。
@@ -96,7 +102,13 @@ def restore_backup(file: UploadFile = File(...)):
     tmpdir = tempfile.mkdtemp(prefix="researchmate_restore_")
     try:
         with zipfile.ZipFile(io.BytesIO(data)) as zf:
-            zf.extractall(tmpdir)
+            # 防御 Zip Slip：逐成员校验提取目标必须在 tmpdir 内
+            tmpdir_norm = os.path.normpath(tmpdir)
+            for member in zf.infolist():
+                target = os.path.normpath(os.path.join(tmpdir_norm, member.filename))
+                if not target.startswith(tmpdir_norm + os.sep):
+                    raise HTTPException(status_code=400, detail=f"备份包包含非法路径: {member.filename}")
+                zf.extract(member, tmpdir)
 
         # 恢复数据库
         db_path = _sqlite_db_path()

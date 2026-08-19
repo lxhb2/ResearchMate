@@ -5,6 +5,7 @@ import {
   MessageOutlined,
   SettingOutlined,
   ApartmentOutlined,
+  ClusterOutlined,
 } from '@ant-design/icons'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useThemeStore } from '../store/themeStore'
@@ -13,6 +14,7 @@ const { Header, Sider, Content } = Layout
 
 const menuItems = [
   { key: '/library', icon: <BookOutlined />, label: '文献库' },
+  { key: '/graph', icon: <ClusterOutlined />, label: '图谱' },
   { key: '/write', icon: <EditOutlined />, label: '写作' },
   { key: '/workflow', icon: <ApartmentOutlined />, label: '工作流' },
   { key: '/chat', icon: <MessageOutlined />, label: '对话' },

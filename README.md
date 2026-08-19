@@ -13,7 +13,8 @@
 - **对话（顶层 Agent）**：统一对话入口，自动路由——科研 Skill / 专用 Agent（文献/数据/实验/写作）/ 智能问答
 - **翻译 / 术语**：论文翻译、术语查询
 - **Agent 工作流**：模板库（默认固定模板 + 自定义模板）、对话式执行、白板式拖拽、自然语言生成工作流
-- **科研 Skill 集成**：10 个 Skill（综述/写作/评审/选题/实验等），注册表管理 + 调度 + 持久记忆 + 评审
+- **科研 Skill 集成**：**337 个内置 Skill**（综述/写作/评审/选题/实验等，整合 anthropics/skills 与 6 大科研技能仓库），注册表管理 + 调度 + 持久记忆 + 评审，支持 GitHub 一键导入
+- **插件生态**：zip 包安装插件，扩展技能 / 工具 / MCP 服务器配置；启用、停用、卸载全生命周期管理
 - **备份 / 恢复**：SQLite + PDF 一键打包备份
 - **CLI**：`python main.py --research "..."` 直接跑科研任务
 
@@ -24,7 +25,7 @@
 ```
 ResearchMate/
 ├── backend/                后端（FastAPI + SQLAlchemy + SQLite）
-│   ├── app/                应用代码（路由 / 服务 / Agent 工作流 / 顶层Agent）
+│   ├── app/                应用代码（路由 / 服务 / Agent 工作流 / 顶层Agent / 插件管理）
 │   ├── research_skills/    科研 Skill 模块（注册表 / 调度 / 记忆 / 评审，自包含）
 │   ├── main.py             CLI 入口
 │   ├── requirements.txt    依赖清单
@@ -137,7 +138,7 @@ RESEARCH_LLM_PROVIDER=mock python main.py --research "..."
 cd backend
 python main.py --list-skills                 # 列出已注册的科研 Skill
 python main.py --research "文献综述：一人公司商业模型，结合OPC概念" --provider mock
-python main.py --feed                         # 原有情报采集模式
+python main.py --feed                         # 情报采集（feed-digest 插件，抓 RSS 落盘 output/feed/）
 python main.py --research "..." --provider ollama   # 指定 LLM 提供方
 python main.py --research "..." --review      # 执行后用 Supervisor 评审
 python main.py --rebuild-registry             # 从 templates/ 重建 Skill 注册表
@@ -166,6 +167,58 @@ python main.py --rebuild-registry             # 从 templates/ 重建 Skill 注�
 - **科研 Skill 输出是占位符？** 用 `--provider openai` 或 `--provider ollama` 配置真实模型。
 
   ==本项目由AI编程实现==
+
+---
+
+## 🧩 插件生态
+
+后续新增能力优先以**插件**方式接入（无需改主程序）。在「设置 → 插件」页上传 zip 安装，即刻生效。
+
+插件目录结构：
+
+```
+my-plugin/
+├── plugin.json          # 清单（必需）
+├── skills/<dir>/SKILL.md    # 技能（Agent Skills 标准）
+├── tools/my_tools.py        # 工具模块（定义 TOOLS 列表）
+└── mcp.json                 # MCP 服务器配置（可选）
+```
+
+`plugin.json` 清单：
+
+```json
+{
+  "name": "my-plugin",
+  "version": "1.0.0",
+  "display_name": "我的插件",
+  "description": "插件说明",
+  "author": "you",
+  "provides": {
+    "skills": ["skills"],
+    "tools": ["tools/my_tools.py"],
+    "mcp": ["mcp.json"]
+  }
+}
+```
+
+工具模块契约（自包含，不 import 应用内部代码）：
+
+```python
+TOOLS = [
+    {
+        "name": "my_tool",
+        "description": "工具说明（给 LLM 看）",
+        "parameters": {"type": "object", "properties": {...}, "required": [...]},
+        "handler": lambda ctx, args: {"result": ...},   # ctx: ToolContext
+    },
+]
+```
+
+- **安装**：上传 zip（根目录或唯一子目录含 `plugin.json`），自动注册技能 / 工具 / MCP
+- **停用**：反注册全部能力，目录保留，可随时再启用
+- **卸载**：反注册并删除目录
+- 管理接口：`GET/POST /api/v1/agent/plugins`（详见 `/docs`）
+- **官方示例插件**：`feed-digest`（RSS 情报采集，源码见 `plugins/feed-digest/`）已预装——提供 `rss_fetch` 工具与 `feed-digest` 技能，CLI `--feed` 即走此插件
 
 ---
 

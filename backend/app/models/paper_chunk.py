@@ -18,6 +18,9 @@ class PaperChunk(Base):
     # 轻量化：向量存为 JSON 文本，检索时在内存中计算余弦（不再依赖 pgvector）
     embedding = Column(VectorJson, nullable=True)
     page_number = Column(Integer)
+    # 该 chunk 内容在 paper.full_text 中的字符偏移（用于 citation 溯源跳转）
+    char_start = Column(Integer)
+    char_end = Column(Integer)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     paper = relationship("Paper", back_populates="chunks")

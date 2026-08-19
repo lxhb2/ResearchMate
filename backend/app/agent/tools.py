@@ -33,11 +33,13 @@ class Tool:
         description: str,
         parameters: dict,
         handler: Callable[[ToolContext, dict], Any],
+        source: str = "",
     ):
         self.name = name
         self.description = description
         self.parameters = parameters
         self.handler = handler
+        self.source = source  # 来源标记：内置工具为空串，插件工具为插件名
 
     def run(self, ctx: ToolContext, args: dict) -> Any:
         return self.handler(ctx, args)
@@ -440,6 +442,287 @@ def _experiment_plan(ctx: ToolContext, args: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# 全局能力工具：联网搜索 / 文件配置 / API 一键配置 / 长期记忆 / 模块导航
+# ---------------------------------------------------------------------------
+
+def _clean_search_query(q: str) -> str:
+    """剥去口语化前缀/连接词，提高搜索引擎结果相关性。
+
+    "搜索陶瓷材料相关文献" → "陶瓷材料 文献"（否则搜索引擎会返回引擎自身页面）。
+    """
+    import re as _re
+
+    cleaned = _re.sub(
+        r"^(请|麻烦|帮我|帮忙|给我)?(在网上|在线|联网)?(搜索|搜一下|检索|查找|查询|查一下|查查|找一下|找)",
+        "",
+        q.strip(),
+    )
+    cleaned = _re.sub(r"相关|有关", "", cleaned)
+    cleaned = _re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned or q
+
+
+def _web_search(ctx: ToolContext, args: dict) -> dict:
+    """联网搜索：抓取 Bing 网页搜索结果，返回标题/链接/摘要。
+
+    无 API Key 也能用（无需第三方搜索服务）；失败时返回可读提示而非抛错。
+    """
+    query = _clean_search_query(args.get("query") or "")
+    limit = int(args.get("limit", 5))
+    if not query:
+        return {"count": 0, "items": [], "error": "缺少 query 参数"}
+
+    import httpx
+    from bs4 import BeautifulSoup
+
+    url = "https://www.bing.com/search"
+    params = {"q": query, "count": min(limit, 10), "mkt": "zh-CN"}
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+        ),
+        "Accept-Language": "zh-CN,zh;q=0.9",
+    }
+    try:
+        resp = httpx.get(url, params=params, headers=headers, timeout=15.0, follow_redirects=True)
+        resp.raise_for_status()
+    except Exception as e:  # noqa: BLE001
+        return {"count": 0, "items": [], "error": f"联网失败：{e}"}
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    items: list[dict] = []
+    # Bing 结果结构：li.b_algo 内 h2 > a[href] 与 p
+    for li in soup.select("li.b_algo"):
+        a = li.select_one("h2 a")
+        if not a:
+            continue
+        title = a.get_text(" ", strip=True)
+        href = a.get("href", "")
+        snippet = li.select_one("p")
+        text = snippet.get_text(" ", strip=True) if snippet else ""
+        if title:
+            items.append({"title": title, "url": href, "snippet": text[:300]})
+        if len(items) >= limit:
+            break
+    if not items:
+        # 兜底：Bing 也可能用 cite 结构
+        for li in soup.select("li.b_algo"):
+            a = li.select_one("a")
+            if not a:
+                continue
+            items.append(
+                {
+                    "title": a.get_text(" ", strip=True),
+                    "url": a.get("href", ""),
+                    "snippet": "",
+                }
+            )
+            if len(items) >= limit:
+                break
+    return {"count": len(items), "query": query, "items": items}
+
+
+def _file_root() -> str:
+    """文件工具的沙箱根目录（仅允许读写此目录，避免越权操作任意路径）。"""
+    root = os.path.join(app_settings_dir(), "agent", "files")
+    os.makedirs(root, exist_ok=True)
+    return root
+
+
+def app_settings_dir() -> str:
+    from app.config import settings as _s
+    return _s.STORAGE_DIR
+
+
+def _resolve_path(name: str) -> str:
+    """把用户给出的文件名解析为沙箱内绝对路径；防目录穿越。"""
+    safe = os.path.basename((name or "").replace("\\", "/").rstrip("/"))
+    if not safe:
+        safe = "untitled.txt"
+    return os.path.join(_file_root(), safe)
+
+
+def _file_read(ctx: ToolContext, args: dict) -> dict:
+    """读取沙箱内文本文件（用于读取/检查配置文件）。"""
+    path = _resolve_path(args.get("path", ""))
+    if not os.path.isfile(path):
+        return {"ok": False, "error": f"文件不存在：{args.get('path')}", "path": path}
+    try:
+        with open(path, encoding="utf-8") as f:
+            content = f.read()
+        return {"ok": True, "path": path, "content": content[:20000]}
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "error": str(e), "path": path}
+
+
+def _file_write(ctx: ToolContext, args: dict) -> dict:
+    """写入（或追加）沙箱内文本文件，用于保存配置/笔记/脚本。"""
+    path = _resolve_path(args.get("path", ""))
+    content = args.get("content", "")
+    append = bool(args.get("append", False))
+    try:
+        mode = "a" if append else "w"
+        with open(path, mode, encoding="utf-8") as f:
+            f.write(str(content))
+        return {"ok": True, "path": path, "size": os.path.getsize(path)}
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "error": str(e), "path": path}
+
+
+def _api_configure(ctx: ToolContext, args: dict) -> dict:
+    """API 一键配置：保存 LLM 配置（base_url/api_key/model）并重置熔断，立即生效。"""
+    from app.services import settings_service
+    from app.agent.llm_adapter import reset_breakers
+
+    payload: dict[str, str] = {}
+    if args.get("base_url"):
+        payload["llm_base_url"] = str(args["base_url"]).strip()
+    if args.get("api_key"):
+        payload["llm_api_key"] = str(args["api_key"]).strip()
+    if args.get("model"):
+        payload["llm_model"] = str(args["model"]).strip()
+
+    if ctx.db is None or not ctx.user_id:
+        return {"ok": False, "error": "缺少数据库上下文"}
+    if not payload:
+        return {"ok": False, "error": "至少需要提供 base_url/api_key/model 之一"}
+
+    try:
+        settings_service.update_many(ctx.db, str(ctx.user_id), payload)
+        reset_breakers()  # 关键：保存后立即清除熔断，新配置马上生效
+        return {"ok": True, "updated": list(payload.keys()), "tip": "已保存并立即生效"}
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "error": f"保存失败：{e}"}
+
+
+def _memory_save(ctx: ToolContext, args: dict) -> dict:
+    """保存到长期记忆（本地 md，跨对话共享）。append=True 时追加而不是覆盖。"""
+    from app.agent import memory as memory_mod
+
+    if not ctx.user_id:
+        return {"ok": False, "error": "缺少用户上下文"}
+    name = args.get("name", "notes.md")
+    content = args.get("content", "")
+    append = bool(args.get("append", True))
+    if not content:
+        return {"ok": False, "error": "缺少 content"}
+    try:
+        info = memory_mod.write_memory(ctx.user_id, name, content, append=append)
+        return {"ok": True, **info}
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "error": str(e)}
+
+
+def _memory_recall(ctx: ToolContext, args: dict) -> dict:
+    """从长期记忆检索内容（关键词搜索全部 md 文件），便于 Agent 引用历史偏好。"""
+    from app.agent import memory as memory_mod
+
+    if not ctx.user_id:
+        return {"ok": False, "error": "缺少用户上下文"}
+    query = args.get("query", "")
+    if not query:
+        # 无查询时返回全部记忆文件摘要
+        return {"files": memory_mod.list_memories(ctx.user_id)}
+    hits = memory_mod.search(ctx.user_id, query, top_k=int(args.get("top_k", 5)))
+    return {"ok": True, "count": len(hits), "hits": hits}
+
+
+def _module_navigate(ctx: ToolContext, args: dict) -> dict:
+    """返回模块导航信息：识别用户想用的功能对应哪个模块、跳转路径与引导步骤。"""
+    from app.agent import modules
+
+    text = args.get("text", "")
+    if not text:
+        text = args.get("query", "")
+    result = modules.recommend(text)
+    return result
+
+
+def _system_info(ctx: ToolContext, args: dict) -> dict:
+    """获取系统概览：LLM 配置状态、文献/项目数量，供 Agent 判断可用能力。"""
+    from app.services import settings_service
+
+    info: dict[str, Any] = {"app": "ResearchMate", "modules": [], "llm_configured": False}
+    if ctx.db is not None and ctx.user_id:
+        try:
+            cfg = settings_service.get_llm_config(ctx.db, str(ctx.user_id))
+            key = (cfg.get("api_key") or "").strip()
+            info["llm_configured"] = bool(key) and key not in ("", "sk-xxx")
+            info["llm_base_url"] = cfg.get("base_url", "")
+            info["llm_model"] = cfg.get("model", "")
+        except Exception:  # noqa: BLE001
+            pass
+        try:
+            from app.models.paper import Paper
+            from app.models.project import Project
+            from app.models.conversation import Conversation
+
+            info["paper_count"] = ctx.db.query(Paper).filter(Paper.user_id == ctx.user_id).count()
+            info["project_count"] = ctx.db.query(Project).filter(Project.user_id == ctx.user_id).count()
+            info["conversation_count"] = ctx.db.query(Conversation).filter(Conversation.user_id == ctx.user_id).count()
+        except Exception:  # noqa: BLE001
+            pass
+    info["modules"] = modules.catalog()
+    return info
+
+
+def _skills_list(ctx: ToolContext, args: dict) -> dict:
+    """列出当前可用 Skill（含自定义），供 Agent 判断能调用哪些技能。"""
+    try:
+        from research_skills.registry import get_registry
+
+        skills = get_registry().all()
+        return {
+            "count": len(skills),
+            "skills": [
+                {"name": s.get("name"), "category": s.get("category"), "description": s.get("description")}
+                for s in skills
+            ],
+        }
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "error": str(e), "skills": []}
+
+
+def _mcp_tools(ctx: ToolContext, args: dict) -> dict:
+    """列出已配置的 MCP 服务器与其可用工具（用于判断可调用的外部能力）。"""
+    from app.agent.mcp_store import list_servers, server_tools
+
+    servers = list_servers()
+    result = []
+    for s in servers:
+        result.append({"name": s["name"], "tools": server_tools(s["name"])})
+    return {"count": len(servers), "servers": result}
+
+
+def _skill_search(ctx: ToolContext, args: dict) -> dict:
+    """搜索 GitHub 上符合 Agent Skills 规范的技能仓库。"""
+    from app.agent.skill_store import search_github
+
+    query = args.get("query", "")
+    limit = int(args.get("limit", 6))
+    try:
+        items = search_github(query, limit)
+        return {"count": len(items), "items": items}
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "error": str(e), "items": []}
+
+
+def _skill_install(ctx: ToolContext, args: dict) -> dict:
+    """从 GitHub 仓库自动导入并注册 Skill（下载 → 解析 SKILL.md → 注册）。"""
+    from app.agent.skill_store import import_github
+
+    repo_url = args.get("repo_url", "")
+    if not repo_url:
+        return {"ok": False, "error": "缺少 repo_url 参数"}
+    try:
+        skills = import_github(repo_url)
+        return {"ok": True, "count": len(skills), "skills": skills}
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "error": str(e), "skills": []}
+
+
+# ---------------------------------------------------------------------------
 # 工具注册表
 # ---------------------------------------------------------------------------
 
@@ -586,6 +869,138 @@ def _build_registry() -> dict[str, Tool]:
             },
             handler=_experiment_plan,
         ),
+        # ---- 全局能力工具 ----
+        "web_search": Tool(
+            name="web_search",
+            description="联网搜索：抓取 Bing 搜索结果，返回标题/链接/摘要。用于查询实时资料、最新进展。",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "搜索关键词"},
+                    "limit": {"type": "integer", "description": "返回条数（默认 5，最多 10）"},
+                },
+                "required": ["query"],
+            },
+            handler=_web_search,
+        ),
+        "file_read": Tool(
+            name="file_read",
+            description="读取本地沙箱内文本文件（用于检查配置文件/笔记/脚本）。",
+            parameters={
+                "type": "object",
+                "properties": {"path": {"type": "string", "description": "沙箱内文件名"}},
+                "required": ["path"],
+            },
+            handler=_file_read,
+        ),
+        "file_write": Tool(
+            name="file_write",
+            description="写入或追加本地沙箱内文本文件（用于保存配置/笔记/脚本）。",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "沙箱内文件名"},
+                    "content": {"type": "string", "description": "文件内容"},
+                    "append": {"type": "boolean", "description": "是否追加（默认 False 覆盖）"},
+                },
+                "required": ["path", "content"],
+            },
+            handler=_file_write,
+        ),
+        "api_configure": Tool(
+            name="api_configure",
+            description="API 一键配置：保存 LLM 接口配置（base_url/api_key/model），保存后立即生效、无需多次配置。",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "base_url": {"type": "string", "description": "OpenAI 兼容接口地址，如 https://api.deepseek.com/v1"},
+                    "api_key": {"type": "string", "description": "API Key"},
+                    "model": {"type": "string", "description": "模型名，如 deepseek-chat"},
+                },
+                "required": [],
+            },
+            handler=_api_configure,
+        ),
+        "memory_save": Tool(
+            name="memory_save",
+            description="保存内容到长期记忆（本地 md 文件，跨所有对话共享），用于记录用户偏好、重要信息。",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "记忆文件名（默认 notes.md）"},
+                    "content": {"type": "string", "description": "要记忆的内容"},
+                    "append": {"type": "boolean", "description": "是否追加（默认 True）"},
+                },
+                "required": ["content"],
+            },
+            handler=_memory_save,
+        ),
+        "memory_recall": Tool(
+            name="memory_recall",
+            description="从长期记忆中检索内容（关键词搜索全部 md 文件），用于回忆用户偏好与历史记录。",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "检索关键词"},
+                    "top_k": {"type": "integer", "description": "返回条数（默认 5）"},
+                },
+                "required": [],
+            },
+            handler=_memory_recall,
+        ),
+        "module_navigate": Tool(
+            name="module_navigate",
+            description="智能推荐：识别用户想用的功能对应哪个模块，返回跳转路径与引导步骤（向导）。",
+            parameters={
+                "type": "object",
+                "properties": {"text": {"type": "string", "description": "用户想做的功能描述"}},
+                "required": ["text"],
+            },
+            handler=_module_navigate,
+        ),
+        "system_info": Tool(
+            name="system_info",
+            description="获取系统概览：LLM 配置状态、文献/项目/对话数量、可用模块清单。",
+            parameters={"type": "object", "properties": {}, "required": []},
+            handler=_system_info,
+        ),
+        "skills_list": Tool(
+            name="skills_list",
+            description="列出当前可用的 Skill 技能及其说明（含自定义技能）。",
+            parameters={"type": "object", "properties": {}, "required": []},
+            handler=_skills_list,
+        ),
+        "mcp_tools": Tool(
+            name="mcp_tools",
+            description="列出已配置的 MCP 服务器与其可用工具。",
+            parameters={"type": "object", "properties": {}, "required": []},
+            handler=_mcp_tools,
+        ),
+        "skill_search": Tool(
+            name="skill_search",
+            description="在 GitHub 上搜索符合 Agent Skills 规范的技能仓库（用户想找/安装新技能时使用）。",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "搜索关键词，如 'arxiv paper review'"},
+                    "limit": {"type": "integer", "description": "返回数量，默认 6"},
+                },
+                "required": ["query"],
+            },
+            handler=_skill_search,
+        ),
+        "skill_install": Tool(
+            name="skill_install",
+            description="从 GitHub 仓库自动导入并注册 Skill（下载 → 解析 SKILL.md → 注册到本地）。",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "repo_url": {"type": "string", "description": "GitHub 仓库地址，如 https://github.com/owner/repo"},
+                },
+                "required": ["repo_url"],
+            },
+            handler=_skill_install,
+        ),
     }
     return tools
 
@@ -599,6 +1014,11 @@ def get_tool(name: str) -> Optional[Tool]:
 
 def tool_names() -> list[str]:
     return list(TOOL_REGISTRY.keys())
+
+
+def tool_index() -> list[tuple[str, str]]:
+    """返回 (工具名, 说明) 列表，供 @ 引用 / 前端展示。"""
+    return [(t.name, t.description) for t in TOOL_REGISTRY.values()]
 
 
 def tool_catalog() -> list[dict]:
@@ -617,18 +1037,38 @@ def tool_catalog() -> list[dict]:
     ]
 
 
-def register_tool(tool: Tool) -> None:
+def register_tool(tool: Tool, source: str = "") -> None:
     """工具迭代接口：注册（或覆盖）一个自定义工具到全局注册表。
 
     自定义工具只需实现 ``run(ctx, args)``，并声明 name/description/parameters，
     即可被工作流引擎与 Agent 识别。用于后续扩展机器学习、自定义分析等能力。
+    ``source`` 非空时标记为插件工具，便于插件停用时批量反注册。
     """
+    if source:
+        tool.source = source
     TOOL_REGISTRY[tool.name] = tool
 
 
 def unregister_tool(name: str) -> bool:
     """工具迭代接口：注销一个已注册工具。"""
     return TOOL_REGISTRY.pop(name, None) is not None
+
+
+def tools_by_source() -> list[dict]:
+    """返回全部带来源标记的工具（供插件管理器清理孤儿注册）。"""
+    return [
+        {"name": t.name, "source": t.source}
+        for t in TOOL_REGISTRY.values()
+        if getattr(t, "source", "")
+    ]
+
+
+def unregister_tools_by_source(source: str) -> list[str]:
+    """按来源批量注销工具（插件停用/卸载时调用），返回被注销的工具名。"""
+    names = [t["name"] for t in tools_by_source() if t["source"] == source]
+    for n in names:
+        TOOL_REGISTRY.pop(n, None)
+    return names
 
 
 def tool_descriptions() -> str:

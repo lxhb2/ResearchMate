@@ -91,6 +91,13 @@ class Registry:
         s = self._skills.get(name)
         return copy.deepcopy(s) if s else None
 
+    def all_by_name(self, name: str) -> dict | None:
+        """按名称取 skill（含 disabled，供 @ 引用显式调用）。"""
+        if not self._loaded:
+            self.load()
+        s = self._skills.get(name)
+        return copy.deepcopy(s) if s else None
+
     def by_category(self, category: str) -> list[dict]:
         return [s for s in self.all() if s.get("category") == category]
 

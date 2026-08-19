@@ -2,6 +2,7 @@ html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
+  overflow: hidden; /* 整页不滚动：由各内容区内部滚动 */
 }
 
 body {
@@ -9,12 +10,18 @@ body {
   background: #f5f5f7;
 }
 
+/* 应用框架固定为视口高度：侧边栏/顶栏不随内容滚动 */
 .app-layout {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
+/* 内容区：框架内滚动，页面不再自由伸缩撑高窗口 */
 .app-content {
   padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .markdown-body {
@@ -32,10 +39,38 @@ body {
 
 /* react-pdf container */
 .pdf-container {
-  display: flex;
-  justify-content: center;
+  display: block;
   overflow: auto;
   background: #525659;
   padding: 16px;
   border-radius: 8px;
+}
+
+/* 引用溯源跳转：整页高亮闪烁动画 */
+@keyframes citation-pulse {
+  0% {
+    opacity: 0.9;
+  }
+  60% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Pin 卡片笔记跳转：矩形边框脉冲闪烁 1 次（Q1-1） */
+@keyframes annotation-flash-pulse {
+  0% {
+    outline-width: 2px;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.15);
+  }
+  50% {
+    outline-width: 6px;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.12);
+  }
+  100% {
+    outline-width: 2px;
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+  }
 }

@@ -147,6 +147,8 @@ def semantic_search(
                 "dimension": chunk.dimension,
                 "content": chunk.content,
                 "page_number": chunk.page_number,
+                "char_start": chunk.char_start,
+                "char_end": chunk.char_end,
                 "score": round(score, 4),
             }
         )
@@ -187,6 +189,8 @@ def keyword_search(
             "dimension": chunk.dimension,
             "content": chunk.content,
             "page_number": chunk.page_number,
+            "char_start": chunk.char_start,
+            "char_end": chunk.char_end,
             "score": round(score, 4),
         }
         for score, chunk, paper in scored[:top_k]

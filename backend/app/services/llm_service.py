@@ -46,6 +46,24 @@ def chat(
     return resp.choices[0].message.content or ""
 
 
+def chat_stream(db: Session, user_id, messages: list[dict], temperature: float = 0.3, max_tokens: int = 2048):
+    """流式 chat completion，逐 token 产出文本片段（生成器，用于 SSE）。"""
+    client = _client(db, user_id)
+    model = _model(db, user_id)
+    stream = client.chat.completions.create(
+        model=model,
+        messages=messages,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        stream=True,
+    )
+    for chunk in stream:
+        if chunk.choices:
+            delta = chunk.choices[0].delta
+            if delta and delta.content:
+                yield delta.content
+
+
 def chat_json(db: Session, user_id, messages: list[dict], temperature: float = 0.3) -> dict:
     """chat completion 并把响应解析为 JSON。"""
     text = chat(db, user_id, messages, temperature=temperature, json_mode=True)

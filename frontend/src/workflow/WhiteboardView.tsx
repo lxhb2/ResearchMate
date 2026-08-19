@@ -10,6 +10,7 @@ import {
   useEdgesState,
   Handle,
   Position,
+  MarkerType,
   type Node,
   type Edge,
   type Connection,
@@ -24,11 +25,15 @@ import {
   Input,
   Select,
   InputNumber,
+  Switch,
   Divider,
   message,
   Tag,
   Empty,
   Alert,
+  Tooltip,
+  Badge,
+  Popover,
 } from 'antd'
 import {
   ArrowLeftOutlined,
@@ -45,10 +50,23 @@ import {
   BranchesOutlined,
   CheckCircleOutlined,
   MinusCircleOutlined,
+  WarningOutlined,
+  ThunderboltTwoTone,
+  SettingOutlined,
+  InfoCircleOutlined,
 } from '@ant-design/icons'
 import { workflowApi } from '../api/workflow'
 import { getErrorMessage } from '../api/client'
-import { graphToWorkflow, validateGraph, type WhiteboardNodeMeta } from './graphToWorkflow'
+import {
+  graphToWorkflow,
+  validateGraph,
+  requiredArgsOf,
+  upstreamNodes,
+  TOOL_OUTPUT_FIELDS,
+  type WhiteboardNodeMeta,
+  type GraphNode,
+  type GraphEdge,
+} from './graphToWorkflow'
 
 const { Text, Paragraph } = Typography
 
@@ -78,20 +96,40 @@ const NODE_PALETTE: {
   { key: 'end', label: '结束', desc: '工作流终点', nodeType: 'end', icon: <MinusCircleOutlined />, color: '#8c8c8c' },
 ]
 
-const TOOL_ARGS_DEF: Record<string, { name: string; label: string; type: 'text' | 'number' | 'select' | 'textarea'; options?: { label: string; value: string }[] }[]> = {
+/** 参数表单定义（借鉴 n8n/Dify 的声明式 Schema 驱动表单）：
+ * - type     控件类型
+ * - required 必填校验（保存时拦截）
+ * - hint     参数提示（悬停展示，参考 ComfyUI tooltip） */
+const TOOL_ARGS_DEF: Record<
+  string,
+  { name: string; label: string; type: 'text' | 'number' | 'select' | 'textarea' | 'switch'; options?: { label: string; value: string }[]; required?: boolean; hint?: string }[]
+> = {
   rag_search: [
-    { name: 'query', label: '检索语句', type: 'textarea' },
+    { name: 'query', label: '检索语句', type: 'textarea', required: true, hint: '必填。支持 $results.节点ID.字段 引用上游输出' },
     { name: 'top_k', label: '返回条数 top_k', type: 'number' },
     { name: 'dimension', label: '维度', type: 'select', options: [
       { label: '不限', value: '' }, { label: '标题与关键词', value: 'title_keywords' }, { label: '研究背景', value: 'background' },
       { label: '方法/模型', value: 'method' }, { label: '实验结果', value: 'results' }, { label: '结论', value: 'conclusion' }, { label: '创新点', value: 'contributions' },
     ] },
+    { name: 'highlighted_only', label: '仅检索标记重点', type: 'switch' },
   ],
-  paper_parse: [{ name: 'paper_id', label: '论文 ID', type: 'text' }],
-  paper_summarize: [{ name: 'type', label: '总结类型', type: 'select', options: [{ label: '全文', value: 'full' }, { label: '章节', value: 'chapter' }] }],
-  llm_translate: [{ name: 'text', label: '待翻译文本', type: 'textarea' }],
-  data_analyze: [{ name: 'data', label: '实验数据', type: 'textarea' }],
-  experiment_plan: [{ name: 'topic', label: '研究主题', type: 'text' }],
+  paper_parse: [{ name: 'paper_id', label: '论文 ID', type: 'text', hint: '留空则取最新导入的论文' }],
+  paper_summarize: [
+    { name: 'type', label: '总结类型', type: 'select', options: [{ label: '全文', value: 'full' }, { label: '章节', value: 'chapter' }] },
+  ],
+  llm_translate: [{ name: 'text', label: '待翻译文本', type: 'textarea', required: true }],
+  note_append: [{ name: 'content', label: '追加内容', type: 'textarea', required: true, hint: '支持 $results.节点ID.字段 引用上游输出' }],
+  llm_compare: [{ name: 'query', label: '对比主题', type: 'textarea', required: true }],
+  citation_generate: [{ name: 'format', label: '引用格式', type: 'select', options: [{ label: 'GB7714（国标）', value: 'GB7714' }, { label: 'APA', value: 'APA' }] }],
+  library_list: [
+    { name: 'keyword', label: '关键词', type: 'text' },
+    { name: 'limit', label: '返回条数', type: 'number' },
+  ],
+  data_analyze: [
+    { name: 'question', label: '分析需求', type: 'textarea', required: true },
+    { name: 'exec_code', label: '执行生成的代码', type: 'switch' },
+  ],
+  experiment_plan: [{ name: 'question', label: '研究主题', type: 'textarea', required: true }],
 }
 
 const NODE_COLOR: Record<string, string> = {
@@ -119,6 +157,18 @@ function NodeShell({ data, handles, children }: { data: any; handles: React.Reac
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{ color, fontSize: 14 }}>{d.icon}</span>
         <Text strong style={{ fontSize: 12 }}>{d.label}</Text>
+        {/* 运行策略角标（借鉴 n8n 节点徽章）：配置了重试/失败继续时显示，一眼可见哪些节点有容错策略 */}
+        {(d.retry > 0 || d.onError === 'continue') && (
+          <Tooltip title={`重试 ${d.retry || 0} 次${d.onError === 'continue' ? '；失败继续' : ''}`}>
+            <ThunderboltTwoTone style={{ fontSize: 11 }} twoToneColor="#faad14" />
+          </Tooltip>
+        )}
+        {/* 配置错误角标：必填参数为空时标红，画布上直接可见（借鉴 n8n 红色感叹号） */}
+        {d.hasError && (
+          <Tooltip title={d.errorText || '配置不完整'}>
+            <WarningOutlined style={{ color: '#ff4d4f', fontSize: 12 }} />
+          </Tooltip>
+        )}
       </div>
       <div style={{ marginTop: 2, color: '#8c8c8c', fontSize: 11, whiteSpace: 'pre-wrap' }}>
         {d.summary || (children ?? '')}
@@ -189,6 +239,11 @@ function makeNodeFromPalette(p: (typeof NODE_PALETTE)[number], id: string, x: nu
     color: p.color,
     tool: p.tool || '',
     args: p.args || {},
+    // 运行策略默认值（n8n/Dify 式：默认不重试、失败终止）
+    retry: 0,
+    retryDelay: 1,
+    onError: 'stop',
+    defaultValue: '',
   }
   if (p.nodeType === 'condition') {
     data.variable = ''
@@ -225,15 +280,67 @@ export default function WhiteboardView({ onBack }: { onBack: () => void }) {
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
 
+  // 实时校验（编辑过程中即反馈，保存前再拦截一次）
+  const liveErrors = useMemo(() => {
+    try {
+      return validateGraph(nodes as GraphNode[], edges as unknown as GraphEdge[])
+    } catch {
+      return []
+    }
+  }, [nodes, edges])
+
+  // 节点级错误标记：把校验错误回写到对应节点，画布上显示红色角标
+  const nodesWithFlags = useMemo(() => {
+    const errMap = new Map<string, string[]>()
+    for (const e of liveErrors) {
+      const m = e.match(/节点「(.+?)」(.+)/)
+      if (m) {
+        const label = m[1]
+        const list = errMap.get(label) || []
+        list.push(m[2])
+        errMap.set(label, list)
+      }
+    }
+    return nodes.map((n) => {
+      const errs = errMap.get((n.data as any)?.label || '')
+      return {
+        ...n,
+        data: {
+          ...n.data,
+          hasError: !!errs?.length,
+          errorText: errs?.join('；'),
+        },
+      }
+    })
+  }, [nodes, liveErrors])
+
   const validate = () => {
-    const errs = validateGraph(nodes, edges)
+    const errs = validateGraph(nodes as GraphNode[], edges as unknown as GraphEdge[])
     setErrors(errs)
     return errs.length === 0
   }
 
+  // 连线后为条件分支边自动打标签（true/false），普通边保持简洁
   const onConnect = useCallback(
-    (conn: Connection) => setEdges((eds) => addEdge(conn, eds)),
-    [setEdges],
+    (conn: Connection) => {
+      setEdges((eds) => {
+        const edge: Edge = {
+          ...conn,
+          id: `e-${conn.source}-${conn.target}-${Date.now()}`,
+          markerEnd: { type: MarkerType.ArrowClosed },
+        }
+        const src = nodes.find((n) => n.id === conn.source)
+        if ((src?.data as any)?.nodeType === 'condition' && conn.sourceHandle) {
+          edge.label = conn.sourceHandle === 'true' ? '成立' : '不成立'
+          edge.style = {
+            stroke: conn.sourceHandle === 'true' ? '#52c41a' : '#ff4d4f',
+            strokeWidth: 2,
+          }
+        }
+        return addEdge(edge, eds)
+      })
+    },
+    [setEdges, nodes],
   )
 
   const onNodeClick = useCallback((_: any, node: Node) => setSelected(node), [])
@@ -293,7 +400,7 @@ export default function WhiteboardView({ onBack }: { onBack: () => void }) {
     if (!validate()) return
     setSaving(true)
     try {
-      const wf = graphToWorkflow(nodes, edges, { name, description })
+      const wf = graphToWorkflow(nodes as GraphNode[], edges as unknown as GraphEdge[], { name, description })
       await workflowApi.saveTemplate({ name, description, workflow_json: wf })
       message.success('工作流已保存为「我的模板」，可在模板库中选择运行')
       onBack()
@@ -341,9 +448,14 @@ export default function WhiteboardView({ onBack }: { onBack: () => void }) {
   }, [nodes])
 
   const selectedMeta = selected?.data as any
+  // 上游节点列表（变量选择器数据源）
+  const upstream = useMemo(
+    () => (selected ? upstreamNodes(nodes as GraphNode[], edges as GraphEdge[], selected.id) : []),
+    [nodes, edges, selected],
+  )
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Space style={{ marginBottom: 8 }}>
         <Button icon={<ArrowLeftOutlined />} onClick={onBack}>返回模板库</Button>
         <Input
@@ -365,6 +477,11 @@ export default function WhiteboardView({ onBack }: { onBack: () => void }) {
             onChange={(e) => e.target.files?.[0] && importJson(e.target.files[0])}
           />
         </label>
+        {liveErrors.length > 0 && (
+          <Badge count={liveErrors.length} title="配置问题">
+            <Tag icon={<WarningOutlined />} color="warning">有待修复配置</Tag>
+          </Badge>
+        )}
       </Space>
 
       {errors.length > 0 && (
@@ -412,7 +529,7 @@ export default function WhiteboardView({ onBack }: { onBack: () => void }) {
         {/* 画布 */}
         <div ref={reactFlowWrapper} style={{ flex: 1, border: '1px solid #f0f0f0', borderRadius: 8 }}>
           <ReactFlow
-            nodes={nodes}
+            nodes={nodesWithFlags}
             edges={edges}
             nodeTypes={nodeTypes}
             onNodesChange={onNodesChange}
@@ -422,6 +539,7 @@ export default function WhiteboardView({ onBack }: { onBack: () => void }) {
             onSelectionChange={selectElement}
             onDrop={onDrop}
             onDragOver={onDragOver}
+            defaultEdgeOptions={{ markerEnd: { type: MarkerType.ArrowClosed } }}
             fitView
           >
             <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
@@ -431,7 +549,7 @@ export default function WhiteboardView({ onBack }: { onBack: () => void }) {
         </div>
 
         {/* 右侧属性面板 */}
-        <div style={{ width: 280, border: '1px solid #f0f0f0', borderRadius: 8, padding: 12, overflow: 'auto', background: '#fafafa' }}>
+        <div style={{ width: 300, border: '1px solid #f0f0f0', borderRadius: 8, padding: 12, overflow: 'auto', background: '#fafafa' }}>
           {!selectedMeta ? (
             <Empty description="选中一个节点编辑属性" style={{ marginTop: 40 }} />
           ) : (
@@ -440,6 +558,11 @@ export default function WhiteboardView({ onBack }: { onBack: () => void }) {
               onChange={updateSelected}
               onArg={updateArg}
               onCondition={updateCondition}
+              upstream={upstream}
+              onInsertVariable={(ref) => {
+                // 插入变量引用到当前焦点的文本输入（由 Inspector 内部处理光标位置）
+                return ref
+              }}
             />
           )}
         </div>
@@ -448,23 +571,103 @@ export default function WhiteboardView({ onBack }: { onBack: () => void }) {
   )
 }
 
+/** 变量选择器（借鉴 Dify 点选式变量 / Activepieces 变量插入器）：
+ * 列出上游节点的输出字段，点选即复制 `$results.节点.字段` 引用并插入到参数。 */
+function VariablePicker({
+  upstream,
+  onPick,
+}: {
+  upstream: GraphNode[]
+  onPick: (ref: string) => void
+}) {
+  if (!upstream.length) {
+    return (
+      <Tooltip title="先连接上游节点，即可从其输出中点选变量">
+        <Button size="small" icon={<InfoCircleOutlined />} disabled>
+          插入变量
+        </Button>
+      </Tooltip>
+    )
+  }
+  const items = upstream
+    .filter((n) => (n.data as any)?.nodeType === 'tool')
+    .flatMap((n) => {
+      const d = n.data as any
+      const fields = TOOL_OUTPUT_FIELDS[d.tool] || []
+      if (!fields.length) return [{ key: `${n.id}`, label: `${d.label || n.id}（整个输出）` }]
+      return fields.map((f) => ({
+        key: `results.${n.id}.${f.key}`,
+        label: `${d.label || n.id} · ${f.label}`,
+      }))
+    })
+  return (
+    <Popover
+      trigger="click"
+      placement="leftTop"
+      title="选择上游变量"
+      content={
+        <div style={{ maxHeight: 260, overflow: 'auto', minWidth: 200 }}>
+          {items.map((it) => (
+            <div
+              key={it.key}
+              onClick={() => onPick(it.key)}
+              style={{ padding: '5px 8px', cursor: 'pointer', borderRadius: 4, fontSize: 12 }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#f0f5ff')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              {it.label}
+              <div style={{ color: '#8c8c8c', fontSize: 11 }}>${it.key}</div>
+            </div>
+          ))}
+        </div>
+      }
+    >
+      <Button size="small" icon={<ThunderboltOutlined />}>插入变量</Button>
+    </Popover>
+  )
+}
+
 function Inspector({
   data,
   onChange,
   onArg,
   onCondition,
+  upstream,
 }: {
   data: any
   onChange: (patch: Partial<any>) => void
   onArg: (name: string, value: any) => void
   onCondition: (patch: Partial<{ variable: string; operator: string; value: any }>) => void
+  upstream: GraphNode[]
+  onInsertVariable: (ref: string) => string
 }) {
   const typeLabel: Record<string, string> = { tool: '工具', condition: '条件判断', confirm: '人工确认', end: '结束' }
+  const required = requiredArgsOf(data.tool)
+  // 最近一个文本输入的 ref，插入变量时在光标处拼接（借鉴 n8n 表达式插入）
+  const lastTextRef = useRef<{ name: string; el: HTMLTextAreaElement | HTMLInputElement | null }>({ name: '', el: null })
+
+  const insertVariable = (ref: string) => {
+    const { name, el } = lastTextRef.current
+    if (!name || !el) return
+    const cur = String((data.args?.[name] ?? '') || '')
+    const start = el.selectionStart ?? cur.length
+    const end = el.selectionEnd ?? cur.length
+    const next = `${cur.slice(0, start)}$${ref}${cur.slice(end)}`
+    onArg(name, next)
+    // 恢复光标到插入内容之后
+    requestAnimationFrame(() => {
+      el.focus()
+      const pos = start + ref.length + 1
+      el.setSelectionRange(pos, pos)
+    })
+  }
+
   return (
     <div>
-      <Space>
+      <Space wrap>
         <Tag color={NODE_COLOR[data.nodeType]}>{typeLabel[data.nodeType] || data.nodeType}</Tag>
         <Text strong>{data.label}</Text>
+        <VariablePicker upstream={upstream} onPick={insertVariable} />
       </Space>
       <Divider style={{ margin: '10px 0' }} />
 
@@ -481,65 +684,165 @@ function Inspector({
         const defs = TOOL_ARGS_DEF[data.tool] || []
         return (
           <>
-            <Divider style={{ margin: '10px 0' }} />
-            <Text type="secondary">参数</Text>
+            <Divider style={{ margin: '10px 0' }}><SettingOutlined /> 参数</Divider>
             {defs.length === 0 && <Paragraph type="secondary" style={{ fontSize: 11 }}>该工具无需额外参数</Paragraph>}
-            {defs.map((d) => (
-              <div key={d.name} style={{ marginTop: 8 }}>
-                <Text style={{ fontSize: 12 }}>{d.label}</Text>
-                {d.type === 'number' && (
-                  <InputNumber
-                    style={{ width: '100%', marginTop: 2 }}
-                    value={data.args?.[d.name]}
-                    onChange={(v) => onArg(d.name, v)}
-                    placeholder={d.name}
-                  />
-                )}
-                {d.type === 'select' && (
-                  <Select
-                    style={{ width: '100%', marginTop: 2 }}
-                    value={data.args?.[d.name] ?? ''}
-                    onChange={(v) => onArg(d.name, v)}
-                    options={d.options}
-                    placeholder="请选择"
-                    allowClear
-                  />
-                )}
-                {d.type === 'textarea' && (
-                  <Input.TextArea
-                    style={{ marginTop: 2 }}
-                    value={data.args?.[d.name] ?? ''}
-                    onChange={(e) => onArg(d.name, e.target.value)}
-                    rows={2}
-                    placeholder={d.name}
-                  />
-                )}
-                {d.type === 'text' && (
-                  <Input
-                    style={{ marginTop: 2 }}
-                    value={data.args?.[d.name] ?? ''}
-                    onChange={(e) => onArg(d.name, e.target.value)}
-                    placeholder={d.name}
-                  />
-                )}
+            {defs.map((d) => {
+              const isMissing = d.required && (data.args?.[d.name] === undefined || data.args?.[d.name] === null || data.args?.[d.name] === '')
+              return (
+                <div key={d.name} style={{ marginTop: 8 }}>
+                  <Space size={4}>
+                    <Text style={{ fontSize: 12 }}>
+                      {d.label}
+                      {d.required && <span style={{ color: '#ff4d4f' }}> *</span>}
+                    </Text>
+                    {d.hint && (
+                      <Tooltip title={d.hint}>
+                        <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: 11 }} />
+                      </Tooltip>
+                    )}
+                  </Space>
+                  {isMissing && (
+                    <div style={{ color: '#ff4d4f', fontSize: 11 }}>必填参数，保存前请填写</div>
+                  )}
+                  {d.type === 'number' && (
+                    <InputNumber
+                      style={{ width: '100%', marginTop: 2 }}
+                      value={data.args?.[d.name]}
+                      onChange={(v) => onArg(d.name, v)}
+                      placeholder={d.name}
+                    />
+                  )}
+                  {d.type === 'select' && (
+                    <Select
+                      style={{ width: '100%', marginTop: 2 }}
+                      value={data.args?.[d.name] ?? ''}
+                      onChange={(v) => onArg(d.name, v)}
+                      options={d.options}
+                      placeholder="请选择"
+                      allowClear
+                    />
+                  )}
+                  {d.type === 'switch' && (
+                    <div style={{ marginTop: 2 }}>
+                      <Switch
+                        checked={!!data.args?.[d.name]}
+                        onChange={(v) => onArg(d.name, v)}
+                      />
+                    </div>
+                  )}
+                  {d.type === 'textarea' && (
+                    <Input.TextArea
+                      ref={(el) => {
+                        lastTextRef.current = { name: d.name, el: el as any }
+                      }}
+                      style={{ marginTop: 2 }}
+                      value={data.args?.[d.name] ?? ''}
+                      onChange={(e) => onArg(d.name, e.target.value)}
+                      onFocus={(e) => {
+                        lastTextRef.current = { name: d.name, el: e.target as any }
+                      }}
+                      rows={2}
+                      placeholder={d.name}
+                      status={isMissing ? 'error' : undefined}
+                    />
+                  )}
+                  {d.type === 'text' && (
+                    <Input
+                      ref={(el) => {
+                        lastTextRef.current = { name: d.name, el: el as any }
+                      }}
+                      style={{ marginTop: 2 }}
+                      value={data.args?.[d.name] ?? ''}
+                      onChange={(e) => onArg(d.name, e.target.value)}
+                      onFocus={(e) => {
+                        lastTextRef.current = { name: d.name, el: e.target as any }
+                      }}
+                      placeholder={d.name}
+                      status={isMissing ? 'error' : undefined}
+                    />
+                  )}
+                </div>
+              )
+            })}
+
+            {/* 运行策略区（借鉴 n8n Settings Tab / Dify Retry Config） */}
+            <Divider style={{ margin: '10px 0' }}><SettingOutlined /> 运行策略</Divider>
+            <div style={{ marginTop: 8 }}>
+              <Text style={{ fontSize: 12 }}>失败重试次数</Text>
+              <InputNumber
+                style={{ width: '100%', marginTop: 2 }}
+                min={0}
+                max={5}
+                value={data.retry ?? 0}
+                onChange={(v) => onChange({ retry: v || 0 })}
+                addonAfter="次"
+              />
+            </div>
+            {(data.retry ?? 0) > 0 && (
+              <div style={{ marginTop: 8 }}>
+                <Text style={{ fontSize: 12 }}>重试间隔</Text>
+                <InputNumber
+                  style={{ width: '100%', marginTop: 2 }}
+                  min={1}
+                  max={30}
+                  value={data.retryDelay ?? 1}
+                  onChange={(v) => onChange({ retryDelay: v || 1 })}
+                  addonAfter="秒"
+                />
               </div>
-            ))}
+            )}
+            <div style={{ marginTop: 8 }}>
+              <Text style={{ fontSize: 12 }}>失败时</Text>
+              <Select
+                style={{ width: '100%', marginTop: 2 }}
+                value={data.onError ?? 'stop'}
+                onChange={(v) => onChange({ onError: v })}
+                options={[
+                  { label: '终止工作流（默认）', value: 'stop' },
+                  { label: '使用默认值继续', value: 'continue' },
+                ]}
+              />
+            </div>
+            {data.onError === 'continue' && (
+              <div style={{ marginTop: 8 }}>
+                <Text style={{ fontSize: 12 }}>默认输出值 *</Text>
+                <Input.TextArea
+                  style={{ marginTop: 2 }}
+                  value={data.defaultValue ?? ''}
+                  onChange={(e) => onChange({ defaultValue: e.target.value })}
+                  rows={2}
+                  placeholder="失败时作为该节点输出的内容，下游节点将引用此值"
+                />
+              </div>
+            )}
           </>
         )
       })()}
 
       {data.nodeType === 'condition' && (
         <>
-          <Divider style={{ margin: '10px 0' }} />
-          <Text type="secondary">条件</Text>
+          <Divider style={{ margin: '10px 0' }}><BranchesOutlined /> 条件</Divider>
           <div style={{ marginTop: 8 }}>
-            <Text style={{ fontSize: 12 }}>变量</Text>
+            <Space size={4}>
+              <Text style={{ fontSize: 12 }}>判断变量</Text>
+              <Tooltip title="从「插入变量」点选上游节点输出，或手写 $results.节点ID.字段">
+                <InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: 11 }} />
+              </Tooltip>
+            </Space>
             <Input
               style={{ marginTop: 2 }}
               value={data.condition?.variable || ''}
               onChange={(e) => onCondition({ variable: e.target.value })}
-              placeholder="如 $results.n1"
+              placeholder="点选或输入，如 results.n1.count"
             />
+            {upstream.length > 0 && (
+              <div style={{ marginTop: 4 }}>
+                <VariablePicker
+                  upstream={upstream}
+                  onPick={(ref) => onCondition({ variable: ref })}
+                />
+              </div>
+            )}
           </div>
           <div style={{ marginTop: 8 }}>
             <Text style={{ fontSize: 12 }}>运算符</Text>
@@ -549,9 +852,14 @@ function Inspector({
               onChange={(v) => onCondition({ operator: v })}
               options={[
                 { label: '存在/非空', value: 'exists' },
-                { label: '等于', value: 'eq' },
-                { label: '不等于', value: 'ne' },
+                { label: '等于 ==', value: '==' },
+                { label: '不等于 !=', value: '!=' },
+                { label: '大于 >', value: '>' },
+                { label: '小于 <', value: '<' },
+                { label: '大于等于 >=', value: '>=' },
+                { label: '小于等于 <=', value: '<=' },
                 { label: '包含', value: 'contains' },
+                { label: '不包含', value: 'not_contains' },
               ]}
             />
           </div>
@@ -561,7 +869,7 @@ function Inspector({
               style={{ marginTop: 2 }}
               value={data.condition?.value ?? ''}
               onChange={(e) => onCondition({ value: e.target.value })}
-              placeholder="可选"
+              placeholder="可选（exists 可留空）"
             />
           </div>
         </>
@@ -569,8 +877,7 @@ function Inspector({
 
       {data.nodeType === 'confirm' && (
         <>
-          <Divider style={{ margin: '10px 0' }} />
-          <Text type="secondary">人工确认关卡</Text>
+          <Divider style={{ margin: '10px 0' }}><CheckCircleOutlined /> 人工确认关卡</Divider>
           <div style={{ marginTop: 8 }}>
             <Text style={{ fontSize: 12 }}>关卡名称</Text>
             <Input

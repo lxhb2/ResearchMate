@@ -183,6 +183,19 @@ class Executor:
             except Exception as e:  # noqa: BLE001
                 last_err = str(e)
 
+        # 重试耗尽：按节点错误策略处理（借鉴 n8n On Error / Dify 默认值策略）
+        if node.on_error == "continue":
+            log.status = "success"
+            log.detail = (
+                f"{node.description or node.tool} 执行失败（{last_err}），"
+                f"已按预设策略使用默认值继续"
+            )
+            log.finished_at = _now_iso()
+            log.duration_ms = round((time.time() - started) * 1000, 1)
+            state["results"][node.id] = node.default_value
+            state.setdefault("degraded", {})[node.id] = last_err
+            return
+
         log.status = "failed"
         log.finished_at = _now_iso()
         log.detail = f"{node.description or node.tool} 执行失败: {last_err}"

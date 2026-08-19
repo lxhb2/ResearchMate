@@ -4,6 +4,7 @@ from openai import OpenAI
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from app.agent.llm_adapter import reset_breakers
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
@@ -36,24 +37,24 @@ class TestConnectionRequest(BaseModel):
     model: str
 
 
+class ModelPresetOut(BaseModel):
+    name: str
+    base_url: str
+    models: list[str]
+    embedding_model: str
+    help: str
+
+
+@router.get("/model-presets", response_model=list[ModelPresetOut])
+def get_model_presets(user: User = Depends(get_current_user)):
+    """返回推荐的 LLM 预设列表，供前端一键填充 base_url / model / embedding_model。"""
+    return settings_service.MODEL_PRESETS
+
+
 @router.get("", response_model=SettingsOut)
 def get_settings(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     cfg = settings_service.get_all(db, str(user.id))
-    # 出于安全考虑，API key 做脱敏展示（仅保留首尾）
-    key = cfg.get("llm_api_key") or ""
-    masked = ""
-    if len(key) > 8:
-        masked = key[:4] + "*" * (len(key) - 8) + key[-4:]
-    elif key:
-        masked = "*" * len(key)
-    return SettingsOut(
-        llm_api_key=masked,
-        llm_base_url=cfg.get("llm_base_url", ""),
-        llm_model=cfg.get("llm_model", ""),
-        embedding_model=cfg.get("embedding_model", ""),
-        embedding_dim=int(cfg.get("embedding_dim") or 1536),
-        theme_color=cfg.get("theme_color", "#4f46e5"),
-    )
+    return _masked_out(cfg)
 
 
 @router.put("", response_model=SettingsOut)
@@ -63,14 +64,25 @@ def update_settings(
     user: User = Depends(get_current_user),
 ):
     payload = body.model_dump(exclude_none=True)
-    # 接受全掩码的 api_key 时跳过更新（用户未修改）
+    # 出于安全考虑，GET 返回的是脱敏 Key（含 *）。保存时：
+    # 任何「包含 *」的 Key 都视为「用户未修改」，跳过更新，
+    # 避免把脱敏串误当新 Key 存库导致原 Key 被覆盖损坏。
     if "llm_api_key" in payload:
         k = payload["llm_api_key"] or ""
-        if set(k) == {"*"} or k.endswith("***") and len(k) < 40 and "*" in k:
+        if "*" in k or not k.strip():
             payload.pop("llm_api_key", None)
     cfg = settings_service.update_many(db, str(user.id), payload)
-    masked = ""
+    # 清空 LLM 熔断状态：让新配置立即生效。
+    # 否则旧的熔断记录会让「保存后立刻重试」的请求继续降级，
+    # 用户误以为新配置无效（实际只是熔断窗口未过期）。
+    reset_breakers()
+    return _masked_out(cfg)
+
+
+def _masked_out(cfg: dict) -> SettingsOut:
+    """构造脱敏输出：Key 只保留首尾，避免明文回传前端。"""
     key = cfg.get("llm_api_key") or ""
+    masked = ""
     if len(key) > 8:
         masked = key[:4] + "*" * (len(key) - 8) + key[-4:]
     elif key:
@@ -88,11 +100,21 @@ def update_settings(
 @router.post("/test-connection")
 def test_connection(
     body: TestConnectionRequest,
+    db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """用提供的凭据发起一次最小化 chat 请求，验证可用性。"""
+    """用提供的凭据发起一次最小化 chat 请求，验证可用性。
+
+    api_key 留空时自动使用已保存的 Key（出于安全前端不回显 Key，
+    用户改完地址/模型后无需重新输入 Key 即可测试）。
+    """
+    api_key = (body.api_key or "").strip()
+    if not api_key:
+        api_key = (settings_service.get_llm_config(db, str(user.id)).get("api_key") or "").strip()
+    if not api_key:
+        raise HTTPException(status_code=400, detail="未填写 API Key，也没有已保存的 Key 可用")
     try:
-        client = OpenAI(api_key=body.api_key, base_url=body.base_url)
+        client = OpenAI(api_key=api_key, base_url=body.base_url, timeout=20)
         resp = client.chat.completions.create(
             model=body.model,
             messages=[{"role": "user", "content": "ping，请回复：pong"}],
