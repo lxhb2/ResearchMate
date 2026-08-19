@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 
 from app.config import settings
 from app.database import Base
-from app.models.types import GUID, VectorJson, uuid_str
+from app.models.types import GUID, JSONType, VectorJson, uuid_str
 
 
 class PaperChunk(Base):
@@ -15,6 +15,10 @@ class PaperChunk(Base):
     paper_id = Column(GUID, ForeignKey("papers.id", ondelete="CASCADE"), nullable=False, index=True)
     dimension = Column(String(30), nullable=False, index=True)  # background|method|result|conclusion
     content = Column(Text, nullable=False)
+    # 结构感知拆分：片段来源章节标题（如 "2.1 全球铜资源禀赋" / "Method"）
+    section = Column(String(160), nullable=True)
+    # 拆分元数据：原文依据、关键词、拆分模式等（JSON）
+    meta = Column(JSONType, nullable=True)
     # 轻量化：向量存为 JSON 文本，检索时在内存中计算余弦（不再依赖 pgvector）
     embedding = Column(VectorJson, nullable=True)
     page_number = Column(Integer)

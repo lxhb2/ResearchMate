@@ -173,7 +173,9 @@ class TopAgent:
 
         if web_search:
             parts.append(
-                "用户要求联网查询：请使用 web_search 工具获取最新资料后回答，并标注来源链接。"
+                "用户要求联网查询：请使用 web_search 工具获取最新资料后回答。"
+                "只能使用 web_search 返回的链接，不得编造 URL；"
+                "回答末尾列出「来源链接」，逐条给出标题与可点击 URL。"
             )
 
         return "\n\n".join(parts)
@@ -237,12 +239,25 @@ class TopAgent:
             {"role": "user", "content": text},
         ]
 
-        # 无 LLM（纯 mock）时直接给结构化回答，避免反复解析失败
+        # 无 LLM（纯 mock）时：联网开关仍真实执行搜索，并直接给出带链接结果
         if self.ctx.llm is None or self.ctx.llm.provider == "mock":
+            if web_search:
+                tool = get_tool("web_search")
+                trace: list[dict] = []
+                if tool is not None:
+                    result = tool.run(self.ctx, {"query": text})
+                    trace.append({"tool": "web_search", "args": {"query": text}, "result": _preview(result)})
+                    if isinstance(result, dict) and (result.get("items") or []):
+                        return {"answer": _format_search_only(text, result), "tool_trace": trace}
+                return {
+                    "answer": "联网搜索未能获取结果，请稍后重试或换一个关键词。",
+                    "tool_trace": trace,
+                }
             return self._mock_global(text, use_library, web_search)
 
         tool_trace: list[dict] = []
         used_tools: set[str] = set()
+        web_search_result: Optional[dict] = None
         seen_calls: set[str] = set()
         for _ in range(3):
             try:
@@ -282,6 +297,8 @@ class TopAgent:
                 {"tool": tool_name, "args": args, "result": _preview(result)}
             )
             used_tools.add(tool_name)
+            if tool_name == "web_search" and isinstance(result, dict):
+                web_search_result = result
             history.append(
                 {"role": "assistant", "content": f"（工具 {tool_name} 已调用，结果：{result}）"}
             )
@@ -300,6 +317,7 @@ class TopAgent:
                 tool_trace.append(
                     {"tool": "web_search", "args": {"query": text}, "result": _preview(result)}
                 )
+                web_search_result = forced_search
                 history.append(
                     {
                         "role": "assistant",
@@ -320,23 +338,17 @@ class TopAgent:
         except Exception:  # noqa: BLE001
             final = "（未能生成最终回答，请重试或检查配置。）"
         if not final:
-            final = "（工具调用完成，但模型未生成文字回答。）"
+            # 工具执行成功但模型返回空文本：优先把搜索结果整理成可直接阅读的答案
+            if web_search_result and (web_search_result.get("items") or []):
+                final = _format_search_only(text, web_search_result)
+            else:
+                final = "（工具调用完成，但模型未生成文字回答。）"
 
-        # 大模型不可达（降级文案）但联网搜索已成功：直接呈现原始搜索结果，
-        # 让「联网」开关即使在没有可用 LLM 时也有真实价值
-        if forced_search and "离线降级响应" in final:
-            items = forced_search.get("items") or []
-            if items:
-                lines = [f"**联网搜索「{text}」结果**（大模型服务暂不可达，以下为原始结果）", ""]
-                for i, it in enumerate(items, 1):
-                    title = it.get("title", "")
-                    url = it.get("url", "")
-                    lines.append(f"{i}. [{title}]({url})" if url else f"{i}. {title}")
-                    if it.get("snippet"):
-                        lines.append(f"   {it['snippet']}")
-                lines.append("")
-                lines.append("> 提示：到「设置」页确认大模型接口可用后重试，即可获得 AI 整合后的回答。")
-                final = "\n".join(lines)
+        # 无论模型是否正常总结，联网搜索后都附上可点击的来源链接
+        if web_search_result and (web_search_result.get("items") or []):
+            sources = _format_search_sources(web_search_result)
+            if sources and "来源链接" not in final:
+                final = final.rstrip() + "\n\n" + sources
         return {"answer": final, "tool_trace": tool_trace}
 
     def _mock_global(self, text: str, use_library: bool, web_search: bool) -> dict:
@@ -412,6 +424,43 @@ def _modules_text() -> str:
     return "\n".join(
         f"- {m['name']}（{m['desc']}）→ {m['path']}" for m in modules_mod.catalog()
     )
+
+
+def _format_search_only(query: str, result: dict) -> str:
+    """模型不可用/未输出时，直接把搜索结果整理成带链接的可读答案。"""
+    items = result.get("items") or []
+    lines = [f"**联网搜索「{query}」结果**", ""]
+    for i, it in enumerate(items, 1):
+        title = it.get("title") or it.get("url") or "未命名"
+        url = it.get("url") or ""
+        line = f"{i}. [{title}]({url})" if url else f"{i}. {title}"
+        if it.get("date"):
+            line += f"（{it['date']}）"
+        lines.append(line)
+        if it.get("snippet"):
+            lines.append(f"   {it['snippet']}")
+    lines.append("")
+    lines.append("> 当前未连接大模型服务或模型未生成总结文字，以上为原始搜索结果。")
+    return "\n".join(lines)
+
+
+def _format_search_sources(result: dict) -> str:
+    """把搜索结果统一渲染为可点击的来源链接区。"""
+    items = result.get("items") or []
+    if not items:
+        return ""
+    lines = ["", "**来源链接：**", ""]
+    for i, it in enumerate(items, 1):
+        title = it.get("title") or it.get("url") or "未命名"
+        url = it.get("url") or ""
+        line = f"{i}. [{title}]({url})" if url else f"{i}. {title}"
+        if it.get("date"):
+            line += f"（{it['date']}）"
+        lines.append(line)
+        snippet = (it.get("snippet") or "").strip()
+        if snippet:
+            lines.append(f"   {snippet[:120]}")
+    return "\n".join(lines)
 
 
 def _preview(result: Any) -> str:

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ReactFlow,
@@ -14,6 +14,7 @@ import {
   type NodeProps,
   type NodeTypes,
   type OnSelectionChangeParams,
+  type OnNodeDrag,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import {
@@ -22,8 +23,11 @@ import {
   Drawer,
   Empty,
   message,
+  Segmented,
+  Slider,
   Space,
   Spin,
+  Switch,
   Tag,
   Tooltip,
   Typography,
@@ -47,6 +51,15 @@ const DIMENSION_LABELS: Record<string, string> = {
   conclusion: '结论',
   contributions: '创新点',
 }
+const DIMENSION_ITEMS: [string, string][] = [
+  ['title_keywords', '关键词'],
+  ['background', '背景'],
+  ['method', '方法'],
+  ['results', '结果'],
+  ['conclusion', '结论'],
+  ['contributions', '创新点'],
+  ['text', '原文片段'],
+]
 
 // 片段节点的自定义数据（cluster 颜色 / 摘要 / 出处）
 // 索引签名：@xyflow/react v12 要求 Node.data 满足 Record<string, unknown>
@@ -58,17 +71,95 @@ interface ChunkData {
   paperId: string
   page: number | null
   dimension: string
+  section: string | null
   dimmed: boolean
+  paperCount?: number
   [key: string]: unknown
 }
 type ChunkNodeType = Node<ChunkData, 'chunk'>
 
+interface LayoutPoint {
+  id: string
+  x: number
+  y: number
+}
+
+/** 轻量力导向布局：斥力 + 连线引力 + 向心力，结果稳定可拖拽微调。 */
+function runForceLayout(
+  points: LayoutPoint[],
+  links: { source: string; target: string }[],
+  width = 1000,
+  height = 720,
+  iterations = 220,
+): Record<string, { x: number; y: number }> {
+  const pos = new Map(points.map((p) => [p.id, { x: p.x, y: p.y }]))
+  const k = 120
+  const linkDist = 170
+  for (let iter = 0; iter < iterations; iter++) {
+    const alpha = 0.85 * (1 - iter / iterations)
+    const forces = new Map<string, { x: number; y: number }>()
+    for (const p of points) forces.set(p.id, { x: 0, y: 0 })
+    // 斥力
+    for (let i = 0; i < points.length; i++) {
+      for (let j = i + 1; j < points.length; j++) {
+        const a = pos.get(points[i].id)!
+        const b = pos.get(points[j].id)!
+        let dx = a.x - b.x
+        let dy = a.y - b.y
+        let dist = Math.hypot(dx, dy) || 1
+        dx /= dist
+        dy /= dist
+        const rep = (k * k) / Math.max(60, dist * dist)
+        const fa = forces.get(points[i].id)!
+        const fb = forces.get(points[j].id)!
+        fa.x += dx * rep
+        fa.y += dy * rep
+        fb.x -= dx * rep
+        fb.y -= dy * rep
+      }
+    }
+    // 连线引力
+    for (const link of links) {
+      const a = pos.get(link.source)
+      const b = pos.get(link.target)
+      if (!a || !b) continue
+      let dx = b.x - a.x
+      let dy = b.y - a.y
+      const dist = Math.hypot(dx, dy) || 1
+      dx /= dist
+      dy /= dist
+      const pull = (dist - linkDist) * 0.08
+      const fa = forces.get(link.source)!
+      const fb = forces.get(link.target)!
+      fa.x += dx * pull
+      fa.y += dy * pull
+      fb.x -= dx * pull
+      fb.y -= dy * pull
+    }
+    // 向心力
+    for (const p of points) {
+      const f = forces.get(p.id)!
+      const c = pos.get(p.id)!
+      f.x += (width / 2 - c.x) * 0.012
+      f.y += (height / 2 - c.y) * 0.012
+    }
+    for (const p of points) {
+      const c = pos.get(p.id)!
+      const f = forces.get(p.id)!
+      c.x += f.x * alpha
+      c.y += f.y * alpha
+    }
+  }
+  return Object.fromEntries(pos)
+}
+
 /** 片段节点：左侧簇色条 + 两行摘要 + 出处（文献 · 页码 · 维度） */
 function ChunkNode({ data, selected }: NodeProps<ChunkNodeType>) {
+  const isPaper = !!data.paperCount
   return (
     <div
       style={{
-        width: 176,
+        width: isPaper ? 224 : 176,
         borderRadius: 6,
         background: '#fff',
         border: `1px solid ${selected ? data.color : '#dcdcdc'}`,
@@ -88,24 +179,31 @@ function ChunkNode({ data, selected }: NodeProps<ChunkNodeType>) {
           color: '#333',
         }}
       >
-        {data.snippet || '（无内容）'}
+        {isPaper ? data.paperTitle || '未命名' : data.snippet || '（无内容）'}
       </div>
       <div style={{ padding: '0 8px 6px', display: 'flex', alignItems: 'center', gap: 4 }}>
-        <span
-          style={{
-            fontSize: 10,
-            color: '#888',
-            flex: 1,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {data.paperTitle}
-          {data.page != null ? ` · p${data.page}` : ''}
-        </span>
+        {isPaper ? (
+          <span style={{ fontSize: 10, color: '#888', flex: 1 }}>
+            {data.paperCount} 个片段 · 双击进入阅读器
+          </span>
+        ) : (
+          <span
+            style={{
+              fontSize: 10,
+              color: '#888',
+              flex: 1,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {data.paperTitle}
+            {data.page != null ? ` · p${data.page}` : ''}
+            {data.section ? ` · ${data.section}` : ''}
+          </span>
+        )}
         <span style={{ fontSize: 10, color: data.color, whiteSpace: 'nowrap' }}>
-          {DIMENSION_LABELS[data.dimension] || data.dimension}
+          {isPaper ? '论文' : DIMENSION_LABELS[data.dimension] || data.dimension}
         </span>
       </div>
     </div>
@@ -121,8 +219,13 @@ export default function SmartGraphPage() {
   // 图谱数据整体替换时递增，作为 ReactFlow 的 key 触发重挂载并重新 fitView
   const [reloadSeq, setReloadSeq] = useState(0)
   const [focusCluster, setFocusCluster] = useState<number | null>(null)
+  const [dimensionFilter, setDimensionFilter] = useState<string | null>(null)
+  const [paperView, setPaperView] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [analyzing, setAnalyzing] = useState(false)
+  const [showEdges, setShowEdges] = useState(true)
+  const [minSim, setMinSim] = useState(0.2)
+  const savedPositions = useRef<Record<string, { x: number; y: number }>>({})
   const [analysis, setAnalysis] = useState<{ open: boolean; content: string; sources: AnalyzeSource[] }>({
     open: false,
     content: '',
@@ -137,8 +240,11 @@ export default function SmartGraphPage() {
     graphApi
       .smart()
       .then((g) => {
+        savedPositions.current = {}
         setGraph(g)
         setFocusCluster(null)
+        setDimensionFilter(null)
+        setPaperView(false)
         setSelectedIds([])
         setReloadSeq((s) => s + 1)
       })
@@ -154,11 +260,94 @@ export default function SmartGraphPage() {
   useEffect(() => {
     if (!graph) return
     const clusterMap = new Map(graph.clusters.map((c) => [c.id, c]))
+    const visibleChunks = graph.nodes.filter(
+      (nd) => dimensionFilter == null || nd.dimension === dimensionFilter,
+    )
+    const clusterOf = new Map(graph.nodes.map((nd) => [nd.id, nd.cluster]))
+    const dimensionOf = new Map(graph.nodes.map((nd) => [nd.id, nd.dimension]))
+
+    if (paperView) {
+      const byPaper = new Map<
+        string,
+        { id: string; paperId: string; title: string; nodes: typeof graph.nodes }
+      >()
+      for (const nd of visibleChunks) {
+        const id = `paper:${nd.paper_id}`
+        const prev = byPaper.get(id)
+        if (prev) {
+          prev.nodes.push(nd)
+        } else {
+          byPaper.set(id, { id, paperId: nd.paper_id, title: nd.paper_title, nodes: [nd] })
+        }
+      }
+      setNodes(
+        Array.from(byPaper.values()).map((p) => {
+          const cluster = p.nodes[0]?.cluster ?? 0
+          const avgX = p.nodes.reduce((s, n) => s + n.x, 0) / p.nodes.length
+          const avgY = p.nodes.reduce((s, n) => s + n.y, 0) / p.nodes.length
+          return {
+            id: p.id,
+            type: 'chunk' as const,
+            position: savedPositions.current[p.id] || { x: avgX, y: avgY },
+            data: {
+              cluster,
+              color: clusterMap.get(cluster)?.color || '#5B8FF9',
+              snippet: p.title,
+              paperTitle: p.title,
+              paperId: p.paperId,
+              page: null,
+              dimension: 'paper',
+              section: null,
+              dimmed: focusCluster != null && cluster !== focusCluster,
+              paperCount: p.nodes.length,
+            },
+          }
+        }),
+      )
+      if (!showEdges) {
+        setEdges([])
+        return
+      }
+      const paperPair = new Map<string, { source: string; target: string; sim: number }>()
+      for (const e of graph.edges) {
+        const a = graph.nodes.find((n) => n.id === e.source)
+        const b = graph.nodes.find((n) => n.id === e.target)
+        if (!a || !b || a.paper_id === b.paper_id) continue
+        const pa = `paper:${a.paper_id}`
+        const pb = `paper:${b.paper_id}`
+        const key = pa < pb ? `${pa}->${pb}` : `${pb}->${pa}`
+        const prev = paperPair.get(key)
+        if (!prev || e.sim > prev.sim) {
+          paperPair.set(key, { source: pa, target: pb, sim: e.sim })
+        }
+      }
+      setEdges(
+        Array.from(paperPair.values())
+          .filter((e) => e.sim >= minSim)
+          .map((e) => ({
+            id: `${e.source}->${e.target}`,
+            source: e.source,
+            target: e.target,
+            label: e.sim >= 0.5 ? `${Math.round(e.sim * 100)}%` : undefined,
+            labelStyle: { fontSize: 9, fill: '#6b7280', fontWeight: 600 },
+            labelBgStyle: { fill: '#ffffff', fillOpacity: 0.75 },
+            labelBgPadding: [2, 2] as [number, number],
+            labelBgBorderRadius: 3,
+            style: {
+              stroke: '#9aa7b8',
+              strokeWidth: Math.max(1, Math.round(e.sim * 3)),
+              opacity: Math.min(0.9, 0.35 + e.sim * 0.55),
+            },
+          })),
+      )
+      return
+    }
+
     setNodes(
-      graph.nodes.map((nd) => ({
+      visibleChunks.map((nd) => ({
         id: nd.id,
         type: 'chunk' as const,
-        position: { x: nd.x, y: nd.y },
+        position: savedPositions.current[nd.id] || { x: nd.x, y: nd.y },
         data: {
           cluster: nd.cluster,
           color: clusterMap.get(nd.cluster)?.color || '#5B8FF9',
@@ -167,31 +356,45 @@ export default function SmartGraphPage() {
           paperId: nd.paper_id,
           page: nd.page_number,
           dimension: nd.dimension,
-          dimmed: focusCluster != null && nd.cluster !== focusCluster,
+          section: nd.section,
+          dimmed:
+            (focusCluster != null && nd.cluster !== focusCluster) ||
+            false,
         },
       })),
     )
-    const clusterOf = new Map(graph.nodes.map((nd) => [nd.id, nd.cluster]))
+    if (!showEdges) {
+      setEdges([])
+      return
+    }
     setEdges(
       graph.edges
         .filter(
           (e) =>
-            focusCluster == null ||
-            (clusterOf.get(e.source) === focusCluster && clusterOf.get(e.target) === focusCluster),
+            e.sim >= minSim &&
+            (dimensionFilter == null ||
+              (dimensionOf.get(e.source) === dimensionFilter && dimensionOf.get(e.target) === dimensionFilter)) &&
+            (focusCluster == null ||
+              (clusterOf.get(e.source) === focusCluster && clusterOf.get(e.target) === focusCluster)),
         )
         .map((e) => ({
           id: `${e.source}->${e.target}`,
           source: e.source,
           target: e.target,
+          label: e.sim >= 0.5 ? `${Math.round(e.sim * 100)}%` : undefined,
+          labelStyle: { fontSize: 9, fill: '#6b7280', fontWeight: 600 },
+          labelBgStyle: { fill: '#ffffff', fillOpacity: 0.75 },
+          labelBgPadding: [2, 2] as [number, number],
+          labelBgBorderRadius: 3,
           style: {
-            stroke: '#bfbfbf',
-            strokeWidth: Math.max(1, Math.round(e.sim * 2.5)),
-            opacity: 0.45,
+            stroke: '#9aa7b8',
+            strokeWidth: Math.max(1, Math.round(e.sim * 3)),
+            opacity: Math.min(0.9, 0.35 + e.sim * 0.55),
           },
         })),
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graph, focusCluster])
+  }, [graph, focusCluster, minSim, showEdges, dimensionFilter, paperView])
 
   // 框选/点选变化（React Flow 内建选择）
   const handleSelectionChange = useCallback(
@@ -214,6 +417,25 @@ export default function SmartGraphPage() {
     },
     [navigate],
   )
+
+  const handleNodeDragStop = useCallback<OnNodeDrag<ChunkNodeType>>((_e, node) => {
+    savedPositions.current[node.id] = { x: node.position.x, y: node.position.y }
+  }, [])
+
+  const applyForceLayout = useCallback(() => {
+    setNodes((nds) => {
+      const pts = nds.map((n) => ({ id: n.id, x: n.position.x, y: n.position.y }))
+      const linkIds = new Set(nds.map((n) => n.id))
+      const links = edges
+        .filter((e) => linkIds.has(e.source) && linkIds.has(e.target))
+        .map((e) => ({ source: e.source, target: e.target }))
+      const next = runForceLayout(pts, links)
+      nds.forEach((n) => {
+        if (next[n.id]) savedPositions.current[n.id] = next[n.id]
+      })
+      return nds.map((n) => ({ ...n, position: next[n.id] || n.position }))
+    })
+  }, [edges, setNodes])
 
   // 框选批量分析（SSE 流式）
   const runAnalyze = () => {
@@ -268,6 +490,15 @@ export default function SmartGraphPage() {
           <Typography.Title level={5} style={{ margin: 0 }}>
             Smart Graph 语义图谱
           </Typography.Title>
+          <Segmented
+            size="small"
+            value={paperView ? 'paper' : 'chunk'}
+            onChange={(v) => setPaperView(v === 'paper')}
+            options={[
+              { label: '片段视图', value: 'chunk' },
+              { label: '论文视图', value: 'paper' },
+            ]}
+          />
           {graph && (
             <Typography.Text type="secondary">
               {graph.node_count} 个片段 · {graph.clusters.length} 个语义簇
@@ -278,6 +509,9 @@ export default function SmartGraphPage() {
           )}
           <Button size="small" icon={<ReloadOutlined />} onClick={load} loading={loading}>
             重新构建
+          </Button>
+          <Button size="small" onClick={applyForceLayout} disabled={!nodes.length}>
+            力导向布局
           </Button>
         </Space>
         {graph?.mode === 'keyword' && (
@@ -320,6 +554,62 @@ export default function SmartGraphPage() {
             })}
           </Space>
         )}
+        {graph && (
+          <Space size={[6, 6]} wrap>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              按拆分维度聚焦
+            </Typography.Text>
+            {DIMENSION_ITEMS.map(([key, label]) => {
+              const count = graph.nodes.filter((n) => n.dimension === key).length
+              if (count === 0) return null
+              const active = dimensionFilter === key
+              return (
+                <Tooltip key={key} title={`${label}维度 ${count} 个片段`}>
+                  <Tag.CheckableTag
+                    checked={active}
+                    onChange={() => setDimensionFilter(active ? null : key)}
+                    style={{
+                      border: active ? '1px solid #4f46e5' : '1px solid #d9d9d9',
+                      background: active ? '#eef2ff' : undefined,
+                      color: active ? '#4f46e5' : '#555',
+                      fontWeight: active ? 600 : 400,
+                    }}
+                  >
+                    {label}（{count}）
+                  </Tag.CheckableTag>
+                </Tooltip>
+              )
+            })}
+          </Space>
+        )}
+        {graph && graph.edges.length > 0 && (
+          <Space size={[8, 8]} wrap align="center">
+            <Switch size="small" checked={showEdges} onChange={setShowEdges} />
+            <Typography.Text style={{ fontSize: 12 }}>近似内容连线</Typography.Text>
+            {showEdges && (
+              <>
+                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                  相似度 ≥
+                </Typography.Text>
+                <Slider
+                  min={0.1}
+                  max={0.9}
+                  step={0.05}
+                  value={minSim}
+                  onChange={setMinSim}
+                  style={{ width: 160, margin: '0 4px' }}
+                  tooltip={{ formatter: (v) => `${Math.round((v ?? 0) * 100)}%` }}
+                />
+                <Typography.Text type="secondary" style={{ fontSize: 12, minWidth: 36 }}>
+                  {Math.round(minSim * 100)}%
+                </Typography.Text>
+                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                  当前显示 {graph.edges.filter((e) => e.sim >= minSim).length} 条
+                </Typography.Text>
+              </>
+            )}
+          </Space>
+        )}
       </Space>
 
       {/* 图谱画布：拖拽框选片段，双击跳转阅读器 */}
@@ -338,10 +628,10 @@ export default function SmartGraphPage() {
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onNodeDragStop={handleNodeDragStop}
           nodeTypes={nodeTypes}
           onSelectionChange={handleSelectionChange}
           onNodeDoubleClick={handleNodeDoubleClick}
-          nodesDraggable={false}
           nodesConnectable={false}
           elementsSelectable
           selectionOnDrag
@@ -398,7 +688,7 @@ export default function SmartGraphPage() {
               <Typography.Text type="secondary" style={{ fontSize: 12 }}>
                 {selectedIds.length
                   ? `已选 ${selectedIds.length} 个片段（最多可分析 30 个）`
-                  : '按住鼠标左键拖拽框选片段；双击片段跳转阅读器'}
+                  : '拖动方块调整布局；空白处按住左键框选；双击片段跳转阅读器'}
               </Typography.Text>
               <Button
                 size="small"
@@ -406,7 +696,7 @@ export default function SmartGraphPage() {
                 icon={<ThunderboltOutlined />}
                 onClick={runAnalyze}
                 loading={analyzing}
-                disabled={!selectedIds.length}
+                disabled={!selectedIds.length || paperView}
               >
                 批量分析
               </Button>

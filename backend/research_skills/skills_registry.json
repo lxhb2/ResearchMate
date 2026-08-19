@@ -8702,29 +8702,6 @@
       "constraints": "",
       "version": "",
       "enabled": true
-    },
-    {
-      "name": "feed-digest",
-      "github_source": "",
-      "trigger_keyword": [
-        "情报",
-        "订阅",
-        "RSS",
-        "arxiv",
-        "feed",
-        "快讯",
-        "动态",
-        "简报"
-      ],
-      "description": "科研情报采集与摘要：抓取 RSS/Atom 订阅源（arXiv 等），筛出与研究方向相关的新论文/动态，输出结构化情报简报",
-      "prompt_template": "# 科研情报采集（feed-digest）\n\n## 目标\n\n帮助科研人员跟踪领域最新动态：从订阅源抓取最新条目，按用户研究方向筛选、归类，产出一份可直接阅读的情报简报。\n\n## 工作流程\n\n1. **确认范围**：询问（或从上下文推断）用户的研究方向与关注主题；未提供时默认跟踪其文献库近期关键词。\n2. **抓取**：调用 `rss_fetch` 工具获取订阅源条目（默认 arXiv cs.AI / cs.CL，可由用户指定其他 RSS/Atom 源）。\n3. **筛选**：按研究方向相关性排序，剔除无关条目；每条保留标题、链接、发表时间。\n4. **归类摘要**：按子主题分组，每组 1-2 句概括趋势；标注与用户现有研究可能相关的条目。\n5. **输出简报**：Markdown 格式，含日期、来源、分组条目、趋势小结与建议阅读清单。\n\n## 输出格式\n\n```markdown\n# 科研情报简报 · {日期}\n\n## {子主题 A}\n- {标题}（{时间}）{一句话说明为何值得关注}\n  {链接}\n\n## 趋势小结\n- {观察 1}\n- {观察 2}\n\n## 建议优先阅读\n1. {条目 + 理由}\n```\n\n## 约束\n\n- 只使用 rss_fetch 实际返回的条目，不得编造标题或链接。\n- 抓取失败时明确列出失败源与原因，不中断整份简报。\n- 简报语言与用户提问语言一致。",
-      "input_schema": "",
-      "output_schema": "",
-      "category": "research_closed_loop",
-      "constraints": "",
-      "version": "",
-      "enabled": true,
-      "plugin_source": "feed-digest"
     }
   ]
 }

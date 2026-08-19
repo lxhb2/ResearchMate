@@ -27,6 +27,8 @@ def _env_files() -> list[str]:
 class Settings(BaseSettings):
     # App
     APP_NAME: str = "ResearchMate"
+    APP_VERSION: str = "0.2.0"
+    GITHUB_REPO: str = "lxhb2/ResearchMate"
     API_V1_PREFIX: str = "/api/v1"
     SECRET_KEY: str = "change-me-in-production-please-use-a-long-random-string"
     ALGORITHM: str = "HS256"

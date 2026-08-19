@@ -13,6 +13,14 @@ from app.services import settings_service
 router = APIRouter(prefix="/settings", tags=["settings"])
 
 
+_PLACEHOLDER_KEYS = {"sk-xxx", "sk-placeholder", "sk-sandbox-placeholder"}
+
+
+def _is_placeholder_key(key: str) -> bool:
+    key = (key or "").strip()
+    return not key or key in _PLACEHOLDER_KEYS
+
+
 class SettingsOut(BaseModel):
     llm_api_key: str
     llm_base_url: str
@@ -82,6 +90,8 @@ def update_settings(
 def _masked_out(cfg: dict) -> SettingsOut:
     """构造脱敏输出：Key 只保留首尾，避免明文回传前端。"""
     key = cfg.get("llm_api_key") or ""
+    if _is_placeholder_key(key):
+        key = ""
     masked = ""
     if len(key) > 8:
         masked = key[:4] + "*" * (len(key) - 8) + key[-4:]
@@ -111,8 +121,13 @@ def test_connection(
     api_key = (body.api_key or "").strip()
     if not api_key:
         api_key = (settings_service.get_llm_config(db, str(user.id)).get("api_key") or "").strip()
-    if not api_key:
-        raise HTTPException(status_code=400, detail="未填写 API Key，也没有已保存的 Key 可用")
+    if api_key.lower().startswith("bearer "):
+        api_key = api_key[7:].strip()
+    if _is_placeholder_key(api_key):
+        raise HTTPException(
+            status_code=400,
+            detail="当前使用的是默认占位 API Key（sk-xxx），请先填写真实 API Key 并保存后再测试连接",
+        )
     try:
         client = OpenAI(api_key=api_key, base_url=body.base_url, timeout=20)
         resp = client.chat.completions.create(

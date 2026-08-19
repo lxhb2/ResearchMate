@@ -1,0 +1,31 @@
+appId: com.researchmate.desktop
+productName: ResearchMate
+directories:
+  output: ../release
+  buildResources: build
+files:
+  - main.cjs
+  - preload.cjs
+extraResources:
+  - from: ../backend/packaging/windows_sqlite/dist/ResearchMate.exe
+    to: backend/ResearchMate.exe
+asar: true
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: zip
+      arch:
+        - x64
+  artifactName: ResearchMate-${version}-${arch}.${ext}
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+publish:
+  provider: github
+  owner: lxhb2
+  repo: ResearchMate
+  private: false

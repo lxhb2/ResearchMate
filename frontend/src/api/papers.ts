@@ -119,6 +119,12 @@ export const papersApi = {
     return data
   },
 
+  /** 重新跑结构感知拆分 + 六维语义分析（无需重新上传 PDF） */
+  reanalyze: async (id: string): Promise<{ ok: boolean }> => {
+    const { data } = await api.post<{ ok: boolean }>(`/papers/${id}/reanalyze`)
+    return data
+  },
+
   /** 多文档综述生成（Q1-2）：SSE 流式，逐段 delta + 结束 citations 元事件 */
   literatureReview: async (
     opts: LitReviewOptions,
@@ -162,6 +168,20 @@ export interface PaperAnalysisDimension {
   label: string
   content: string
   page_number: number | null
+  section: string | null
+  meta: { mode?: string; keywords?: string[]; evidence_sections?: string[] } | null
+}
+
+export interface PaperAnalysisMeta {
+  structure?: { title: string; level: number; kind: string; chars: number }[]
+  top_level?: { title: string; kind: string; chars: number }[]
+  chunking?: { text_chunks: number; mode: string; chunk_chars: number; overlap: number }
+  split?: {
+    mode: string
+    dimension_count: number
+    keywords?: string[]
+    evidence?: Record<string, string[]>
+  }
 }
 
 export interface PaperAnalysisNote {
@@ -178,5 +198,6 @@ export interface PaperAnalysis {
   status: string
   analysis_status: 'pending' | 'done' | 'failed' | null
   dimensions: PaperAnalysisDimension[]
+  analysis_meta: PaperAnalysisMeta | null
   user_notes: PaperAnalysisNote[]
 }

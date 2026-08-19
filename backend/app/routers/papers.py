@@ -559,7 +559,10 @@ def get_paper_analysis(
     # 1) AI 拆分的 6 个语义维度（保持 DIMENSIONS 顺序）
     chunks = (
         db.query(PaperChunk)
-        .filter(PaperChunk.paper_id == paper.id)
+        .filter(
+            PaperChunk.paper_id == paper.id,
+            PaperChunk.dimension.in_(search_service.DIMENSIONS),
+        )
         .order_by(PaperChunk.created_at.asc())
         .all()
     )
@@ -572,6 +575,8 @@ def get_paper_analysis(
                 "label": dim_label.get(c.dimension, c.dimension),
                 "content": c.content,
                 "page_number": c.page_number,
+                "section": c.section,
+                "meta": c.meta or None,
             }
         )
     # 补齐尚未拆分的维度占位（如处理中/失败）
@@ -606,9 +611,30 @@ def get_paper_analysis(
         "status": paper.status,
         "analysis_status": paper.analysis_status or "done",
         "dimensions": dimensions,
+        "analysis_meta": paper.analysis_meta or None,
         "user_notes": user_notes,
     }
 
+
+@router.post("/{paper_id}/reanalyze")
+def reanalyze_paper(
+    paper_id: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """重新跑一次结构感知拆分 + 六维语义分析。
+
+    结构变化/更换 API Key 后无需重新上传 PDF；后台任务会更新原文切片、
+    维度摘要与图谱缓存，用户可继续阅读正文。
+    """
+    paper = db.get(Paper, paper_id)
+    if not paper or paper.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    paper.analysis_status = "pending"
+    db.commit()
+    background_tasks.add_task(_run_processing, str(paper.id))
+    return {"ok": True}
 
 # ===========================================================================
 # Q1-2 多文档综述生成（带精确 in-text citation）

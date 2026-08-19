@@ -35,9 +35,9 @@ except ImportError:  # pragma: no cover
 POOL_DIM = 64        # 池化投影目标维度（JL 引理下对数百点的余弦结构保持足够）
 BOW_DIM = 128        # 离线词袋伪向量维度
 MAX_NODES = 400      # 图谱节点上限（超出按文献轮转采样，保证文献多样性）
-KNN_K = 2            # 每个节点保留的最近邻居数
-KNN_MIN_SIM = 0.25   # 低于该余弦相似度的边不画
-MAX_EDGES = 800
+KNN_K = 3            # 每个节点保留的最近邻居数
+KNN_MIN_SIM = 0.15   # 低于该余弦相似度的边不画
+MAX_EDGES = 1200
 CANVAS = 1000        # 布局画布边长（前端 fitView 自适应）
 
 CLUSTER_COLORS = [
@@ -426,6 +426,14 @@ def _round_robin_sample(rows: list, limit: int) -> list:
 _CACHE: dict[str, tuple[tuple, dict]] = {}
 
 
+def invalidate_cache(user_id=None) -> None:
+    """重新解析/重新分析后清除图谱缓存，避免旧片段布局残留。"""
+    if user_id is None:
+        _CACHE.clear()
+        return
+    _CACHE.pop(str(user_id), None)
+
+
 def build_smart_graph(db: Session, user_id, limit: int = MAX_NODES) -> dict:
     """构建语义聚类图谱：降维布局 + 球面 k-means 语义簇 + 关键词标签 + kNN 关联边。"""
     limit = max(20, min(int(limit or MAX_NODES), 1000))
@@ -498,6 +506,7 @@ def build_smart_graph(db: Session, user_id, limit: int = MAX_NODES) -> dict:
                 "paper_id": str(p.id),
                 "paper_title": p.title or "未命名",
                 "dimension": c.dimension,
+                "section": c.section,
                 "page_number": c.page_number,
                 "snippet": (c.content or "")[:90],
             }

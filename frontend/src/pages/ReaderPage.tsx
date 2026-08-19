@@ -33,6 +33,7 @@ import {
   EditOutlined,
   DeleteOutlined,
   HolderOutlined,
+  RedoOutlined,
 } from '@ant-design/icons'
 import { Document, Page, pdfjs } from 'react-pdf'
 import PdfJsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?worker'
@@ -495,6 +496,7 @@ export default function ReaderPage() {
 
   const [analysis, setAnalysis] = useState<PaperAnalysis | null>(null)
   const [analysisLoading, setAnalysisLoading] = useState(false)
+  const [reanalyzing, setReanalyzing] = useState(false)
 
   const [selection, setSelection] = useState<{ text: string; x: number; y: number; rects: HlRect[] } | null>(null)
   const [hlColor, setHlColor] = useState<string>(HIGHLIGHT_COLORS[0])
@@ -1167,6 +1169,21 @@ export default function ReaderPage() {
     }
   }
 
+  const handleReanalyze = async () => {
+    if (!paperId || reanalyzing) return
+    setReanalyzing(true)
+    try {
+      await papersApi.reanalyze(paperId)
+      message.success('已开始结构感知拆分，完成后自动刷新')
+      setAnalysis((a) => (a ? { ...a, analysis_status: 'pending' } : a))
+      loadAnalysis()
+    } catch (err) {
+      message.error(getErrorMessage(err))
+    } finally {
+      setReanalyzing(false)
+    }
+  }
+
   // 首次进入「论文分析」标签时自动加载
   useEffect(() => {
     if (tab === 'analysis' && !analysis && !analysisLoading) {
@@ -1199,9 +1216,51 @@ export default function ReaderPage() {
       )
     }
     const dims = analysis.dimensions.filter((d) => d.content && d.content.trim())
+    const meta = analysis.analysis_meta
+    const topLevel = (meta?.top_level ?? []).filter((s) => s.kind !== 'references')
     return (
       <div style={{ maxHeight: 560, overflow: 'auto', paddingRight: 8 }}>
         <Typography.Title level={5}>AI 语义分析</Typography.Title>
+        {meta && (
+          <div
+            style={{
+              marginBottom: 14,
+              padding: '8px 10px',
+              background: '#f6f8fa',
+              borderRadius: 6,
+              border: '1px solid #eef1f5',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+              <Typography.Text strong style={{ fontSize: 13 }}>
+                结构感知拆分
+              </Typography.Text>
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                {meta.chunking?.mode === 'structure' ? '已识别章节结构' : '段落级切分'} ·{' '}
+                {meta.chunking?.text_chunks ?? 0} 个原文片段 · 重叠{' '}
+                {meta.chunking?.overlap ?? 0} 字符
+              </Typography.Text>
+              <Button
+                size="small"
+                icon={<RedoOutlined />}
+                onClick={handleReanalyze}
+                loading={reanalyzing}
+                disabled={analysis.analysis_status === 'pending'}
+              >
+                重新拆分
+              </Button>
+            </div>
+            {topLevel.length > 0 && (
+              <Space size={[4, 4]} wrap>
+                {topLevel.map((s, idx) => (
+                  <Tag key={`${s.title}-${idx}`} style={{ fontSize: 11, marginInlineEnd: 0 }}>
+                    {s.title}
+                  </Tag>
+                ))}
+              </Space>
+            )}
+          </div>
+        )}
         {dims.length === 0 ? (
           analysis.analysis_status === 'pending' ? (
             <Typography.Text type="secondary">
@@ -1212,8 +1271,19 @@ export default function ReaderPage() {
           )
         ) : (
           dims.map((d) => (
-            <div key={d.dimension} style={{ marginBottom: 16 }}>
-              <Tag color="blue">{d.label}</Tag>
+            <div
+              key={d.dimension}
+              style={{ marginBottom: 16, borderLeft: '3px solid #91caff', paddingLeft: 10 }}
+            >
+              <Space size={[4, 4]} wrap style={{ marginBottom: 4 }}>
+                <Tag color="blue">{d.label}</Tag>
+                {d.section && <Tag>{d.section}</Tag>}
+                {(d.meta?.evidence_sections ?? []).slice(0, 3).map((ev, idx) => (
+                  <Tag key={`${d.dimension}-${ev}-${idx}`} color="cyan" style={{ fontSize: 11 }}>
+                    {ev}
+                  </Tag>
+                ))}
+              </Space>
               <div style={{ whiteSpace: 'pre-wrap', marginTop: 4, fontSize: 13 }}>{d.content}</div>
             </div>
           ))

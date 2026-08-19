@@ -42,9 +42,11 @@ import {
   COLOR_PRESETS,
   type AppSettings,
   type ModelPreset,
+  type SettingsUpdate,
 } from '../api/settings'
 import { getErrorMessage, api } from '../api/client'
 import { useThemeStore } from '../store/themeStore'
+import { appApi, type AppInfo, type UpdateCheckResult } from '../api/app'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -217,6 +219,154 @@ function PluginPanel() {
   )
 }
 
+/** 版本与更新面板：Web 模式跳 GitHub Releases，Electron 模式可原生下载安装。 */
+function UpdatePanel() {
+  const [info, setInfo] = useState<AppInfo | null>(null)
+  const [update, setUpdate] = useState<UpdateCheckResult | null>(null)
+  const [checking, setChecking] = useState(false)
+  const [downloading, setDownloading] = useState(false)
+  const [installing, setInstalling] = useState(false)
+  const native = window.researchmate
+
+  useEffect(() => {
+    appApi
+      .info()
+      .then(setInfo)
+      .catch(() => setInfo(null))
+  }, [])
+
+  const check = async () => {
+    setChecking(true)
+    try {
+      setUpdate(await appApi.checkUpdate())
+    } catch (err) {
+      message.error('检查更新失败：' + getErrorMessage(err))
+    } finally {
+      setChecking(false)
+    }
+  }
+
+  const download = async () => {
+    if (!native) return
+    setDownloading(true)
+    try {
+      const res = await native.downloadUpdate()
+      if (res.ok) message.success('更新包已下载，可点击“安装更新”')
+      else message.error('下载失败：' + (res.error || '未知错误'))
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  const install = async () => {
+    if (!native) return
+    setInstalling(true)
+    const res = await native.installUpdate()
+    if (!res.ok) message.error('安装失败：' + (res.error || '未知错误'))
+    setInstalling(false)
+  }
+
+  return (
+    <Card
+      title={
+        <Space>
+          <CloudDownloadOutlined style={{ color: '#2563eb' }} />
+          <span>版本与更新</span>
+        </Space>
+      }
+      style={{ marginBottom: 16 }}
+    >
+      <Space direction="vertical" size={10} style={{ width: '100%' }}>
+        <Space wrap align="center">
+          <Tag color="blue" bordered={false}>
+            ResearchMate v{info?.version || '0.2.0'}
+          </Tag>
+          <Text type="secondary">
+            {info?.repo ? `GitHub: ${info.repo}` : '本地单机版'}
+          </Text>
+          <Button icon={<ReloadOutlined />} loading={checking} onClick={check}>
+            检查更新
+          </Button>
+          {info?.update_url && (
+            <Button href={info.update_url} target="_blank">
+              打开 Releases 页面
+            </Button>
+          )}
+        </Space>
+
+        {update && (
+          <div
+            style={{
+              padding: '10px 12px',
+              borderRadius: 8,
+              border: update.has_update ? '1px solid #bfdbfe' : '1px solid #d1fae5',
+              background: update.has_update ? '#eff6ff' : '#ecfdf5',
+            }}
+          >
+            {update.has_update ? (
+              <>
+                <Space wrap align="center">
+                  <Tag color="processing" bordered={false}>
+                    发现新版本 v{update.latest}
+                  </Tag>
+                  <Text type="secondary">当前 v{update.current}</Text>
+                  {update.release_name && <Text strong>{update.release_name}</Text>}
+                </Space>
+                <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <Button href={update.release_url} target="_blank">
+                    查看发布说明
+                  </Button>
+                  {native && (
+                    <>
+                      <Button
+                        type="primary"
+                        icon={<CloudDownloadOutlined />}
+                        loading={downloading}
+                        onClick={download}
+                      >
+                        下载更新
+                      </Button>
+                      <Button
+                        icon={<CheckCircleOutlined />}
+                        loading={installing}
+                        onClick={install}
+                      >
+                        安装更新
+                      </Button>
+                    </>
+                  )}
+                </div>
+                {update.assets.length > 0 && (
+                  <Space size={[6, 6]} wrap style={{ marginTop: 8 }}>
+                    {update.assets.slice(0, 5).map((a) => (
+                      <Tag key={a.name} bordered={false}>
+                        <a href={a.url} target="_blank" rel="noreferrer">
+                          {a.name}
+                        </a>
+                      </Tag>
+                    ))}
+                  </Space>
+                )}
+              </>
+            ) : (
+              <Space>
+                <CheckCircleOutlined style={{ color: '#16a34a' }} />
+                <Text>当前已是最新版本（v{update.current}）。</Text>
+              </Space>
+            )}
+          </div>
+        )}
+
+        {!update && (
+          <Text type="secondary">
+            版本检查通过 GitHub Releases 完成。首次发布后，应用内即可检测到新版本。
+          </Text>
+        )}
+      </Space>
+    </Card>
+  )
+}
+
 export default function SettingsPage() {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(true)
@@ -339,7 +489,7 @@ export default function SettingsPage() {
   const handleTest = async () => {
     try {
       const values = await form.validateFields(['llm_base_url', 'llm_model'])
-      const key = (values.llm_api_key || '').trim()
+      const key = (form.getFieldValue('llm_api_key') || '').trim()
       // Key 留空且已有保存的 Key：后端会自动使用已保存的 Key 测试
       if (!key && !keyConfigured) {
         message.warning('请填写 API Key 后再测试连接')
@@ -351,7 +501,22 @@ export default function SettingsPage() {
         base_url: values.llm_base_url,
         model: values.llm_model,
       })
-      message.success(`连接成功，模型回复：${res.reply || '（空）'}`)
+      // 测试通过后顺手保存，避免“填了 Key 但页面仍提示未配置”。
+      const savePayload: SettingsUpdate = {
+        llm_base_url: values.llm_base_url,
+        llm_model: values.llm_model,
+        embedding_model: (form.getFieldValue('embedding_model') as string) || '',
+        embedding_dim: Number(form.getFieldValue('embedding_dim')) || 1536,
+        theme_color: pickedColor,
+      }
+      if (key) {
+        savePayload.llm_api_key = key
+      }
+      const updated = await settingsApi.update(savePayload)
+      form.setFieldsValue({ llm_api_key: '' })
+      setKeyMasked(updated.llm_api_key || '')
+      setKeyConfigured(!!updated.llm_api_key?.trim())
+      message.success(`连接成功，配置已保存，模型回复：${res.reply || '（空）'}`)
     } catch (err) {
       if ((err as any)?.errorFields) return
       message.error('连接测试失败：' + getErrorMessage(err))
@@ -653,6 +818,15 @@ export default function SettingsPage() {
               </Space>
             ),
             children: <PluginPanel />,
+          },
+          {
+            key: 'update',
+            label: (
+              <Space>
+                <CloudDownloadOutlined /> 版本与更新
+              </Space>
+            ),
+            children: <UpdatePanel />,
           },
         ]}
       />

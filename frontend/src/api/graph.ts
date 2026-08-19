@@ -8,6 +8,7 @@ export interface GraphNodeData {
   paper_id: string
   paper_title: string
   dimension: string
+  section: string | null
   page_number: number | null
   snippet: string
 }

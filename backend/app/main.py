@@ -26,6 +26,7 @@ from app.routers import (
     agent,
     imports,
     graph,
+    app_info,
 )
 from app.utils.security import hash_password
 
@@ -65,6 +66,8 @@ def _migrate_sqlite() -> None:
     chunk_adds: dict[str, str] = {
         "char_start": "ALTER TABLE paper_chunks ADD COLUMN char_start INTEGER",
         "char_end": "ALTER TABLE paper_chunks ADD COLUMN char_end INTEGER",
+        "section": "ALTER TABLE paper_chunks ADD COLUMN section VARCHAR(160)",
+        "meta": "ALTER TABLE paper_chunks ADD COLUMN meta TEXT",
     }
     try:
         with engine.begin() as conn:
@@ -73,6 +76,8 @@ def _migrate_sqlite() -> None:
                 for col, ddl in paper_adds.items():
                     if col not in cols:
                         conn.execute(text(ddl))
+                if "analysis_meta" not in cols:
+                    conn.execute(text("ALTER TABLE papers ADD COLUMN analysis_meta TEXT"))
             chunk_cols = [row[1] for row in conn.execute(text("PRAGMA table_info(paper_chunks)"))]
             if chunk_cols:
                 for col, ddl in chunk_adds.items():
@@ -98,7 +103,7 @@ def _ensure_default_user(db: Session) -> None:
     db.commit()
 
 
-app = FastAPI(title=settings.APP_NAME, version="0.1.0")
+app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION)
 
 app.add_middleware(
     CORSMiddleware,
@@ -143,6 +148,7 @@ app.include_router(backup.router, prefix=prefix)
 app.include_router(agent.router, prefix=prefix)
 app.include_router(imports.router, prefix=prefix)
 app.include_router(graph.router, prefix=prefix)
+app.include_router(app_info.router, prefix=prefix)
 
 
 def _resolve_frontend_dist() -> str:

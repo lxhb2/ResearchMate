@@ -108,6 +108,7 @@ def semantic_search(
 
     results = []
     query_vec = None
+    tokens = _tokenize(query)
     use_embedding = _embedding_available(db, user_id)
     if use_embedding:
         try:
@@ -124,12 +125,14 @@ def semantic_search(
             if not vec:
                 continue
             score = _cosine(query_vec, vec)
-            scored.append((score, chunk, paper))
+            kw_score = _keyword_score(tokens, chunk.content or "")
+            # 混合检索：向量主导 + 关键词补偿（成熟 RAG 的 dense + sparse 融合思路）
+            hybrid = 0.72 * score + 0.28 * kw_score
+            scored.append((hybrid, score, chunk, paper))
         scored.sort(key=lambda x: x[0], reverse=True)
-        select = scored[:top_k]
+        select = [(r[0], r[2], r[3]) for r in scored[:top_k]]
     else:
         # 关键词降级：作用于全部片段（离线时片段可能没有 embedding）
-        tokens = _tokenize(query)
         scored = []
         for chunk, paper in rows:
             score = _keyword_score(tokens, chunk.content or "")
@@ -145,6 +148,7 @@ def semantic_search(
                 "paper_id": str(paper.id),
                 "paper_title": paper.title,
                 "dimension": chunk.dimension,
+                "section": chunk.section,
                 "content": chunk.content,
                 "page_number": chunk.page_number,
                 "char_start": chunk.char_start,
@@ -187,6 +191,7 @@ def keyword_search(
             "paper_id": str(paper.id),
             "paper_title": paper.title,
             "dimension": chunk.dimension,
+            "section": chunk.section,
             "content": chunk.content,
             "page_number": chunk.page_number,
             "char_start": chunk.char_start,

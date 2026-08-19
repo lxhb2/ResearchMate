@@ -462,65 +462,169 @@ def _clean_search_query(q: str) -> str:
     return cleaned or q
 
 
-def _web_search(ctx: ToolContext, args: dict) -> dict:
-    """联网搜索：抓取 Bing 网页搜索结果，返回标题/链接/摘要。
-
-    无 API Key 也能用（无需第三方搜索服务）；失败时返回可读提示而非抛错。
-    """
-    query = _clean_search_query(args.get("query") or "")
-    limit = int(args.get("limit", 5))
-    if not query:
-        return {"count": 0, "items": [], "error": "缺少 query 参数"}
-
-    import httpx
-    from bs4 import BeautifulSoup
-
-    url = "https://www.bing.com/search"
-    params = {"q": query, "count": min(limit, 10), "mkt": "zh-CN"}
-    headers = {
+def _search_headers() -> dict[str, str]:
+    return {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
             "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
         ),
         "Accept-Language": "zh-CN,zh;q=0.9",
     }
-    try:
-        resp = httpx.get(url, params=params, headers=headers, timeout=15.0, follow_redirects=True)
-        resp.raise_for_status()
-    except Exception as e:  # noqa: BLE001
-        return {"count": 0, "items": [], "error": f"联网失败：{e}"}
 
+
+def _fetch_bing_rss(query: str, limit: int) -> list[dict]:
+    """Bing RSS：比 HTML 抓取更稳定，自带标题/链接/摘要/日期。"""
+    import httpx
+    from bs4 import BeautifulSoup
+    from xml.etree import ElementTree as ET
+
+    resp = httpx.get(
+        "https://www.bing.com/search",
+        params={"format": "rss", "q": query, "mkt": "zh-CN", "count": min(limit, 10)},
+        headers=_search_headers(),
+        timeout=15.0,
+        follow_redirects=True,
+    )
+    resp.raise_for_status()
+    root = ET.fromstring(resp.content)
+    items: list[dict] = []
+    for node in root.findall(".//item"):
+        title = node.findtext("title") or ""
+        link = (node.findtext("link") or "").strip()
+        desc_raw = node.findtext("description") or ""
+        desc = BeautifulSoup(desc_raw, "html.parser").get_text(" ", strip=True)
+        if title and link and not link.startswith(("http://", "https://")):
+            continue
+        if title and link:
+            items.append(
+                {
+                    "title": title.strip(),
+                    "url": link,
+                    "snippet": desc[:300],
+                    "date": (node.findtext("pubDate") or "").strip(),
+                    "source": "bing",
+                }
+            )
+        if len(items) >= limit:
+            break
+    return items
+
+
+def _fetch_bing_html(query: str, limit: int) -> list[dict]:
+    """Bing HTML 抓取，作为 RSS 无结果时的兜底。"""
+    import httpx
+    from bs4 import BeautifulSoup
+
+    resp = httpx.get(
+        "https://www.bing.com/search",
+        params={"q": query, "count": min(limit, 10), "mkt": "zh-CN"},
+        headers=_search_headers(),
+        timeout=15.0,
+        follow_redirects=True,
+    )
+    resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
     items: list[dict] = []
-    # Bing 结果结构：li.b_algo 内 h2 > a[href] 与 p
     for li in soup.select("li.b_algo"):
-        a = li.select_one("h2 a")
+        a = li.select_one("h2 a") or li.select_one("a")
         if not a:
             continue
         title = a.get_text(" ", strip=True)
-        href = a.get("href", "")
+        href = (a.get("href") or "").strip()
+        if not title or not href.startswith(("http://", "https://")):
+            continue
         snippet = li.select_one("p")
         text = snippet.get_text(" ", strip=True) if snippet else ""
-        if title:
-            items.append({"title": title, "url": href, "snippet": text[:300]})
+        items.append(
+            {
+                "title": title,
+                "url": href,
+                "snippet": text[:300],
+                "date": "",
+                "source": "bing",
+            }
+        )
         if len(items) >= limit:
             break
-    if not items:
-        # 兜底：Bing 也可能用 cite 结构
-        for li in soup.select("li.b_algo"):
-            a = li.select_one("a")
-            if not a:
-                continue
-            items.append(
-                {
-                    "title": a.get_text(" ", strip=True),
-                    "url": a.get("href", ""),
-                    "snippet": "",
+    return items
+
+
+def _fetch_duckduckgo_html(query: str, limit: int) -> list[dict]:
+    """DuckDuckGo HTML 兜底：部分网络环境下可用，失败会自动跳过。"""
+    import httpx
+    from bs4 import BeautifulSoup
+
+    resp = httpx.get(
+        "https://html.duckduckgo.com/html/",
+        params={"q": query},
+        headers=_search_headers(),
+        timeout=8.0,
+        follow_redirects=True,
+    )
+    resp.raise_for_status()
+    soup = BeautifulSoup(resp.text, "html.parser")
+    items: list[dict] = []
+    for result in soup.select(".result"):
+        a = result.select_one(".result__a")
+        if not a:
+            continue
+        title = a.get_text(" ", strip=True)
+        href = (a.get("href") or "").strip()
+        if not title or not href.startswith(("http://", "https://")):
+            continue
+        snippet = result.select_one(".result__snippet")
+        text = snippet.get_text(" ", strip=True) if snippet else ""
+        items.append(
+            {
+                "title": title,
+                "url": href,
+                "snippet": text[:300],
+                "date": "",
+                "source": "duckduckgo",
+            }
+        )
+        if len(items) >= limit:
+            break
+    return items
+
+
+def _web_search(ctx: ToolContext, args: dict) -> dict:
+    """联网搜索：优先 Bing RSS，回退 Bing HTML / DuckDuckGo，返回标题/链接/摘要。
+
+    无需第三方搜索 API Key；失败时返回可读提示而非抛错。
+    """
+    query = _clean_search_query(args.get("query") or "")
+    try:
+        limit = max(1, min(int(args.get("limit", 5)), 10))
+    except (TypeError, ValueError):
+        limit = 5
+    if not query:
+        return {"count": 0, "items": [], "error": "缺少 query 参数"}
+
+    errors: list[str] = []
+    for engine, fetcher in (
+        ("bing_rss", _fetch_bing_rss),
+        ("bing_html", _fetch_bing_html),
+        ("duckduckgo_html", _fetch_duckduckgo_html),
+    ):
+        try:
+            items = fetcher(query, limit)
+            if items:
+                return {
+                    "count": len(items),
+                    "query": query,
+                    "engine": engine,
+                    "items": items,
                 }
-            )
-            if len(items) >= limit:
-                break
-    return {"count": len(items), "query": query, "items": items}
+            errors.append(f"{engine}: 无结果")
+        except Exception as e:  # noqa: BLE001
+            errors.append(f"{engine}: {e}")
+    return {
+        "count": 0,
+        "items": [],
+        "query": query,
+        "error": "；".join(errors) or "无搜索结果",
+    }
 
 
 def _file_root() -> str:

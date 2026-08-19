@@ -32,6 +32,8 @@ class Paper(Base):
     # AI 语义分析（LLM 六维拆分 + 向量化）进度：pending → done | failed。
     # 与 status 解耦：本地 PyMuPDF 解析完成后即可阅读，AI 分析在后台慢慢跑。
     analysis_status = Column(String(20), default="pending", nullable=False)
+    # 结构感知拆分结果：检测到的章节树、维度依据、拆分统计（JSON）
+    analysis_meta = Column(JSONType, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
