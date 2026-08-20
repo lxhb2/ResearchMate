@@ -40,6 +40,28 @@ def _build_llm(db: Session, user_id) -> LLMAdapter:
         return LLMAdapter.mock()
 
 
+def _fast_llm(db: Session, user_id) -> LLMAdapter:
+    """短文本快速翻译模型：根据当前厂商自动选更快的模型。"""
+    try:
+        cfg = settings_service.get_llm_config(db, str(user_id))
+    except Exception:  # noqa: BLE001
+        return _build_llm(db, user_id)
+    model = (cfg.get("model") or "").strip()
+    base = (cfg.get("base_url") or "").lower()
+    if "openai" in base and not model.endswith("mini"):
+        model = "gpt-4o-mini"
+    elif "deepseek" in base:
+        model = "deepseek-chat"
+    elif "dashscope" in base or "aliyun" in base:
+        model = "qwen-turbo"
+    elif "bigmodel" in base:
+        model = "glm-4-flash"
+    elif "moonshot" in base:
+        model = "moonshot-v1-8k"
+    cfg = {**cfg, "model": model}
+    return LLMAdapter.from_config(cfg)
+
+
 def _translate_with_llm(llm: LLMAdapter, text: str, target_lang: str) -> str:
     system = (
         "You are a professional academic translator. Translate the user's text into the target language. "
@@ -57,6 +79,16 @@ def _translate_text(db: Session, user_id, text: str, target_lang: str) -> str:
     text = (text or "").strip()
     if not text:
         return ""
+    # 术语表精确命中：个人已保存术语直接秒回
+    try:
+        from app.services import glossary_service
+        hits = glossary_service.search_terms(str(user_id), text, limit=5)
+        for hit in hits:
+            if hit.get("term", "").strip().lower() == text.lower() and hit.get("translation"):
+                translation_cache.set("auto", target_lang, text, hit["translation"])
+                return hit["translation"]
+    except Exception:  # noqa: BLE001
+        pass
     cached = translation_cache.get("auto", target_lang, text)
     if cached is not None:
         return cached
@@ -68,7 +100,7 @@ def _translate_text(db: Session, user_id, text: str, target_lang: str) -> str:
                 return translated
         except Exception:  # noqa: BLE001
             pass
-    llm = _build_llm(db, user_id)
+    llm = _fast_llm(db, user_id) if len(text) <= 300 else _build_llm(db, user_id)
     translation = _translate_with_llm(llm, text, target_lang)
     if translation:
         translation_cache.set("auto", target_lang, text, translation)
@@ -114,6 +146,15 @@ def translate_batch(
     llm = LLMAdapter.from_config(cfg)
 
     def work(text: str) -> str:
+        try:
+            from app.services import glossary_service
+            hits = glossary_service.search_terms(str(user.id), text, limit=5)
+            for hit in hits:
+                if hit.get("term", "").strip().lower() == text.lower() and hit.get("translation"):
+                    translation_cache.set("auto", body.target_lang, text, hit["translation"])
+                    return hit["translation"]
+        except Exception:  # noqa: BLE001
+            pass
         cached = translation_cache.get("auto", body.target_lang, text)
         if cached is not None:
             return cached
@@ -125,7 +166,8 @@ def translate_batch(
                     return translated
             except Exception:  # noqa: BLE001
                 pass
-        translated = _translate_with_llm(llm, text, body.target_lang)
+        fast_llm = _fast_llm(db, str(user.id)) if len(text) <= 300 else llm
+        translated = _translate_with_llm(fast_llm, text, body.target_lang)
         if translated:
             translation_cache.set("auto", body.target_lang, text, translated)
         return translated

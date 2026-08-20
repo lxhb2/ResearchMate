@@ -1030,9 +1030,15 @@ export default function ReaderPage() {
       result: '',
     })
     try {
-      await translateApi.translateStream(text, 'zh', (delta) => {
-        setFloatTranslation((f) => (f ? { ...f, result: f.result + delta } : f))
-      })
+      if (text.length <= 300) {
+        // 短句/术语：直接返回完整译文，避免逐 token 等待
+        const res = await translateApi.translate(text, 'zh')
+        setFloatTranslation((f) => (f ? { ...f, result: res.translation } : f))
+      } else {
+        await translateApi.translateStream(text, 'zh', (delta) => {
+          setFloatTranslation((f) => (f ? { ...f, result: f.result + delta } : f))
+        })
+      }
     } catch (err) {
       message.error(getErrorMessage(err))
     }
