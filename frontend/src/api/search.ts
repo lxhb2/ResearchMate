@@ -72,6 +72,11 @@ export const translateApi = {
     const { data } = await api.post('/translate', { text, target_lang: targetLang })
     return data
   },
+  // BabelDOC 整篇 PDF 翻译（保持排版，返回双语 PDF）
+  translatePdf: async (paperId: string): Promise<Blob> => {
+    const { data } = await api.post('/translate/pdf', { paper_id: paperId }, { responseType: 'blob' })
+    return data
+  },
   // 流式翻译
   translateStream: async (text: string, targetLang: string, onDelta: (delta: string) => void): Promise<void> => {
     await streamSSE('/translate/stream', { text, target_lang: targetLang }, onDelta)

@@ -1,0 +1,2 @@
+# 可选：BabelDOC 整篇 PDF 翻译引擎（保持排版、批量加速）
+BabelDOC>=0.6.4

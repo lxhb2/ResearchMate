@@ -94,4 +94,10 @@ npx tsc --noEmit -p tsconfig.json --pretty false
 - 素材检索接入 RAG 6 维向量库：按章节标题自动映射到 background / method / results / conclusion / contributions 等维度。
 - Word 导出会包含中英文摘要与关键词。
 
+## 八、整篇 PDF 翻译加速（BabelDOC）
+
+- 评估 BabelDOC：可胜任 PDF 整篇翻译，保持原版式并输出双语 PDF，适合替代逐段 LLM 翻译的慢速链路。
+- 新增可选接入：`backend/app/services/babeldoc_service.py` 调用 BabelDOC CLI，阅读器新增「整篇翻译」按钮。
+- 未安装时自动提示 `pip install -r requirements-babeldoc.txt`，不影响原有划词翻译流程。
+
 已被需求移除、不在当前路线图内的可选方向：Zotero 深度集成、CSL 引文、笔记本/专题工作区、网页 / RSS / 视频多源导入、OCR、GROBID。

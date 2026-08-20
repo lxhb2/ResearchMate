@@ -140,6 +140,17 @@ CI 已配置：每次 push/PR 自动运行后端 pytest 与前端构建（`.gith
 | `SECRET_KEY` | JWT 密钥（生产请改） | 占位 |
 | `EMBEDDING_MODEL` / `EMBEDDING_DIM` | 向量模型与维度 | `text-embedding-3-small` / `1536` |
 
+### 7. 可选：整篇 PDF 翻译（BabelDOC）
+
+阅读器新增「整篇翻译」按钮，使用 BabelDOC 保持原版式输出双语 PDF，适合整篇文献快速翻译：
+
+```bash
+cd backend
+pip install -r requirements-babeldoc.txt
+```
+
+未安装时，整篇翻译会提示安装指引；逐段划词翻译不受影响。
+
 ---
 
 ## 🖥️ CLI 用法

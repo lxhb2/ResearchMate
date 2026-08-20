@@ -24,6 +24,7 @@ import {
   SendOutlined,
   ThunderboltOutlined,
   ExportOutlined,
+  GlobalOutlined,
   MoreOutlined,
   ClearOutlined,
   ZoomInOutlined,
@@ -490,6 +491,7 @@ export default function ReaderPage() {
     open: false,
     text: '',
   })
+  const [translatingPdf, setTranslatingPdf] = useState(false)
   const [summary, setSummary] = useState('')
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [tab, setTab] = useState('analysis')
@@ -955,6 +957,26 @@ export default function ReaderPage() {
     URL.revokeObjectURL(url)
   }
 
+  // BabelDOC 整篇翻译：保持原版式输出双语 PDF
+  const translateWholePdf = async () => {
+    if (!paperId || translatingPdf) return
+    setTranslatingPdf(true)
+    try {
+      const blob = await translateApi.translatePdf(paperId)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${paper?.title || 'paper'}-translated.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+      message.success('整篇翻译完成，已开始下载双语 PDF')
+    } catch (err) {
+      message.error(getErrorMessage(err))
+    } finally {
+      setTranslatingPdf(false)
+    }
+  }
+
   // 保存一条带颜色 + 矩形坐标的标注
   const saveAnnotation = async (type: Annotation['type'], content?: string) => {
     if (!paperId || !selection) return
@@ -1350,6 +1372,13 @@ export default function ReaderPage() {
             >
               <Button icon={<ExportOutlined />}>导出引文</Button>
             </Dropdown>
+            <Button
+              icon={<GlobalOutlined />}
+              loading={translatingPdf}
+              onClick={translateWholePdf}
+            >
+              整篇翻译
+            </Button>
             <Button onClick={() => setPageNumber((p) => Math.max(1, p - 1))} disabled={pageNumber <= 1}>
               上一页
             </Button>
