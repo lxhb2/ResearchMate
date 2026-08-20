@@ -25,6 +25,7 @@ class PdfTranslateRequest(BaseModel):
     paper_id: str
     lang_in: str = "en"
     lang_out: str = "zh"
+    engine: str = "auto"
 
 
 class BatchTranslateRequest(BaseModel):
@@ -75,7 +76,7 @@ def _translate_with_llm(llm: LLMAdapter, text: str, target_lang: str) -> str:
 
 def _translate_text(db: Session, user_id, text: str, target_lang: str) -> str:
     """带缓存 / DeepL 直连 / LLM 降级的单条翻译。"""
-    from app.services import deepl_service, translation_cache
+    from app.services import deepl_service, free_translate_service, translation_cache
 
     text = (text or "").strip()
     if not text:
@@ -96,6 +97,14 @@ def _translate_text(db: Session, user_id, text: str, target_lang: str) -> str:
     if deepl_service.available() and len(text) <= 5000:
         try:
             translated = deepl_service.translate(text, target_lang)
+            if translated:
+                translation_cache.set("auto", target_lang, text, translated)
+                return translated
+        except Exception:  # noqa: BLE001
+            pass
+    if free_translate_service.enabled() and len(text) <= 5000:
+        try:
+            translated = free_translate_service.translate(text, target_lang)
             if translated:
                 translation_cache.set("auto", target_lang, text, translated)
                 return translated
@@ -166,7 +175,7 @@ def translate_batch(
 ):
     """批量翻译：并发调用，用于长段落/多选片段加速。"""
     from app.agent.llm_adapter import LLMAdapter
-    from app.services import deepl_service, translation_cache
+    from app.services import deepl_service, free_translate_service, translation_cache
 
     texts = [(t or "").strip() for t in (body.texts or [])]
     texts = [t for t in texts if t][:50]
@@ -189,6 +198,14 @@ def translate_batch(
         if deepl_service.available() and len(text) <= 5000:
             try:
                 translated = deepl_service.translate(text, body.target_lang)
+                if translated:
+                    translation_cache.set("auto", body.target_lang, text, translated)
+                    return translated
+            except Exception:  # noqa: BLE001
+                pass
+        if free_translate_service.enabled() and len(text) <= 5000:
+            try:
+                translated = free_translate_service.translate(text, body.target_lang)
                 if translated:
                     translation_cache.set("auto", body.target_lang, text, translated)
                     return translated
@@ -218,8 +235,8 @@ def start_translate_pdf(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """BabelDOC 整篇 PDF 翻译：异步后台执行，立即返回任务 ID，避免 120s 超时。"""
-    from app.services import babeldoc_service, task_queue
+    """整篇 PDF 翻译：优先 pdf2zh-next，失败时回退 BabelDOC，后台异步执行。"""
+    from app.services import babeldoc_service, pdf2zh_service, task_queue
 
     paper = db.get(Paper, body.paper_id)
     if not paper or paper.user_id != user.id:
@@ -229,15 +246,25 @@ def start_translate_pdf(
     src = os.path.join(settings.PDF_DIR, os.path.basename(paper.file_path))
     if not os.path.isfile(src):
         raise HTTPException(status_code=404, detail="PDF 文件不存在")
-    if not babeldoc_service.is_available():
-        raise HTTPException(status_code=501, detail=babeldoc_service.install_hint())
+    if not pdf2zh_service.is_available() and not babeldoc_service.is_available():
+        raise HTTPException(status_code=501, detail=pdf2zh_service.install_hint())
     task = task_queue.enqueue(
         db,
         user.id,
         "babeldoc_translate",
-        {"paper_id": body.paper_id, "lang_in": body.lang_in, "lang_out": body.lang_out},
+        {
+            "paper_id": body.paper_id,
+            "lang_in": body.lang_in,
+            "lang_out": body.lang_out,
+            "engine": body.engine or "auto",
+        },
     )
-    return {"ok": True, "task_id": str(task.id), "status": task.status}
+    return {
+        "ok": True,
+        "task_id": str(task.id),
+        "status": task.status,
+        "engine": "pdf2zh-next" if pdf2zh_service.is_available() else "babeldoc",
+    }
 
 
 @router.get("/translate/pdf/status/{task_id}")
@@ -257,6 +284,9 @@ def translate_pdf_status(
         "error": task.error,
         "output_path": result.get("output_path"),
         "paper_title": result.get("paper_title"),
+        "progress": result.get("progress", 100 if task.status == "success" else 0),
+        "stage": result.get("stage") or ("" if task.status == "pending" else None),
+        "engine": result.get("engine"),
     }
 
 
@@ -283,11 +313,40 @@ def translate_pdf_download(
 
 @router.post("/translate/stream")
 def translate_stream(body: dict, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """流式翻译：SSE 逐 token 返回。"""
+    """流式翻译：短文本走缓存/DeepL/免费加速，长文本 SSE 逐 token 返回。"""
     text = body.get("text", "").strip()
     target_lang = body.get("target_lang", "zh")
     if not text:
         return {"translation": ""}
+    from app.services import deepl_service, free_translate_service, translation_cache
+
+    cached = translation_cache.get("auto", target_lang, text)
+    if cached is not None:
+        def cached_gen():
+            yield f"data: {json.dumps({'delta': cached})}\n\n"
+
+        return StreamingResponse(cached_gen(), media_type="text/event-stream")
+
+    fast_result = ""
+    if len(text) <= 5000:
+        if deepl_service.available():
+            try:
+                fast_result = deepl_service.translate(text, target_lang)
+            except Exception:  # noqa: BLE001
+                fast_result = ""
+        if not fast_result and free_translate_service.enabled():
+            try:
+                fast_result = free_translate_service.translate(text, target_lang)
+            except Exception:  # noqa: BLE001
+                fast_result = ""
+    if fast_result:
+        translation_cache.set("auto", target_lang, text, fast_result)
+
+        def fast_gen():
+            yield f"data: {json.dumps({'delta': fast_result})}\n\n"
+
+        return StreamingResponse(fast_gen(), media_type="text/event-stream")
+
     system = (
         "You are a professional academic translator. Translate the user's text into the target language. "
         "Preserve technical terms accurately. Return ONLY the translation, no explanations."
@@ -298,7 +357,10 @@ def translate_stream(body: dict, db: Session = Depends(get_db), user: User = Dep
 
     def gen():
         # chat_stream 在 LLM 不可达时自动降级为离线 mock 流（含降级提示），不抛异常
+        parts: list[str] = []
         for tok in llm.chat_stream(messages, temperature=0.2, max_tokens=1200):
             yield f"data: {json.dumps({'delta': tok})}\n\n"
+            parts.append(tok)
+        translation_cache.set("auto", target_lang, text, "".join(parts))
 
     return StreamingResponse(gen(), media_type="text/event-stream")

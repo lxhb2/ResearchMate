@@ -17,6 +17,7 @@ BACKEND_DIR = os.path.abspath(os.path.join(PACK, "..", ".."))          # /projec
 PROJECT_ROOT = os.path.abspath(os.path.join(PACK, "..", "..", ".."))   # /project
 FRONTEND_DIST = os.path.join(PROJECT_ROOT, "frontend", "dist")
 RESEARCH_TEMPLATES = os.path.join(BACKEND_DIR, "research_skills", "templates")
+PDF2ZH_BRIDGE = os.path.join(BACKEND_DIR, "scripts", "pdf2zh_bridge.py")
 
 # 内嵌前端构建产物 -> 解包到 <_MEIPASS>/dist（run.py 自动识别）
 datas = [(FRONTEND_DIST, "dist")] if os.path.isdir(FRONTEND_DIST) else []
@@ -24,6 +25,10 @@ datas = [(FRONTEND_DIST, "dist")] if os.path.isdir(FRONTEND_DIST) else []
 # 内嵌科研 Skill 模板 -> <_MEIPASS>/research_skills/templates
 if os.path.isdir(RESEARCH_TEMPLATES):
     datas.append((RESEARCH_TEMPLATES, os.path.join("research_skills", "templates")))
+
+# pdf2zh-next 桥接脚本（隔离翻译环境是可选的，安装包内只带调用器）
+if os.path.isfile(PDF2ZH_BRIDGE):
+    datas.append((PDF2ZH_BRIDGE, "scripts"))
 
 binaries = []
 hiddenimports = (

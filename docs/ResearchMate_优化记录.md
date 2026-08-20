@@ -1,8 +1,8 @@
 # ResearchMate 优化记录
 
-> 记录日期：2026-08-20
-> 范围：Zotero 导入修复、P0 安全与可靠性加固、P1 功能补全、Agent 核心集成
-> 验证：后端 32 个测试通过、前端 TypeScript 检查与生产构建通过
+> 记录日期：2026-08-21
+> 范围：Zotero 导入修复、P0 安全与可靠性加固、P1 功能补全、Agent 核心集成、pdf2zh-next 整篇翻译与划词加速
+> 验证：后端 38 个测试通过、前端 TypeScript 检查与生产构建通过
 
 ---
 
@@ -106,5 +106,15 @@ npx tsc --noEmit -p tsconfig.json --pretty false
 - 可选 DeepL API 直连：配置 `DEEPL_API_KEY` 后，短文本优先走 DeepL，速度更快。
 - 新增 `/translate/batch` 批量并发翻译，支持长段落/多选片段加速。
 - 阅读器改为 DeepL 式悬浮翻译卡：选中文字点击「翻译」后，译文在选区附近实时流式展示，可复制/关闭。
+
+## 十、pdf2zh-next 整篇翻译与划词加速（2026-08-21）
+
+- 完整阅读并评估 PDFMathTranslate-next（pdf2zh-next 2.9.0）：基于 BabelDOC，支持保持版式的双语 PDF、上百页长文献、SiliconFlow Free 免费服务，速度明显优于直接串行调用 BabelDOC。
+- 采用隔离环境接入：`backend/.venv-pdf2zh` 独立安装 pdf2zh-next，避免 Gradio/scipy/onnx 等依赖污染主程序；提供 `backend/scripts/install_pdf2zh.ps1` 一键安装。
+- 新增 `backend/app/services/pdf2zh_service.py` 与 `backend/scripts/pdf2zh_bridge.py`：后端通过桥接进程调用，Windows 隐藏命令窗口，解析 pdf2zh 进度事件并持久化到任务结果。
+- 任务队列改造：整篇翻译优先 pdf2zh-next，失败自动回退 BabelDOC；前端显示实时进度、阶段与所用引擎，避免 120s 超时。
+- 划词翻译优化：短文本/段落（≤5000 字符）按「术语表 → 本地缓存 → DeepL → SiliconFlow Free → 快速 LLM」链路返回，长文本才走 LLM 流式；前端增加请求序号防串卡并提升长文本直连阈值。
+- 配置项：`PDF2ZH_ENGINE`、`PDF2ZH_SILICONFLOW_API_KEY`、`PDF2ZH_SILICONFLOW_MODEL`、`TRANSLATION_FREE_SERVICE` 等，详见 `backend/.env.example`。
+- 风险提示：pdf2zh-next 与 BabelDOC 同属 AGPL-3.0；SiliconFlow Free 有配额/限速，失败时会自动回退，如需稳定可配置 SiliconFlow / OpenAI / DeepL Key。
 
 已被需求移除、不在当前路线图内的可选方向：Zotero 深度集成、CSL 引文、笔记本/专题工作区、网页 / RSS / 视频多源导入、OCR、GROBID。

@@ -52,7 +52,7 @@ def _load_or_create_secret_key(storage_dir: str) -> str:
 class Settings(BaseSettings):
     # App
     APP_NAME: str = "ResearchMate"
-    APP_VERSION: str = "0.3.0"
+    APP_VERSION: str = "0.3.1"
     GITHUB_REPO: str = "lxhb2/ResearchMate"
     API_V1_PREFIX: str = "/api/v1"
     SECRET_KEY: str = DEFAULT_SECRET_KEY

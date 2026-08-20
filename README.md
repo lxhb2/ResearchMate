@@ -140,20 +140,33 @@ CI 已配置：每次 push/PR 自动运行后端 pytest 与前端构建（`.gith
 | `SECRET_KEY` | JWT 密钥（生产请改） | 占位 |
 | `EMBEDDING_MODEL` / `EMBEDDING_DIM` | 向量模型与维度 | `text-embedding-3-small` / `1536` |
 
-### 7. 可选：整篇 PDF 翻译（BabelDOC）
+### 7. 可选：整篇 PDF 翻译（pdf2zh-next / BabelDOC）
 
-阅读器新增「整篇翻译」按钮，使用 BabelDOC 保持原版式输出双语 PDF，适合整篇文献快速翻译：
+阅读器「整篇翻译」按钮默认优先使用 **pdf2zh-next（PDFMathTranslate-next）**，
+保持原版式输出双语 PDF，支持上百页长文献；未安装时自动回退 BabelDOC。
+推荐安装方式（隔离环境，不影响主程序依赖）：
 
 ```bash
 cd backend
-pip install -r requirements-babeldoc.txt
+.\scripts\install_pdf2zh.ps1
 ```
 
-未安装时，整篇翻译会提示安装指引；逐段划词翻译不受影响。
+或手动执行：
+
+```bash
+py -3.12 -m venv .venv-pdf2zh
+.venv-pdf2zh\Scripts\python -m pip install -r requirements-pdf2zh.txt
+```
+
+整篇翻译的引擎选择：默认使用 **SiliconFlow Free** 免费服务（零配置），
+也可在 `.env` 配置 `PDF2ZH_SILICONFLOW_API_KEY`、`PDF2ZH_ENGINE=siliconflow|openai|deepl`。
 
 ### 8. 可选：DeepL 翻译加速
 
 配置 `DEEPL_API_KEY`（与 `DEEPL_API_URL`，默认免费版地址）后，短句/术语翻译会优先走 DeepL，速度比 LLM 更快；未配置时自动回退 LLM。
+
+划词翻译还会自动使用 pdf2zh-next 同款的 SiliconFlow Free 服务加速短句/段落；
+如需关闭，在 `.env` 设置 `TRANSLATION_FREE_SERVICE=0`。
 
 ---
 

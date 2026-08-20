@@ -72,8 +72,12 @@ export const translateApi = {
     const { data } = await api.post('/translate', { text, target_lang: targetLang })
     return data
   },
-  // BabelDOC 整篇 PDF 翻译：异步任务（避免 120s 超时）
-  startPdfTranslation: async (paperId: string): Promise<{ task_id: string; status: string }> => {
+  // pdf2zh-next 整篇 PDF 翻译：异步任务（避免 120s 超时）
+  startPdfTranslation: async (paperId: string): Promise<{
+    task_id: string
+    status: string
+    engine?: string
+  }> => {
     const { data } = await api.post('/translate/pdf', { paper_id: paperId })
     return data
   },
@@ -82,6 +86,9 @@ export const translateApi = {
     status: string
     error?: string | null
     output_path?: string | null
+    progress?: number
+    stage?: string | null
+    engine?: string | null
   }> => {
     const { data } = await api.get(`/translate/pdf/status/${taskId}`)
     return data

@@ -1,0 +1,3 @@
+# 可选：pdf2zh-next 快速整篇翻译引擎（PDFMathTranslate-next）
+# 安装到隔离环境：backend\.venv-pdf2zh
+pdf2zh-next==2.9.0

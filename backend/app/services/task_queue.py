@@ -10,6 +10,9 @@ from app.database import SessionLocal
 from app.models.agent_task import AgentTask
 
 
+_last_progress_ts = 0.0
+
+
 def enqueue(db, user_id, task_type: str, payload: dict, max_attempts: int = 3) -> AgentTask:
     """向队列写入一个待执行任务。"""
     task = AgentTask(
@@ -70,6 +73,25 @@ def _finish(task_id, error: Optional[str] = None, result: Optional[dict] = None)
         db.commit()
 
 
+def _update_task_progress(task_id: str, progress: float, stage: str) -> None:
+    """Persist a throttled progress snapshot into the task result JSON."""
+    global _last_progress_ts
+
+    now = time.time()
+    if now - _last_progress_ts < 1.0 and progress < 99:
+        return
+    _last_progress_ts = now
+    with SessionLocal() as db:
+        task = db.get(AgentTask, str(task_id))
+        if task is None:
+            return
+        result = dict(task.result or {})
+        result["progress"] = round(max(0.0, min(float(progress), 100.0)), 1)
+        result["stage"] = stage
+        task.result = result
+        db.commit()
+
+
 def _dispatch(task: AgentTask) -> dict:
     """按任务类型分发执行。"""
     if task.task_type == "paper_processing":
@@ -88,14 +110,15 @@ def _dispatch(task: AgentTask) -> dict:
 
 
 def _run_babeldoc_translate(task: AgentTask) -> dict:
-    """后台执行 BabelDOC 整篇 PDF 翻译，产物保存到 storage/translations/<task_id>/。"""
+    """后台执行整篇 PDF 翻译（优先 pdf2zh-next，失败回退 BabelDOC）。"""
     from app.config import settings
     from app.models.paper import Paper
-    from app.services import babeldoc_service, settings_service
+    from app.services import babeldoc_service, pdf2zh_service, settings_service
 
     paper_id = str((task.payload or {}).get("paper_id") or "")
     lang_in = str((task.payload or {}).get("lang_in") or "en")
     lang_out = str((task.payload or {}).get("lang_out") or "zh")
+    engine = str((task.payload or {}).get("engine") or "auto")
     if not paper_id:
         raise ValueError("babeldoc_translate 任务缺少 paper_id")
 
@@ -114,19 +137,65 @@ def _run_babeldoc_translate(task: AgentTask) -> dict:
     try:
         input_pdf = os.path.join(tmpdir, "input.pdf")
         shutil.copy2(src, input_pdf)
-        files = babeldoc_service.translate_pdf(
-            input_pdf,
-            os.path.join(tmpdir, "out"),
-            lang_in,
-            lang_out,
-            cfg,
-        )
-        chosen = babeldoc_service.pick_translated_pdf(files)
+        pdf_error = ""
+        files: list[str] = []
+        chosen: str | None = None
+        engine_used = "babeldoc"
+
+        if pdf2zh_service.is_available():
+            _update_task_progress(str(task.id), 1, "启动 pdf2zh-next 快速翻译引擎")
+            glossary_path = pdf2zh_service.write_glossary_csv(
+                str(task.user_id), tmpdir, lang_out
+            )
+            try:
+                files = pdf2zh_service.translate_pdf(
+                    input_pdf,
+                    os.path.join(tmpdir, "out"),
+                    lang_in,
+                    lang_out,
+                    cfg,
+                    engine=engine,
+                    progress_cb=lambda p, stage: _update_task_progress(str(task.id), p, stage),
+                )
+                chosen = pdf2zh_service.pick_translated_pdf(files)
+                engine_used = "pdf2zh-next"
+                if glossary_path:
+                    os.remove(glossary_path)
+            except Exception as e:  # noqa: BLE001
+                pdf_error = str(e)
+                _update_task_progress(str(task.id), 0, "pdf2zh-next 失败，正在回退 BabelDOC")
+
+        if not chosen and babeldoc_service.is_available():
+            try:
+                files = babeldoc_service.translate_pdf(
+                    input_pdf,
+                    os.path.join(tmpdir, "out"),
+                    lang_in,
+                    lang_out,
+                    cfg,
+                )
+                chosen = babeldoc_service.pick_translated_pdf(files)
+                engine_used = "babeldoc"
+            except Exception as e:  # noqa: BLE001
+                raise RuntimeError(
+                    f"整篇翻译失败。pdf2zh-next：{pdf_error or '未安装'}；BabelDOC：{e}"
+                ) from e
+
         if not chosen or not os.path.isfile(chosen):
-            raise ValueError("BabelDOC 未生成翻译 PDF")
+            raise ValueError(
+                f"翻译引擎未生成 PDF。pdf2zh-next：{pdf_error or '未使用'}；"
+                "BabelDOC：未使用或不可用"
+            )
         final_path = os.path.join(out_root, f"{paper.title or 'paper'}-{lang_out}.pdf")
         shutil.copy2(chosen, final_path)
-        return {"ok": True, "output_path": final_path, "paper_title": paper.title}
+        return {
+            "ok": True,
+            "output_path": final_path,
+            "paper_title": paper.title,
+            "engine": engine_used,
+            "progress": 100,
+            "stage": "翻译完成",
+        }
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
 

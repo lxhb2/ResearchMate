@@ -495,6 +495,10 @@ export default function ReaderPage() {
   } | null>(null)
   const [floatExpanded, setFloatExpanded] = useState(false)
   const [translatingPdf, setTranslatingPdf] = useState(false)
+  const [pdfProgress, setPdfProgress] = useState(0)
+  const [pdfStage, setPdfStage] = useState('')
+  const [pdfEngine, setPdfEngine] = useState('')
+  const floatRequestId = useRef(0)
   const [summary, setSummary] = useState('')
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [tab, setTab] = useState('analysis')
@@ -960,16 +964,28 @@ export default function ReaderPage() {
     URL.revokeObjectURL(url)
   }
 
-  // BabelDOC 整篇翻译：保持原版式输出双语 PDF
+  // 整篇翻译：优先 pdf2zh-next 快速引擎，保持原版式输出双语 PDF
   const translateWholePdf = async () => {
     if (!paperId || translatingPdf) return
     setTranslatingPdf(true)
+    setPdfProgress(0)
+    setPdfStage('')
+    setPdfEngine('')
     try {
       const start = await translateApi.startPdfTranslation(paperId)
+      setPdfEngine(start.engine || '')
+      let usedEngine = start.engine || ''
+      message.info('整篇翻译已提交，正在后台解析与翻译，可继续阅读')
       let blob: Blob | null = null
-      for (let i = 0; i < 120; i++) {
+      for (let i = 0; i < 1800; i++) {
         await new Promise((r) => setTimeout(r, 2000))
         const st = await translateApi.pdfTranslationStatus(start.task_id)
+        setPdfProgress(st.progress ?? 0)
+        setPdfStage(st.stage || '')
+        if (st.engine) {
+          setPdfEngine(st.engine)
+          usedEngine = st.engine
+        }
         if (st.status === 'success') {
           blob = await translateApi.downloadPdfTranslation(start.task_id)
           break
@@ -985,7 +1001,7 @@ export default function ReaderPage() {
       a.download = `${paper?.title || 'paper'}-translated.pdf`
       a.click()
       URL.revokeObjectURL(url)
-      message.success('整篇翻译完成，已开始下载双语 PDF')
+      message.success(`整篇翻译完成（${usedEngine || '快速引擎'}），已开始下载双语 PDF`)
     } catch (err) {
       message.error(getErrorMessage(err))
     } finally {
@@ -1037,6 +1053,7 @@ export default function ReaderPage() {
   const runFloatAction = async (action: 'translate' | 'polish') => {
     if (!selection) return
     const text = selection.text
+    const requestId = ++floatRequestId.current
     setFloatTranslation({
       x: selection.x,
       y: selection.y + 26,
@@ -1047,15 +1064,21 @@ export default function ReaderPage() {
     try {
       if (action === 'polish') {
         const polished = await translateApi.polish(text)
-        setFloatTranslation((f) => (f ? { ...f, result: polished } : f))
+        if (floatRequestId.current === requestId) {
+          setFloatTranslation((f) => (f ? { ...f, result: polished } : f))
+        }
       } else {
-        if (text.length <= 300) {
-          // 短句/术语：直接返回完整译文，避免逐 token 等待
+        if (text.length <= 5000) {
+          // 短句/段落：DeepL 或免费加速服务一次返回，避免逐 token 等待
           const res = await translateApi.translate(text, 'zh')
-          setFloatTranslation((f) => (f ? { ...f, result: res.translation } : f))
+          if (floatRequestId.current === requestId) {
+            setFloatTranslation((f) => (f ? { ...f, result: res.translation } : f))
+          }
         } else {
           await translateApi.translateStream(text, 'zh', (delta) => {
-            setFloatTranslation((f) => (f ? { ...f, result: f.result + delta } : f))
+            if (floatRequestId.current === requestId) {
+              setFloatTranslation((f) => (f ? { ...f, result: f.result + delta } : f))
+            }
           })
         }
       }
@@ -1422,8 +1445,15 @@ export default function ReaderPage() {
               loading={translatingPdf}
               onClick={translateWholePdf}
             >
-              整篇翻译
+              {translatingPdf
+                ? `翻译中${pdfProgress > 0 ? ` ${Math.round(pdfProgress)}%` : ''}`
+                : '整篇翻译'}
             </Button>
+            {pdfStage && (
+              <Tag color="blue" style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {pdfStage}
+              </Tag>
+            )}
             <Button onClick={() => setPageNumber((p) => Math.max(1, p - 1))} disabled={pageNumber <= 1}>
               上一页
             </Button>
