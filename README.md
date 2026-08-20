@@ -151,6 +151,10 @@ pip install -r requirements-babeldoc.txt
 
 未安装时，整篇翻译会提示安装指引；逐段划词翻译不受影响。
 
+### 8. 可选：DeepL 翻译加速
+
+配置 `DEEPL_API_KEY`（与 `DEEPL_API_URL`，默认免费版地址）后，短句/术语翻译会优先走 DeepL，速度比 LLM 更快；未配置时自动回退 LLM。
+
 ---
 
 ## 🖥️ CLI 用法

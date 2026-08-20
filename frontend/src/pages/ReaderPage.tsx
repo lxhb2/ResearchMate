@@ -486,11 +486,13 @@ export default function ReaderPage() {
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([])
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
-  // 流式翻译弹窗（边生成边显示）
-  const [translationModal, setTranslationModal] = useState<{ open: boolean; text: string }>({
-    open: false,
-    text: '',
-  })
+  // DeepL 式悬浮翻译卡：选中文字后立即在选区附近展示译文
+  const [floatTranslation, setFloatTranslation] = useState<{
+    x: number
+    y: number
+    text: string
+    result: string
+  } | null>(null)
   const [translatingPdf, setTranslatingPdf] = useState(false)
   const [summary, setSummary] = useState('')
   const [summaryLoading, setSummaryLoading] = useState(false)
@@ -1021,11 +1023,15 @@ export default function ReaderPage() {
   const handleTranslate = async () => {
     if (!selection) return
     const text = selection.text
-    clearSelection()
-    setTranslationModal({ open: true, text: '' })
+    setFloatTranslation({
+      x: selection.x,
+      y: selection.y + 26,
+      text,
+      result: '',
+    })
     try {
       await translateApi.translateStream(text, 'zh', (delta) => {
-        setTranslationModal((s) => ({ ...s, text: s.text + delta }))
+        setFloatTranslation((f) => (f ? { ...f, result: f.result + delta } : f))
       })
     } catch (err) {
       message.error(getErrorMessage(err))
@@ -1560,6 +1566,49 @@ export default function ReaderPage() {
                 </div>
               </div>
             )}
+
+            {/* DeepL 式悬浮翻译卡 */}
+            {floatTranslation && (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: Math.max(20, Math.min(floatTranslation.x, (containerRef.current?.clientWidth || 700) - 400)),
+                  top: Math.max(20, floatTranslation.y),
+                  width: 380,
+                  maxWidth: 'calc(100% - 40px)',
+                  zIndex: 20,
+                  background: '#fff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 8,
+                  boxShadow: '0 6px 20px rgba(0,0,0,0.16)',
+                  padding: 10,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <Typography.Text strong style={{ fontSize: 12 }}>
+                    中文翻译
+                  </Typography.Text>
+                  <Space size={4}>
+                    <Button
+                      size="small"
+                      disabled={!floatTranslation.result}
+                      onClick={() => {
+                        navigator.clipboard.writeText(floatTranslation.result)
+                        message.success('已复制译文')
+                      }}
+                    >
+                      复制
+                    </Button>
+                    <Button size="small" type="text" onClick={() => setFloatTranslation(null)}>
+                      关闭
+                    </Button>
+                  </Space>
+                </div>
+                <div style={{ fontSize: 13, lineHeight: 1.7, color: '#333', minHeight: 24 }}>
+                  {floatTranslation.result || <Spin size="small" />}
+                </div>
+              </div>
+            )}
           </div>
         </Col>
 
@@ -1933,31 +1982,6 @@ export default function ReaderPage() {
         )}
       </Modal>
 
-      {/* 流式翻译弹窗 */}
-      <Modal
-        title="中文翻译"
-        open={translationModal.open}
-        onCancel={() => setTranslationModal((m) => ({ ...m, open: false }))}
-        footer={[
-          <Button
-            key="copy"
-            onClick={() => {
-              navigator.clipboard.writeText(translationModal.text)
-              message.success('已复制翻译')
-            }}
-          >
-            复制
-          </Button>,
-          <Button key="close" type="primary" onClick={() => setTranslationModal((m) => ({ ...m, open: false }))}>
-            关闭
-          </Button>,
-        ]}
-        width={560}
-      >
-        <div style={{ whiteSpace: 'pre-wrap', minHeight: 80 }}>
-          {translationModal.text || <Typography.Text type="secondary">翻译生成中...</Typography.Text>}
-        </div>
-      </Modal>
     </div>
   )
 }

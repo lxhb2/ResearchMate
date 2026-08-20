@@ -100,4 +100,11 @@ npx tsc --noEmit -p tsconfig.json --pretty false
 - 新增可选接入：`backend/app/services/babeldoc_service.py` 调用 BabelDOC CLI，阅读器新增「整篇翻译」按钮。
 - 未安装时自动提示 `pip install -r requirements-babeldoc.txt`，不影响原有划词翻译流程。
 
+## 九、段落/词级翻译速度与悬浮体验
+
+- 新增本地翻译缓存：重复短句/术语直接秒回，减少 LLM 调用。
+- 可选 DeepL API 直连：配置 `DEEPL_API_KEY` 后，短文本优先走 DeepL，速度更快。
+- 新增 `/translate/batch` 批量并发翻译，支持长段落/多选片段加速。
+- 阅读器改为 DeepL 式悬浮翻译卡：选中文字点击「翻译」后，译文在选区附近实时流式展示，可复制/关闭。
+
 已被需求移除、不在当前路线图内的可选方向：Zotero 深度集成、CSL 引文、笔记本/专题工作区、网页 / RSS / 视频多源导入、OCR、GROBID。

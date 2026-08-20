@@ -5,6 +5,7 @@ from app.agent import memory as memory_mod
 from app.agent.top_agent import TopAgent
 from app.database import SessionLocal
 from app.services import export_service, glossary_service, reflection_service, task_queue, writing_guide
+from app.services import translation_cache
 
 
 def test_glossary_crud() -> None:
@@ -81,3 +82,9 @@ def test_cluster_nebula_layout_separates_clusters() -> None:
     cy1 = sum(p[1] for p in c1) / 10
     dist = ((cx0 - cx1) ** 2 + (cy0 - cy1) ** 2) ** 0.5
     assert dist > 500
+
+
+def test_translation_cache_roundtrip() -> None:
+    translation_cache.set("auto", "zh", "Transformer", "Transformer 模型")
+    assert translation_cache.get("auto", "zh", "Transformer") == "Transformer 模型"
+    assert translation_cache.get("auto", "en", "Transformer") is None

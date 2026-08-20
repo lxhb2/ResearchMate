@@ -1,6 +1,7 @@
 import os
 import shutil
 import tempfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from fastapi import APIRouter, Depends, HTTPException
 import json
@@ -25,6 +26,11 @@ class PdfTranslateRequest(BaseModel):
     lang_out: str = "zh"
 
 
+class BatchTranslateRequest(BaseModel):
+    texts: list[str]
+    target_lang: str = "zh"
+
+
 def _build_llm(db: Session, user_id) -> LLMAdapter:
     """从用户设置构造 LLM 适配器，无 key/服务不可用时自动降级为 mock。"""
     try:
@@ -34,30 +40,55 @@ def _build_llm(db: Session, user_id) -> LLMAdapter:
         return LLMAdapter.mock()
 
 
-@router.post("/translate")
-def translate(body: dict, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    text = body.get("text", "").strip()
-    target_lang = body.get("target_lang", "zh")
-    save_term = bool(body.get("save_term", False))
-    if not text:
-        return {"translation": ""}
+def _translate_with_llm(llm: LLMAdapter, text: str, target_lang: str) -> str:
     system = (
         "You are a professional academic translator. Translate the user's text into the target language. "
         "Preserve technical terms accurately. Return ONLY the translation, no explanations."
     )
     user_msg = f"Target language: {target_lang}\n\nText to translate:\n{text}"
     messages = llm_service.system_user(system, user_msg)
-    # 统一走 LLMAdapter：连接失败自动降级为离线 mock（不抛 500）
-    llm = _build_llm(db, user.id)
-    translation = llm.chat(messages, temperature=0.2, max_tokens=1200)
-    result: dict = {"translation": translation.strip()}
+    return llm.chat(messages, temperature=0.2, max_tokens=1200).strip()
+
+
+def _translate_text(db: Session, user_id, text: str, target_lang: str) -> str:
+    """带缓存 / DeepL 直连 / LLM 降级的单条翻译。"""
+    from app.services import deepl_service, translation_cache
+
+    text = (text or "").strip()
+    if not text:
+        return ""
+    cached = translation_cache.get("auto", target_lang, text)
+    if cached is not None:
+        return cached
+    if deepl_service.available() and len(text) <= 5000:
+        try:
+            translated = deepl_service.translate(text, target_lang)
+            if translated:
+                translation_cache.set("auto", target_lang, text, translated)
+                return translated
+        except Exception:  # noqa: BLE001
+            pass
+    llm = _build_llm(db, user_id)
+    translation = _translate_with_llm(llm, text, target_lang)
+    if translation:
+        translation_cache.set("auto", target_lang, text, translation)
+    return translation
+
+
+@router.post("/translate")
+def translate(body: dict, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    text = body.get("text", "").strip()
+    target_lang = body.get("target_lang", "zh")
+    save_term = bool(body.get("save_term", False))
+    translation = _translate_text(db, user.id, text, target_lang)
+    result: dict = {"translation": translation}
     if save_term and text and len(text) <= 200:
         try:
             from app.services import glossary_service
             item = glossary_service.add_term(
                 str(user.id),
                 text[:100],
-                translation=translation.strip(),
+                translation=translation,
                 source_lang="auto",
                 target_lang=target_lang,
             )
@@ -65,6 +96,50 @@ def translate(body: dict, db: Session = Depends(get_db), user: User = Depends(ge
         except Exception:  # noqa: BLE001
             pass
     return result
+
+
+@router.post("/translate/batch")
+def translate_batch(
+    body: BatchTranslateRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """批量翻译：并发调用，用于长段落/多选片段加速。"""
+    from app.agent.llm_adapter import LLMAdapter
+    from app.services import deepl_service, translation_cache
+
+    texts = [(t or "").strip() for t in (body.texts or [])]
+    texts = [t for t in texts if t][:50]
+    cfg = settings_service.get_llm_config(db, str(user.id))
+    llm = LLMAdapter.from_config(cfg)
+
+    def work(text: str) -> str:
+        cached = translation_cache.get("auto", body.target_lang, text)
+        if cached is not None:
+            return cached
+        if deepl_service.available() and len(text) <= 5000:
+            try:
+                translated = deepl_service.translate(text, body.target_lang)
+                if translated:
+                    translation_cache.set("auto", body.target_lang, text, translated)
+                    return translated
+            except Exception:  # noqa: BLE001
+                pass
+        translated = _translate_with_llm(llm, text, body.target_lang)
+        if translated:
+            translation_cache.set("auto", body.target_lang, text, translated)
+        return translated
+
+    results: dict[int, str] = {}
+    with ThreadPoolExecutor(max_workers=min(5, len(texts) or 1)) as ex:
+        futures = {ex.submit(work, t): i for i, t in enumerate(texts)}
+        for future in as_completed(futures):
+            idx = futures[future]
+            try:
+                results[idx] = future.result()
+            except Exception:  # noqa: BLE001
+                results[idx] = ""
+    return {"translations": [results.get(i, "") for i in range(len(texts))]}
 
 
 @router.post("/translate/pdf")
