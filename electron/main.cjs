@@ -5,11 +5,25 @@ const fs = require('fs')
 const http = require('http')
 const { autoUpdater } = require('electron-updater')
 
+autoUpdater.autoDownload = false
+autoUpdater.autoInstallOnAppQuit = true
+
 const APP_PORT = Number(process.env.RESEARCHMATE_PORT || 18080)
 let mainWindow = null
 let backendProc = null
 let quitting = false
 let tray = null
+let updateChecked = false
+let updateInfo = null
+let downloadStarted = false
+
+async function ensureChecked(force = false) {
+  if (updateChecked && !force) return
+  const result = await autoUpdater.checkForUpdates()
+  updateInfo = result?.updateInfo || null
+  updateChecked = true
+  return result
+}
 
 function resolveBackendExe() {
   if (app.isPackaged) {
@@ -156,13 +170,13 @@ function registerIpc() {
 
   ipcMain.handle('update:check', async () => {
     try {
-      const result = await autoUpdater.checkForUpdates()
+      await ensureChecked(true)
       return {
         ok: true,
         current: app.getVersion(),
-        available: result?.updateInfo?.version || null,
-        releaseName: result?.updateInfo?.releaseName || null,
-        releaseDate: result?.updateInfo?.releaseDate || null,
+        available: updateInfo?.version || null,
+        releaseName: updateInfo?.releaseName || null,
+        releaseDate: updateInfo?.releaseDate || null,
       }
     } catch (err) {
       return { ok: false, error: String(err?.message || err) }
@@ -171,9 +185,18 @@ function registerIpc() {
 
   ipcMain.handle('update:download', async () => {
     try {
+      await ensureChecked()
+      if (!updateInfo) {
+        return { ok: false, error: '未发现可用更新，请先点击「检查更新」' }
+      }
+      if (downloadStarted) {
+        return { ok: true, already: true }
+      }
+      downloadStarted = true
       await autoUpdater.downloadUpdate()
       return { ok: true }
     } catch (err) {
+      downloadStarted = false
       return { ok: false, error: String(err?.message || err) }
     }
   })
