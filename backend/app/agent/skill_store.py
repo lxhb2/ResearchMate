@@ -131,14 +131,16 @@ def _persist_files(skill_name: str, members: list[tuple[str, bytes]]) -> None:
         # 只保留代码/配置类文件，跳过 README/说明
         if not re.search(r"\.(py|js|ts|tsx|json|yaml|yml|sh|txt|md)$", name, re.I):
             continue
-        rel = name.strip("/")
+        rel = name.strip("/").replace("\\", "/")
         # 去掉常见仓库根前缀（如 owner-repo-main/）
         parts = rel.split("/")
         if len(parts) > 1 and len(parts[0].split("-")) >= 2 and "-" in parts[0]:
-            rel = "/".join(parts[1:])
-        if not rel:
+            parts = parts[1:]
+        # 防御路径穿越：拒绝绝对路径、盘符与 ../ 逃逸，非法成员直接跳过
+        parts = [p for p in parts if p not in ("", ".")]
+        if not parts or any(p == ".." for p in parts) or any(re.match(r"^[A-Za-z]:", p) for p in parts):
             continue
-        target = os.path.join(dest, rel)
+        target = os.path.join(dest, *parts)
         os.makedirs(os.path.dirname(target), exist_ok=True)
         with open(target, "wb") as f:
             f.write(content)

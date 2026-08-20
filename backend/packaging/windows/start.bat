@@ -13,6 +13,7 @@ set "PGDATA=%~dp0pgdata"
 set "APP=%~dp0backend\ResearchMate.exe"
 set "PGLOG=%~dp0postgres.log"
 set "PORT=8000"
+if "%HOST%"=="" set "HOST=0.0.0.0"
 
 REM ---- backend runtime env ----
 set DATABASE_URL=postgresql+psycopg2://researchmate:researchmate@127.0.0.1:55432/researchmate

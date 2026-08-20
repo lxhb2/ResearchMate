@@ -63,6 +63,28 @@ def _plugin_dir(name: str) -> str:
     return os.path.join(PLUGINS_DIR, name)
 
 
+def _safe_extract_zip(zf: zipfile.ZipFile, target_dir: str) -> None:
+    """逐成员校验后解压 zip，防御 Zip Slip / 绝对路径 / 符号链接逃逸。"""
+    root = os.path.abspath(target_dir)
+    os.makedirs(root, exist_ok=True)
+    for member in zf.infolist():
+        raw = (member.filename or "").replace("\\", "/")
+        if raw.startswith("/") or os.path.isabs(raw) or re.match(r"^[A-Za-z]:", raw):
+            raise PluginError(f"zip 包含非法绝对路径: {member.filename}")
+        rel = os.path.normpath(raw)
+        if rel == ".." or rel.startswith(".." + os.sep):
+            raise PluginError(f"zip 包含非法路径: {member.filename}")
+        target = os.path.normpath(os.path.join(root, rel))
+        if target != root and not target.startswith(root + os.sep):
+            raise PluginError(f"zip 包含非法路径: {member.filename}")
+        if member.is_dir():
+            os.makedirs(target, exist_ok=True)
+            continue
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        with zf.open(member) as src, open(target, "wb") as dst:
+            shutil.copyfileobj(src, dst)
+
+
 def _read_manifest(pdir: str) -> dict:
     mf = os.path.join(pdir, "plugin.json")
     if not os.path.isfile(mf):
@@ -325,7 +347,7 @@ class PluginManager:
         shutil.rmtree(tmp, ignore_errors=True)
         os.makedirs(tmp)
         try:
-            zf.extractall(tmp)
+            _safe_extract_zip(zf, tmp)
             src = os.path.join(tmp, root) if root else tmp
             manifest = _read_manifest(src)
             dest = _plugin_dir(manifest["name"])
@@ -422,7 +444,8 @@ class PluginManager:
         from app.agent import tools as tools_mod, mcp_store
 
         for t in tools_mod.tools_by_source():
-            if t["source"] not in live:
+            # MCP 动态工具由 mcp_runtime 管理，不属于插件注册，不在此清理
+            if t["source"] not in live and not t["source"].startswith("mcp:"):
                 tools_mod.unregister_tools_by_source(t["source"])
         for s in mcp_store.list_servers():
             src = s.get(PLUGIN_SOURCE_FIELD)

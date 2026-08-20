@@ -76,6 +76,34 @@ def md_to_docx_bytes(markdown_text: str, title: str = "") -> bytes:
     return buf.getvalue()
 
 
+def md_to_printable_html(markdown_text: str, title: str = "") -> bytes:
+    """把 Markdown 渲染为适合浏览器打印/另存为 PDF 的 HTML。"""
+    body = markdown.markdown(markdown_text or "", extensions=["extra", "sane_lists", "tables"])
+    html = f"""<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>{title or 'ResearchMate'}</title>
+<style>
+body {{ font-family: "Times New Roman", SimSun, serif; max-width: 820px; margin: 32px auto; line-height: 1.8; color: #1f2329; }}
+h1 {{ text-align: center; font-size: 22px; }}
+h2 {{ font-size: 18px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; }}
+table {{ border-collapse: collapse; width: 100%; margin: 12px 0; }}
+th, td {{ border: 1px solid #d1d5db; padding: 6px 10px; font-size: 14px; }}
+blockquote {{ color: #6b7280; border-left: 3px solid #c7d2fe; margin: 8px 0; padding-left: 12px; }}
+pre {{ background: #f3f4f6; padding: 10px; border-radius: 6px; overflow-x: auto; }}
+code {{ background: #f3f4f6; padding: 2px 4px; border-radius: 4px; }}
+@media print {{ body {{ margin: 12mm; }} }}
+</style>
+</head>
+<body>
+{body}
+</body>
+</html>
+"""
+    return html.encode("utf-8")
+
+
 _HEADING_RE = re.compile(r"^h([1-6])$", re.I)
 
 

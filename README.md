@@ -119,7 +119,17 @@ RESEARCH_LLM_PROVIDER=openai RESEARCH_OPENAI_API_KEY=sk-xxx python main.py --res
 RESEARCH_LLM_PROVIDER=mock python main.py --research "..."
 ```
 
-### 5. 其他常用配置（`.env`）
+### 5. 自动化测试
+
+```bash
+cd backend
+pip install -r requirements-dev.txt
+python -m pytest -q
+```
+
+CI 已配置：每次 push/PR 自动运行后端 pytest 与前端构建（`.github/workflows/ci.yml`）。
+
+### 6. 其他常用配置（`.env`）
 
 | 变量 | 说明 | 默认 |
 | --- | --- | --- |

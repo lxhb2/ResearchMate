@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 
 from app.config import settings
 from app.database import Base, engine, SessionLocal
@@ -27,8 +28,10 @@ from app.routers import (
     imports,
     graph,
     app_info,
+    tasks,
 )
 from app.utils.security import hash_password
+from app.services import task_queue
 
 
 def _ensure_storage():
@@ -39,6 +42,8 @@ def _init_db():
     # 建表（SQLite/PostgreSQL 通用；轻量化默认 SQLite 单文件）
     Base.metadata.create_all(bind=engine)
     _migrate_sqlite()
+    from app.services import fts_service
+    fts_service.ensure_fts()
 
 
 def _migrate_sqlite() -> None:
@@ -83,9 +88,44 @@ def _migrate_sqlite() -> None:
                 for col, ddl in chunk_adds.items():
                     if col not in chunk_cols:
                         conn.execute(text(ddl))
+            _migrate_doi_constraint(conn)
     except Exception:  # noqa: BLE001
         # 迁移失败不阻塞启动（新库首次建表时本就包含这些列）
         pass
+
+
+def _migrate_doi_constraint(conn) -> None:
+    """DOI 唯一约束按用户收敛：新增 (user_id, doi) 复合唯一索引。
+
+    新库由 ORM 直接建复合唯一约束；旧库若遗留全局唯一索引，能删则删，
+    SQLite 自动索引无法删除时保留（单用户本地应用下不影响使用）。
+    """
+    indexes = conn.execute(text("PRAGMA index_list('papers')")).fetchall()
+    has_composite = any(str(row[1]) == "uq_papers_user_doi" for row in indexes)
+    if not has_composite:
+        try:
+            conn.execute(
+                text(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS uq_papers_user_doi "
+                    "ON papers(user_id, doi)"
+                )
+            )
+        except Exception:  # noqa: BLE001
+            pass
+    for row in indexes:
+        name = str(row[1])
+        unique = bool(row[2])
+        if not unique or name in ("uq_papers_user_doi",) or name.startswith("sqlite_autoindex"):
+            continue
+        try:
+            cols = [str(c[2]) for c in conn.execute(text(f"PRAGMA index_info('{name}')")).fetchall()]
+        except Exception:  # noqa: BLE001
+            continue
+        if cols == ["doi"]:
+            try:
+                conn.execute(text(f'DROP INDEX IF EXISTS "{name}"'))
+            except Exception:  # noqa: BLE001
+                pass
 
 
 def _ensure_default_user(db: Session) -> None:
@@ -103,6 +143,47 @@ def _ensure_default_user(db: Session) -> None:
     db.commit()
 
 
+def _recover_stale_tasks() -> None:
+    """把上次进程中断时遗留的 running 任务放回 pending，交给 worker 重试。"""
+    try:
+        from app.models.agent_task import AgentTask
+
+        with SessionLocal() as db:
+            db.query(AgentTask).filter(AgentTask.status == "running").update(
+                {"status": "pending"}, synchronize_session=False
+            )
+            db.commit()
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _recover_interrupted_papers() -> None:
+    """启动时重放上次中断的论文任务（processing / analysis pending）。"""
+    try:
+        from app.models.paper import Paper
+        from app.services import task_queue
+
+        with SessionLocal() as db:
+            stuck = (
+                db.query(Paper)
+                .filter(or_(Paper.status == "processing", Paper.analysis_status == "pending"))
+                .order_by(Paper.created_at.asc())
+                .all()
+            )
+            if not stuck:
+                return
+            print(f"[recovery] 发现 {len(stuck)} 篇未完成任务，开始后台重放")
+            for paper in stuck:
+                task_queue.enqueue(
+                    db,
+                    paper.user_id,
+                    "paper_processing",
+                    {"paper_id": str(paper.id)},
+                )
+    except Exception as e:  # noqa: BLE001
+        print(f"[recovery] 启动恢复失败：{e}")
+
+
 app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION)
 
 app.add_middleware(
@@ -117,6 +198,9 @@ _ensure_storage()
 _init_db()
 with SessionLocal() as db:
     _ensure_default_user(db)
+
+_recover_stale_tasks()
+task_queue.start_worker()
 
 # 插件生态：启动时装载全部已启用插件（技能/工具/MCP 配置注册进对应注册表）
 def _load_plugins() -> None:
@@ -149,6 +233,9 @@ app.include_router(agent.router, prefix=prefix)
 app.include_router(imports.router, prefix=prefix)
 app.include_router(graph.router, prefix=prefix)
 app.include_router(app_info.router, prefix=prefix)
+app.include_router(tasks.router, prefix=prefix)
+
+_recover_interrupted_papers()
 
 
 def _resolve_frontend_dist() -> str:

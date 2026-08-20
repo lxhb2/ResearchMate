@@ -1,6 +1,6 @@
 import { api, streamSSE } from './client'
 import type { Conversation } from '../types'
-import type { AgentContext } from './agent'
+import type { AgentContext, AgentEvent } from './agent'
 
 export const chatApi = {
   send: async (
@@ -38,6 +38,28 @@ export const chatApi = {
         if (meta?.conversation_id) convId = String(meta.conversation_id)
       },
       signal,
+    )
+    return convId
+  },
+  // 实时事件流：thinking / tool_start / tool_result / answer
+  sendEvents: async (
+    message: string,
+    conversationId: string | undefined,
+    useLibrary: boolean,
+    webSearch: boolean,
+    contexts: AgentContext[] = [],
+    onEvent: (evt: AgentEvent) => void,
+  ): Promise<string | undefined> => {
+    let convId: string | undefined
+    await streamSSE(
+      '/chat/events',
+      { message, conversation_id: conversationId, use_library: useLibrary, web_search: webSearch, contexts },
+      () => undefined,
+      (meta) => {
+        if (meta?.conversation_id) convId = String(meta.conversation_id)
+      },
+      undefined,
+      (evt) => onEvent(evt as unknown as AgentEvent),
     )
     return convId
   },

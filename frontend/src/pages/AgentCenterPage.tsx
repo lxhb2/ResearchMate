@@ -35,7 +35,15 @@ import {
   StarOutlined,
 } from '@ant-design/icons'
 import type { UploadProps } from 'antd'
-import { agentApi, type SkillInfo, type McpServer, type MemoryFile, type GithubRepo } from '../api/agent'
+import {
+  agentApi,
+  type SkillInfo,
+  type McpServer,
+  type MemoryFile,
+  type GithubRepo,
+  type ToolInfo,
+  type TaskInfo,
+} from '../api/agent'
 import { getErrorMessage } from '../api/client'
 
 const { Title, Text, Paragraph } = Typography
@@ -65,6 +73,13 @@ export default function AgentCenterPage({ embedded = false }: { embedded?: boole
   const [memView, setMemView] = useState<{ name: string; title: string; content: string } | null>(null)
   const [memDraft, setMemDraft] = useState('')
 
+  // ---- 工具目录状态 ----
+  const [toolsData, setToolsData] = useState<{ builtin: ToolInfo[]; mcp: ToolInfo[] }>({
+    builtin: [],
+    mcp: [],
+  })
+  const [tasks, setTasks] = useState<TaskInfo[]>([])
+
   const loadSkills = async () => {
     try {
       const data = await agentApi.skillsList()
@@ -90,10 +105,29 @@ export default function AgentCenterPage({ embedded = false }: { embedded?: boole
     }
   }
 
+  const loadTools = async () => {
+    try {
+      const data = await agentApi.tools()
+      setToolsData({ builtin: data.builtin || [], mcp: data.mcp || [] })
+    } catch (err) {
+      message.error('加载工具目录失败：' + getErrorMessage(err))
+    }
+  }
+
+  const loadTasks = async () => {
+    try {
+      setTasks(await agentApi.tasksList())
+    } catch (err) {
+      message.error('加载任务失败：' + getErrorMessage(err))
+    }
+  }
+
   useEffect(() => {
     loadSkills()
     loadMcp()
     loadMemory()
+    loadTools()
+    loadTasks()
   }, [])
 
   // ---- Skill 操作 ----
@@ -142,8 +176,23 @@ export default function AgentCenterPage({ embedded = false }: { embedded?: boole
       const res = await agentApi.mcpTest(name)
       if (res.ok) message.success({ key: 'mcp-test', content: `${name} 连接正常` })
       else message.error({ key: 'mcp-test', content: `${name}：${res.error}` })
+      loadMcp()
+      loadTools()
     } catch (err) {
       message.error({ key: 'mcp-test', content: '测试失败：' + getErrorMessage(err) })
+    }
+  }
+
+  const discoverMcp = async (name: string) => {
+    message.loading({ key: 'mcp-discover', content: `正在发现 ${name} 的工具…` })
+    try {
+      const res = await agentApi.mcpDiscover(name)
+      if (res.ok) message.success({ key: 'mcp-discover', content: `${name} 发现 ${res.tool_count} 个工具` })
+      else message.error({ key: 'mcp-discover', content: `${name}：${res.error}` })
+      loadMcp()
+      loadTools()
+    } catch (err) {
+      message.error({ key: 'mcp-discover', content: '发现失败：' + getErrorMessage(err) })
     }
   }
 
@@ -429,6 +478,9 @@ export default function AgentCenterPage({ embedded = false }: { embedded?: boole
                         title: '操作',
                         render: (_, s) => (
                           <Space>
+                            <Button size="small" icon={<SearchOutlined />} onClick={() => discoverMcp(s.name)}>
+                              发现
+                            </Button>
                             <Button size="small" onClick={() => testMcp(s.name)}>
                               测试
                             </Button>
@@ -452,6 +504,119 @@ export default function AgentCenterPage({ embedded = false }: { embedded?: boole
                     ]}
                   />
                 )}
+              </Card>
+            ),
+          },
+          {
+            key: 'tools',
+            label: (
+              <Space>
+                <ThunderboltOutlined /> 工具 Tools
+              </Space>
+            ),
+            children: (
+              <Card>
+                <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+                  助手可调用的全部工具：内置科研工具 + 已发现的 MCP 工具。MCP 工具需先「发现」后才会出现在这里。
+                </Text>
+                <Divider orientation="left">内置工具（{toolsData.builtin.length}）</Divider>
+                <List
+                  size="small"
+                  dataSource={toolsData.builtin}
+                  locale={{ emptyText: <Empty description="暂无内置工具" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+                  renderItem={(t) => (
+                    <List.Item>
+                      <List.Item.Meta
+                        title={<Tag color="blue">{t.name}</Tag>}
+                        description={t.description || '（无描述）'}
+                      />
+                    </List.Item>
+                  )}
+                />
+                <Divider orientation="left">MCP 工具（{toolsData.mcp.length}）</Divider>
+                <List
+                  size="small"
+                  dataSource={toolsData.mcp}
+                  locale={{ emptyText: <Empty description="暂无 MCP 工具，请先在 MCP 服务器页「发现」" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+                  renderItem={(t) => (
+                    <List.Item>
+                      <List.Item.Meta
+                        title={
+                          <Space>
+                            <Tag color="geekblue">{t.name}</Tag>
+                            <Tag color="default">{t.server}</Tag>
+                          </Space>
+                        }
+                        description={t.description || '（无描述）'}
+                      />
+                    </List.Item>
+                  )}
+                />
+              </Card>
+            ),
+          },
+          {
+            key: 'tasks',
+            label: (
+              <Space>
+                <CheckCircleOutlined /> 任务 Tasks
+              </Space>
+            ),
+            children: (
+              <Card>
+                <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+                  论文解析、导入等后台任务状态。失败任务可一键重试，应用重启后未完成任务会自动恢复。
+                </Text>
+                <Table
+                  rowKey="id"
+                  dataSource={tasks}
+                  pagination={false}
+                  size="small"
+                  locale={{ emptyText: <Empty description="暂无后台任务" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+                  columns={[
+                    {
+                      title: '类型',
+                      dataIndex: 'task_type',
+                      render: (v) => <Tag>{v}</Tag>,
+                    },
+                    {
+                      title: '状态',
+                      dataIndex: 'status',
+                      render: (v) => {
+                        const color = v === 'success' ? 'green' : v === 'failed' ? 'red' : v === 'running' ? 'blue' : 'gold'
+                        return <Tag color={color}>{v}</Tag>
+                      },
+                    },
+                    { title: '尝试次数', dataIndex: 'attempts', width: 90 },
+                    {
+                      title: '错误',
+                      dataIndex: 'error',
+                      ellipsis: true,
+                      render: (v) => v || '—',
+                    },
+                    {
+                      title: '操作',
+                      width: 90,
+                      render: (_, t) => (
+                        <Button
+                          size="small"
+                          disabled={t.status === 'running' || t.status === 'pending'}
+                          onClick={async () => {
+                            try {
+                              await agentApi.taskRetry(t.id)
+                              message.success('已重新加入队列')
+                              loadTasks()
+                            } catch (err) {
+                              message.error(getErrorMessage(err))
+                            }
+                          }}
+                        >
+                          重试
+                        </Button>
+                      ),
+                    },
+                  ]}
+                />
               </Card>
             ),
           },

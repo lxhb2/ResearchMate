@@ -25,6 +25,7 @@ def _build_llm(db: Session, user_id) -> LLMAdapter:
 def translate(body: dict, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     text = body.get("text", "").strip()
     target_lang = body.get("target_lang", "zh")
+    save_term = bool(body.get("save_term", False))
     if not text:
         return {"translation": ""}
     system = (
@@ -36,7 +37,21 @@ def translate(body: dict, db: Session = Depends(get_db), user: User = Depends(ge
     # 统一走 LLMAdapter：连接失败自动降级为离线 mock（不抛 500）
     llm = _build_llm(db, user.id)
     translation = llm.chat(messages, temperature=0.2, max_tokens=1200)
-    return {"translation": translation.strip()}
+    result: dict = {"translation": translation.strip()}
+    if save_term and text and len(text) <= 200:
+        try:
+            from app.services import glossary_service
+            item = glossary_service.add_term(
+                str(user.id),
+                text[:100],
+                translation=translation.strip(),
+                source_lang="auto",
+                target_lang=target_lang,
+            )
+            result["saved_term"] = item
+        except Exception:  # noqa: BLE001
+            pass
+    return result
 
 
 @router.post("/translate/stream")

@@ -789,13 +789,31 @@ def _skills_list(ctx: ToolContext, args: dict) -> dict:
 
 
 def _mcp_tools(ctx: ToolContext, args: dict) -> dict:
-    """列出已配置的 MCP 服务器与其可用工具（用于判断可调用的外部能力）。"""
-    from app.agent.mcp_store import list_servers, server_tools
+    """列出已配置的 MCP 服务器与其可用工具；refresh=True 时先重新发现。"""
+    from app.agent import mcp_runtime
+    from app.agent.mcp_store import list_servers
 
+    if args.get("refresh"):
+        mcp_runtime.refresh_all()
     servers = list_servers()
     result = []
     for s in servers:
-        result.append({"name": s["name"], "tools": server_tools(s["name"])})
+        tools = s.get("tools") or []
+        result.append(
+            {
+                "name": s["name"],
+                "type": s.get("type", "http"),
+                "enabled": s.get("enabled", True),
+                "tools": [
+                    {
+                        "name": t.get("name"),
+                        "description": t.get("description"),
+                        "registered": f"mcp__{s['name']}__{t.get('name')}",
+                    }
+                    for t in tools
+                ],
+            }
+        )
     return {"count": len(servers), "servers": result}
 
 
@@ -824,6 +842,55 @@ def _skill_install(ctx: ToolContext, args: dict) -> dict:
         return {"ok": True, "count": len(skills), "skills": skills}
     except Exception as e:  # noqa: BLE001
         return {"ok": False, "error": str(e), "skills": []}
+
+
+def _workflow_execute(ctx: ToolContext, args: dict) -> dict:
+    """把一句话任务交给 Agent 拆解为工作流并执行（计划 → 执行 → 汇总）。"""
+    task = (args.get("task") or "").strip()
+    if not task:
+        return {"ok": False, "error": "缺少 task 参数"}
+    if ctx.llm is None or ctx.llm.provider == "mock":
+        return {"ok": False, "error": "当前未配置可用 LLM，无法自动规划多步任务"}
+
+    from app.agent.agent import Agent, WorkflowGenerationError
+    from app.agent.executor import Executor
+    from app.agent.schema import Workflow
+
+    try:
+        workflow, description = Agent(ctx.llm).generate_workflow(task)
+    except WorkflowGenerationError as e:
+        return {"ok": False, "error": f"任务规划失败：{e}"}
+
+    try:
+        result = Executor(llm=ctx.llm, auto_confirm=False).run(workflow, ctx)
+        logs = [
+            {"node": log.node_id, "status": log.status, "detail": log.detail}
+            for log in result.logs
+        ]
+        if ctx.user_id:
+            try:
+                from app.services import reflection_service
+                reflection_service.save_reflection(
+                    ctx.user_id,
+                    "工作流反思",
+                    task,
+                    str(result.final_output or description),
+                    result.status,
+                    llm=ctx.llm,
+                )
+            except Exception:  # noqa: BLE001
+                pass
+        return {
+            "ok": result.status == "success",
+            "status": result.status,
+            "description": description,
+            "workflow_id": workflow.workflow_id,
+            "final_output": result.final_output,
+            "error": result.error,
+            "logs": logs,
+        }
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "error": f"工作流执行失败：{e}"}
 
 
 # ---------------------------------------------------------------------------
@@ -1076,8 +1143,14 @@ def _build_registry() -> dict[str, Tool]:
         ),
         "mcp_tools": Tool(
             name="mcp_tools",
-            description="列出已配置的 MCP 服务器与其可用工具。",
-            parameters={"type": "object", "properties": {}, "required": []},
+            description="列出已配置的 MCP 服务器与其可用工具；refresh=true 时重新连接发现工具。",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "refresh": {"type": "boolean", "description": "是否重新连接服务器发现工具"},
+                },
+                "required": [],
+            },
             handler=_mcp_tools,
         ),
         "skill_search": Tool(
@@ -1104,6 +1177,18 @@ def _build_registry() -> dict[str, Tool]:
                 "required": ["repo_url"],
             },
             handler=_skill_install,
+        ),
+        "workflow_execute": Tool(
+            name="workflow_execute",
+            description="把一个多步科研任务自动规划为工作流并执行（计划 → 执行 → 汇总），适合需要串联检索、翻译、对比、写入等步骤的任务。",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "task": {"type": "string", "description": "一句话描述的多步任务，如：检索最近文献并对比方法，再把结果写入写作项目"},
+                },
+                "required": ["task"],
+            },
+            handler=_workflow_execute,
         ),
     }
     return tools

@@ -1,7 +1,7 @@
 import os
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -173,6 +173,38 @@ def export_word(
     return StreamingResponse(
         iter([docx_bytes]),
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/{project_id}/export")
+def export_project(
+    project_id: str,
+    format: str = "md",
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """导出写作项目：Markdown / Word / 浏览器打印 HTML（可另存为 PDF）。"""
+    project = _require_project(db, project_id, user.id)
+    content = project.content or ""
+    title = project.title or "Untitled"
+    safe_title = "".join(c for c in title if c.isalnum() or c in " -_") or "paper"
+    fmt = format if format in ("md", "docx", "html") else "md"
+    if fmt == "docx":
+        data = export_service.md_to_docx_bytes(content, title)
+        media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        filename = f"{safe_title}.docx"
+    elif fmt == "html":
+        data = export_service.md_to_printable_html(content, title)
+        media_type = "text/html; charset=utf-8"
+        filename = f"{safe_title}.html"
+    else:
+        data = (content or "（空项目）").encode("utf-8")
+        media_type = "text/markdown; charset=utf-8"
+        filename = f"{safe_title}.md"
+    return Response(
+        content=data,
+        media_type=media_type,
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 

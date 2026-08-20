@@ -56,6 +56,7 @@ copy /y "%~dp0start.bat" "%PKG%\start.bat" >nul
 copy /y "%~dp0ResearchMate.vbs" "%PKG%\ResearchMate.vbs" >nul
 copy /y "%~dp0stop.bat" "%PKG%\stop.bat" >nul
 copy /y "%~dp0README.txt" "%PKG%\README.txt" >nul
+copy /y "%ROOT%\allow_lan.bat" "%PKG%\allow_lan.bat" >nul
 
 echo.
 echo ============================================================

@@ -83,6 +83,38 @@ export interface PluginInfo {
   error?: string | null
 }
 
+export interface ToolInfo {
+  name: string
+  description: string
+  parameters?: Record<string, unknown>
+  server?: string
+  mcp_name?: string
+}
+
+export interface TaskInfo {
+  id: string
+  task_type: string
+  payload: Record<string, unknown>
+  status: 'pending' | 'running' | 'success' | 'failed'
+  attempts: number
+  max_attempts: number
+  error?: string | null
+  result?: Record<string, unknown>
+  created_at?: string | null
+  updated_at?: string | null
+}
+
+export interface AgentEvent {
+  type: 'route' | 'thinking' | 'tool_start' | 'tool_result' | 'answer' | 'recommendation' | 'done' | 'error'
+  path?: string
+  tool?: string
+  args?: Record<string, unknown>
+  result?: string
+  answer?: string
+  error?: string
+  tool_trace?: { tool: string; args: Record<string, unknown>; result: string }[]
+}
+
 // @ 引用上下文对象
 export interface AgentContext {
   type: 'skill' | 'tool' | 'memory' | 'module'
@@ -100,12 +132,14 @@ export const agentApi = {
     useLibrary = false,
     webSearch = false,
     contexts: AgentContext[] = [],
+    history: { role: string; content: string }[] = [],
   ): Promise<AgentChatResult> => {
     const { data } = await api.post<AgentChatResult>('/agent/chat', {
       message,
       use_library: useLibrary,
       web_search: webSearch,
       contexts,
+      history,
     })
     return data
   },
@@ -120,10 +154,11 @@ export const agentApi = {
     onDelta: (delta: string) => void,
     signal?: AbortSignal,
     contexts: AgentContext[] = [],
+    history: { role: string; content: string }[] = [],
   ): Promise<void> => {
     await streamSSE(
       '/agent/chat/stream',
-      { message, use_library: useLibrary, web_search: webSearch, contexts },
+      { message, use_library: useLibrary, web_search: webSearch, contexts, history },
       onDelta,
       undefined,
       signal,
@@ -131,6 +166,26 @@ export const agentApi = {
         if (evt.recommendation) onRecommendation(evt.recommendation as Recommendation)
         else if (evt.tool_trace) onToolTrace(evt.tool_trace as { tool: string }[])
       },
+    )
+  },
+
+  // 实时事件流：思考 / 工具开始 / 工具结果 / 最终回答
+  chatEvents: async (
+    message: string,
+    useLibrary: boolean,
+    webSearch: boolean,
+    contexts: AgentContext[] = [],
+    history: { role: string; content: string }[] = [],
+    onEvent: (evt: AgentEvent) => void,
+    signal?: AbortSignal,
+  ): Promise<void> => {
+    await streamSSE(
+      '/agent/chat/events',
+      { message, use_library: useLibrary, web_search: webSearch, contexts, history },
+      () => undefined,
+      undefined,
+      signal,
+      (evt) => onEvent(evt as unknown as AgentEvent),
     )
   },
 
@@ -152,6 +207,20 @@ export const agentApi = {
   mcpSave: (payload: McpServer) => api.post('/agent/mcp', payload).then((r) => r.data),
   mcpRemove: (name: string) => api.delete(`/agent/mcp/${name}`).then((r) => r.data),
   mcpTest: (name: string) => api.post(`/agent/mcp/test/${name}`).then((r) => r.data),
+  mcpDiscover: (name: string) => api.post(`/agent/mcp/${name}/discover`).then((r) => r.data),
+  mcpTools: (name: string) =>
+    api.get<{ name: string; count: number; tools: ToolInfo[] }>(`/agent/mcp/${name}/tools`).then((r) => r.data),
+  mcpCall: (name: string, tool: string, args: Record<string, unknown> = {}) =>
+    api.post(`/agent/mcp/${name}/call`, { name: tool, arguments: args }).then((r) => r.data),
+
+  // 工具目录（内置 + 已发现 MCP）
+  tools: () =>
+    api.get<{ builtin: ToolInfo[]; mcp: ToolInfo[]; total: number }>('/agent/capabilities').then((r) => r.data),
+
+  // 后台任务
+  tasksList: (status = '') =>
+    api.get<{ count: number; items: TaskInfo[] }>('/tasks', { params: { status } }).then((r) => r.data.items),
+  taskRetry: (id: string) => api.post(`/tasks/${id}/retry`).then((r) => r.data),
 
   // @ 引用上下文
   contexts: () => api.get<{ count: number; items: ContextItem[] }>('/agent/contexts').then((r) => r.data.items),

@@ -64,6 +64,7 @@ class TopAgent:
         use_library: bool = False,
         web_search: bool = False,
         contexts: Optional[list[dict]] = None,
+        history: Optional[list[dict]] = None,
     ) -> dict:
         """完整处理一条消息（全局权限 Agent）。"""
         r = self.route(text, web_search=web_search)
@@ -79,7 +80,11 @@ class TopAgent:
             out["route_label"] = out.get("route_label", getattr(agent_cls, "label", r["path"]))
         else:
             out = self._global_chat(
-                text, use_library=use_library, web_search=web_search, contexts=contexts
+                text,
+                use_library=use_library,
+                web_search=web_search,
+                contexts=contexts,
+                history=history,
             )
             out["route_label"] = "全局助手"
 
@@ -99,6 +104,7 @@ class TopAgent:
         use_library: bool = False,
         web_search: bool = False,
         contexts: Optional[list[dict]] = None,
+        history: Optional[list[dict]] = None,
     ):
         """流式版本：逐段产出回答文本（SSE 用）。
 
@@ -113,22 +119,171 @@ class TopAgent:
         r = self.route(text, web_search=web_search)
         if r["path"] == "chat":
             out = self._global_chat(
-                text, use_library=use_library, web_search=web_search, contexts=contexts
+                text,
+                use_library=use_library,
+                web_search=web_search,
+                contexts=contexts,
+                history=history,
             )
         else:
-            out = self.handle(text, use_library=use_library, web_search=web_search, contexts=contexts)
+            out = self.handle(
+                text,
+                use_library=use_library,
+                web_search=web_search,
+                contexts=contexts,
+                history=history,
+            )
         full = out.get("answer", "")
         if not full:
             full = "（助手暂未生成回答）"
         for i in range(0, len(full), 8):
             yield full[i : i + 8]
 
+    def event_stream(
+        self,
+        text: str,
+        use_library: bool = False,
+        web_search: bool = False,
+        contexts: Optional[list[dict]] = None,
+        history: Optional[list[dict]] = None,
+    ):
+        """实时事件流：路由 / 思考 / 工具开始 / 工具结果 / 最终回答。
+
+        供 SSE 前端展示执行过程；现有 stream() 文本流接口保持不变。
+        """
+        r = self.route(text, web_search=web_search)
+        yield {"type": "route", "path": r["path"]}
+        if r["path"] != "chat":
+            out = self.handle(
+                text,
+                use_library=use_library,
+                web_search=web_search,
+                contexts=contexts,
+                history=history,
+            )
+            yield {
+                "type": "answer",
+                "answer": out.get("answer", ""),
+                "tool_trace": out.get("tool_trace") or [],
+                "route_label": out.get("route_label"),
+                "artifact_path": out.get("artifact_path"),
+            }
+            return
+
+        system = self._system_prompt(text, use_library, web_search, contexts, history)
+        messages: list[dict] = [{"role": "system", "content": system}]
+        for msg in (history or [])[-12:]:
+            role = str(msg.get("role") or "")
+            content = str(msg.get("content") or "")
+            if role in ("user", "assistant") and content:
+                messages.append({"role": role, "content": content[:4000]})
+        messages.append({"role": "user", "content": text})
+
+        # 无 LLM / mock：联网搜索仍真实执行，其余直接给离线回答
+        if self.ctx.llm is None or self.ctx.llm.provider == "mock":
+            if web_search:
+                tool = get_tool("web_search")
+                yield {"type": "tool_start", "tool": "web_search", "args": {"query": text}}
+                result = tool.run(self.ctx, {"query": text}) if tool is not None else {"count": 0, "items": []}
+                yield {"type": "tool_result", "tool": "web_search", "result": _preview(result)}
+                if isinstance(result, dict) and (result.get("items") or []):
+                    answer = _format_search_only(text, result)
+                else:
+                    answer = "联网搜索未能获取结果，请稍后重试或换一个关键词。"
+                yield {"type": "answer", "answer": answer, "tool_trace": [{"tool": "web_search", "args": {"query": text}, "result": _preview(result)}]}
+                return
+            yield {"type": "thinking"}
+            answer = self._mock_global(text, use_library, web_search)["answer"]
+            yield {"type": "answer", "answer": answer, "tool_trace": []}
+            return
+
+        tool_trace: list[dict] = []
+        used_tools: set[str] = set()
+        web_search_result: Optional[dict] = None
+        seen_calls: set[str] = set()
+        for _ in range(3):
+            yield {"type": "thinking"}
+            try:
+                decision = self.ctx.llm.chat_json(messages, temperature=0.2)
+            except Exception:  # noqa: BLE001
+                break
+            tool_name = decision.get("tool") or decision.get("action")
+            direct = decision.get("answer")
+            if isinstance(direct, dict):
+                direct = json.dumps(direct, ensure_ascii=False)
+            direct = (direct or "").strip() if isinstance(direct, str) else direct
+            if not tool_name:
+                if direct:
+                    yield {"type": "answer", "answer": direct, "tool_trace": tool_trace}
+                    return
+                break
+            tool = get_tool(tool_name)
+            if tool is None:
+                messages.append({"role": "assistant", "content": f"工具 {tool_name} 不存在，请直接回答用户。"})
+                continue
+            args = decision.get("args") or {}
+            sig = f"{tool_name}:{json.dumps(args, ensure_ascii=False, sort_keys=True, default=str)}"
+            if sig in seen_calls:
+                break
+            seen_calls.add(sig)
+            yield {"type": "tool_start", "tool": tool_name, "args": args}
+            try:
+                result = tool.run(self.ctx, args)
+            except Exception as exc:  # noqa: BLE001
+                result = {"ok": False, "error": str(exc)}
+            tool_trace.append({"tool": tool_name, "args": args, "result": _preview(result)})
+            used_tools.add(tool_name)
+            if tool_name == "web_search" and isinstance(result, dict):
+                web_search_result = result
+            yield {"type": "tool_result", "tool": tool_name, "args": args, "result": _preview(result)}
+            messages.append({"role": "assistant", "content": f"（工具 {tool_name} 已调用，结果：{result}）"})
+
+        forced_search: Optional[dict] = None
+        if web_search and "web_search" not in used_tools:
+            tool = get_tool("web_search")
+            if tool is not None:
+                try:
+                    result = tool.run(self.ctx, {"query": text})
+                except Exception as exc:  # noqa: BLE001
+                    result = {"ok": False, "error": str(exc)}
+                forced_search = result if isinstance(result, dict) else None
+                tool_trace.append({"tool": "web_search", "args": {"query": text}, "result": _preview(result)})
+                web_search_result = forced_search
+                yield {"type": "tool_start", "tool": "web_search", "args": {"query": text}}
+                yield {"type": "tool_result", "tool": "web_search", "result": _preview(result)}
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "content": f"（已按用户要求联网搜索「{text}」，结果：{result}）请基于以上搜索结果回答用户，并标注来源链接。",
+                    }
+                )
+
+        try:
+            final = self.ctx.llm.chat(messages, temperature=0.3, max_tokens=1500).strip()
+        except Exception:  # noqa: BLE001
+            final = "（未能生成最终回答，请重试或检查配置。）"
+        if not final:
+            if web_search_result and (web_search_result.get("items") or []):
+                final = _format_search_only(text, web_search_result)
+            else:
+                final = "（工具调用完成，但模型未生成文字回答。）"
+        if web_search_result and (web_search_result.get("items") or []):
+            sources = _format_search_sources(web_search_result)
+            if sources and "来源链接" not in final:
+                final = final.rstrip() + "\n\n" + sources
+        yield {"type": "answer", "answer": final, "tool_trace": tool_trace}
+
     # ------------------------------------------------------------------
     # 全局对话（LLM 驱动工具调用 + 记忆注入）
     # ------------------------------------------------------------------
 
     def _system_prompt(
-        self, text: str, use_library: bool, web_search: bool, contexts: Optional[list[dict]] = None
+        self,
+        text: str,
+        use_library: bool,
+        web_search: bool,
+        contexts: Optional[list[dict]] = None,
+        history: Optional[list[dict]] = None,
     ) -> str:
         parts: list[str] = [
             "你是「ResearchMate」的全局助手，拥有访问所有功能模块的全局权限，"
@@ -144,6 +299,11 @@ class TopAgent:
         ctx_text = self._contexts_prompt(contexts)
         if ctx_text:
             parts.append(ctx_text)
+
+        # 当前会话的多轮对话历史（保证追问能引用上一轮上下文）
+        history_text = self._history_prompt(history)
+        if history_text:
+            parts.append(history_text)
 
         # 长期记忆（跨对话共享）
         try:
@@ -179,6 +339,23 @@ class TopAgent:
             )
 
         return "\n\n".join(parts)
+
+    @staticmethod
+    def _history_prompt(history: Optional[list[dict]]) -> str:
+        """把最近若干轮对话历史格式化为系统提示片段。"""
+        if not history:
+            return ""
+        rows: list[str] = []
+        for msg in history[-12:]:
+            role = str(msg.get("role") or "")
+            content = str(msg.get("content") or "")
+            if not content:
+                continue
+            label = "用户" if role == "user" else "助手"
+            rows.append(f"{label}：{content[:2000]}")
+        if not rows:
+            return ""
+        return "===== 当前对话历史（最近若干轮） =====\n" + "\n\n".join(rows)
 
     def _contexts_prompt(self, contexts: Optional[list[dict]]) -> str:
         """把用户 @ 引用的对象（技能/工具/记忆/模块）加载为可读上下文。"""
@@ -231,13 +408,19 @@ class TopAgent:
         use_library: bool,
         web_search: bool,
         contexts: Optional[list[dict]] = None,
+        history: Optional[list[dict]] = None,
     ) -> dict:
         """全局 Agent：注入记忆与工具目录，LLM 决策工具调用循环。"""
-        system = self._system_prompt(text, use_library, web_search, contexts)
-        history: list[dict] = [
+        system = self._system_prompt(text, use_library, web_search, contexts, history)
+        messages: list[dict] = [
             {"role": "system", "content": system},
-            {"role": "user", "content": text},
         ]
+        for msg in (history or [])[-12:]:
+            role = str(msg.get("role") or "")
+            content = str(msg.get("content") or "")
+            if role in ("user", "assistant") and content:
+                messages.append({"role": role, "content": content[:4000]})
+        messages.append({"role": "user", "content": text})
 
         # 无 LLM（纯 mock）时：联网开关仍真实执行搜索，并直接给出带链接结果
         if self.ctx.llm is None or self.ctx.llm.provider == "mock":
@@ -261,7 +444,7 @@ class TopAgent:
         seen_calls: set[str] = set()
         for _ in range(3):
             try:
-                decision = self.ctx.llm.chat_json(history, temperature=0.2)
+                decision = self.ctx.llm.chat_json(messages, temperature=0.2)
             except Exception:  # noqa: BLE001
                 break
 
@@ -279,7 +462,7 @@ class TopAgent:
 
             tool = get_tool(tool_name)
             if tool is None:
-                history.append(
+                messages.append(
                     {"role": "assistant", "content": f"工具 {tool_name} 不存在，请直接回答用户。"}
                 )
                 continue
@@ -299,7 +482,7 @@ class TopAgent:
             used_tools.add(tool_name)
             if tool_name == "web_search" and isinstance(result, dict):
                 web_search_result = result
-            history.append(
+            messages.append(
                 {"role": "assistant", "content": f"（工具 {tool_name} 已调用，结果：{result}）"}
             )
 
@@ -318,7 +501,7 @@ class TopAgent:
                     {"tool": "web_search", "args": {"query": text}, "result": _preview(result)}
                 )
                 web_search_result = forced_search
-                history.append(
+                messages.append(
                     {
                         "role": "assistant",
                         "content": (
@@ -331,7 +514,7 @@ class TopAgent:
         # 用完工具轮次后，要求模型组织最终回答
         try:
             final = self.ctx.llm.chat(
-                history,
+                messages,
                 temperature=0.3,
                 max_tokens=1500,
             ).strip()
@@ -406,6 +589,17 @@ class TopAgent:
 
         try:
             result = run_skill(skill, text, opts={}, client=self._skill_client())
+            try:
+                from app.services import reflection_service
+                reflection_service.save_reflection(
+                    self.user_id,
+                    f"Skill·{skill.get('name','')} 反思",
+                    text,
+                    (result.get("output") or "")[:2000],
+                    "success",
+                )
+            except Exception:  # noqa: BLE001
+                pass
             return {
                 "path": "skill",
                 "answer": result.get("output", ""),

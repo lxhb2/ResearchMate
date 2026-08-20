@@ -3,7 +3,7 @@ import json
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor, wait
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -25,7 +25,6 @@ router = APIRouter(prefix="/papers", tags=["papers"])
 
 @router.post("/upload", response_model=PaperOut, status_code=201)
 def upload_pdf(
-    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
@@ -54,8 +53,9 @@ def upload_pdf(
     db.commit()
     db.refresh(paper)
 
-    # Run processing in background (uses a fresh session inside the task)
-    background_tasks.add_task(_run_processing, str(paper.id))
+    # 持久化任务队列：重启可恢复，不依赖进程内 BackgroundTasks
+    from app.services import task_queue
+    task_queue.enqueue(db, user.id, "paper_processing", {"paper_id": str(paper.id)})
     return paper
 
 
@@ -79,19 +79,35 @@ def list_papers(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    page = max(1, page)
+    limit = max(1, min(limit, 200))
     q = db.query(Paper).filter(Paper.user_id == user.id)
     if search:
-        like = f"%{search}%"
-        q = q.filter(Paper.title.ilike(like))
+        try:
+            from app.services import fts_service
+            fts_result = fts_service.fts_search(
+                db, search, user_id=user.id, limit=10000, offset=0
+            )
+            ids = [item["paper_id"] for item in fts_result["items"]]
+            if not ids:
+                return PaperList(items=[], total=0, page=page, limit=limit)
+            q = q.filter(Paper.id.in_(ids))
+        except Exception:  # noqa: BLE001
+            # 非 SQLite / FTS 不可用时退回标题模糊搜索
+            like = f"%{search}%"
+            q = q.filter(Paper.title.ilike(like))
     if status:
         q = q.filter(Paper.status == status)
-    pages = q.order_by(Paper.created_at.desc()).all()
+    ordered = q.order_by(Paper.created_at.desc())
     if tag:
         # JSON 在 SQLite 中按 ASCII 转义存储，LIKE 对中文不可靠。
         # 个人文献库规模小，直接在 Python 里按标签过滤更稳妥。
-        pages = [p for p in pages if tag in (p.tags or [])]
-    total = len(pages)
-    items = pages[(page - 1) * limit : page * limit]
+        pages = [p for p in ordered.all() if tag in (p.tags or [])]
+        total = len(pages)
+        items = pages[(page - 1) * limit : page * limit]
+    else:
+        total = q.count()
+        items = ordered.offset((page - 1) * limit).limit(limit).all()
     return PaperList(items=items, total=total, page=page, limit=limit)
 
 
@@ -619,7 +635,6 @@ def get_paper_analysis(
 @router.post("/{paper_id}/reanalyze")
 def reanalyze_paper(
     paper_id: str,
-    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
@@ -633,7 +648,8 @@ def reanalyze_paper(
         raise HTTPException(status_code=404, detail="Paper not found")
     paper.analysis_status = "pending"
     db.commit()
-    background_tasks.add_task(_run_processing, str(paper.id))
+    from app.services import task_queue
+    task_queue.enqueue(db, user.id, "paper_processing", {"paper_id": str(paper.id)})
     return {"ok": True}
 
 # ===========================================================================

@@ -23,6 +23,7 @@ MEMORY_FILES: dict[str, str] = {
     "knowledge.md": "知识沉淀",
     "notes.md": "笔记想法",
     "events.md": "交互日志",
+    "conversations.md": "会话摘要",
 }
 
 

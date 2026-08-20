@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, String, Integer, DateTime, Text, ForeignKey
+from sqlalchemy import Column, String, Integer, DateTime, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -9,13 +9,14 @@ from app.models.types import GUID, JSONType, uuid_str
 
 class Paper(Base):
     __tablename__ = "papers"
+    __table_args__ = (UniqueConstraint("user_id", "doi", name="uq_papers_user_doi"),)
 
     id = Column(GUID, primary_key=True, default=uuid_str)
     user_id = Column(GUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     title = Column(Text)
     authors = Column(JSONType)  # list[str]（跨库：SQLite 存为 JSON 文本）
     year = Column(Integer)
-    doi = Column(String(255), unique=True, index=True)
+    doi = Column(String(255), index=True)
     abstract = Column(Text)
     source = Column(String(50), default="upload")
     file_path = Column(Text)
