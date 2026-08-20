@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Notification, Tray, Menu, nativeImage } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, Notification, Tray, Menu, nativeImage, session } = require('electron')
 const { spawn } = require('child_process')
 const path = require('path')
 const fs = require('fs')
@@ -209,6 +209,17 @@ function registerIpc() {
 
 app.whenReady().then(async () => {
   app.setAppUserModelId('com.researchmate.desktop')
+  // 关键修复：清掉旧页面缓存，并禁止缓存 index.html，避免用户更新后仍看到旧 UI
+  await session.defaultSession.clearCache()
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    const headers = { ...(details.responseHeaders || {}) }
+    if (details.url.endsWith('/') || details.url.endsWith('/index.html') || details.url.endsWith('index.html')) {
+      headers['Cache-Control'] = ['no-cache, no-store, must-revalidate']
+      headers['Pragma'] = ['no-cache']
+      headers['Expires'] = ['0']
+    }
+    callback({ responseHeaders: headers })
+  })
   registerIpc()
   startBackend()
   autoUpdater.on('update-available', () => {
