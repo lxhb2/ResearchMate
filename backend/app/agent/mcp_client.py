@@ -150,7 +150,7 @@ def _run_stdio(server: dict, method: str, params: Optional[dict] = None, timeout
         session.request("initialize", {
             "protocolVersion": PROTOCOL_VERSION,
             "capabilities": {},
-            "clientInfo": {"name": "ResearchMate", "version": "0.2.0"},
+            "clientInfo": {"name": "ResearchMate", "version": "0.3.0"},
         }, timeout=timeout)
         session.notify("notifications/initialized", {})
         return session.request(method, params or {}, timeout=timeout)
@@ -265,7 +265,7 @@ def _http_initialize(server: dict, timeout: float = 10.0) -> tuple[str, Optional
             "params": {
                 "protocolVersion": PROTOCOL_VERSION,
                 "capabilities": {},
-                "clientInfo": {"name": "ResearchMate", "version": "0.2.0"},
+                "clientInfo": {"name": "ResearchMate", "version": "0.3.0"},
             },
         },
         session_id=None,

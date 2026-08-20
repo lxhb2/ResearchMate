@@ -64,7 +64,7 @@ export default function AppLayout() {
             borderTop: '1px solid var(--app-border)',
           }}
         >
-          ResearchMate · v0.2.0
+          ResearchMate · v0.3.0
         </div>
       </Sider>
       <Layout>

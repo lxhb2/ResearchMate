@@ -279,7 +279,7 @@ function UpdatePanel() {
       <Space direction="vertical" size={10} style={{ width: '100%' }}>
         <Space wrap align="center">
           <Tag color="blue" bordered={false}>
-            ResearchMate v{info?.version || '0.2.0'}
+            ResearchMate v{info?.version || '0.3.0'}
           </Tag>
           <Text type="secondary">
             {info?.repo ? `GitHub: ${info.repo}` : '本地单机版'}

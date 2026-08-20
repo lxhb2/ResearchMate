@@ -1,6 +1,6 @@
 # ResearchMate API Key、Skill、MCP 与插件配置指南
 
-> 适用版本：ResearchMate v0.2.0  
+> 适用版本：ResearchMate v0.3.0  
 > 编写依据：本项目完整源码（backend / frontend / plugins / electron）实际代码分析  
 > 操作入口：应用内「设置」页，部分高级配置可写 `.env` 或直接管理本地存储文件
 
