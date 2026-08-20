@@ -88,13 +88,31 @@ interface LayoutPoint {
 function runForceLayout(
   points: LayoutPoint[],
   links: { source: string; target: string }[],
-  width = 1000,
-  height = 720,
-  iterations = 220,
+  width = 1800,
+  height = 1400,
+  iterations = 300,
+  clusters?: Map<string, number>,
 ): Record<string, { x: number; y: number }> {
   const pos = new Map(points.map((p) => [p.id, { x: p.x, y: p.y }]))
-  const k = 120
-  const linkDist = 170
+  const k = 150
+  const linkDist = 210
+  // 固定簇中心：节点向自己所在语义簇中心聚集，避免力导向后簇被冲散
+  const clusterCenters = new Map<number, { x: number; y: number }>()
+  if (clusters) {
+    const sums = new Map<number, { x: number; y: number; count: number }>()
+    for (const p of points) {
+      const c = clusters.get(p.id)
+      if (c == null) continue
+      const s = sums.get(c) || { x: 0, y: 0, count: 0 }
+      s.x += p.x
+      s.y += p.y
+      s.count += 1
+      sums.set(c, s)
+    }
+    for (const [c, s] of sums) {
+      clusterCenters.set(c, { x: s.x / s.count, y: s.y / s.count })
+    }
+  }
   for (let iter = 0; iter < iterations; iter++) {
     const alpha = 0.85 * (1 - iter / iterations)
     const forces = new Map<string, { x: number; y: number }>()
@@ -142,6 +160,13 @@ function runForceLayout(
       const c = pos.get(p.id)!
       f.x += (width / 2 - c.x) * 0.012
       f.y += (height / 2 - c.y) * 0.012
+      if (clusters) {
+        const cc = clusterCenters.get(clusters.get(p.id)!)
+        if (cc) {
+          f.x += (cc.x - c.x) * 0.055
+          f.y += (cc.y - c.y) * 0.055
+        }
+      }
     }
     for (const p of points) {
       const c = pos.get(p.id)!
@@ -429,13 +454,23 @@ export default function SmartGraphPage() {
       const links = edges
         .filter((e) => linkIds.has(e.source) && linkIds.has(e.target))
         .map((e) => ({ source: e.source, target: e.target }))
-      const next = runForceLayout(pts, links)
+      const clusters = new Map<string, number>(
+        nds.map((n) => [n.id, (n.data as ChunkData).cluster]),
+      )
+      const next = runForceLayout(pts, links, 1800, 1400, 300, clusters)
       nds.forEach((n) => {
         if (next[n.id]) savedPositions.current[n.id] = next[n.id]
       })
       return nds.map((n) => ({ ...n, position: next[n.id] || n.position }))
     })
   }, [edges, setNodes])
+
+  // 图谱加载后自动执行一次簇感知力导向布局，避免默认位置叠在一起
+  useEffect(() => {
+    if (!nodes.length || reloadSeq === 0) return
+    const t = setTimeout(() => applyForceLayout(), 0)
+    return () => clearTimeout(t)
+  }, [reloadSeq, applyForceLayout])
 
   // 框选批量分析（SSE 流式）
   const runAnalyze = () => {

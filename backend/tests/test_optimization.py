@@ -65,3 +65,19 @@ def test_writing_guide_dimension_mapping() -> None:
     assert writing_guide.dimension_for_section("Results") == "results"
     assert "IMRaD" in writing_guide.writing_guidance("en")
     assert "目的" in writing_guide.abstract_guidance("zh")
+
+
+def test_cluster_nebula_layout_separates_clusters() -> None:
+    from app.services import graph_service
+
+    pts = [[float(i), float(i % 3)] for i in range(20)]
+    labels = [0] * 10 + [1] * 10
+    layout = graph_service._cluster_nebula_layout(pts, labels, 2, canvas=2600)
+    c0 = [layout[i] for i in range(10)]
+    c1 = [layout[i] for i in range(10, 20)]
+    cx0 = sum(p[0] for p in c0) / 10
+    cy0 = sum(p[1] for p in c0) / 10
+    cx1 = sum(p[0] for p in c1) / 10
+    cy1 = sum(p[1] for p in c1) / 10
+    dist = ((cx0 - cx1) ** 2 + (cy0 - cy1) ** 2) ** 0.5
+    assert dist > 500

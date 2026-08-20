@@ -38,7 +38,7 @@ MAX_NODES = 400      # 图谱节点上限（超出按文献轮转采样，保证
 KNN_K = 3            # 每个节点保留的最近邻居数
 KNN_MIN_SIM = 0.15   # 低于该余弦相似度的边不画
 MAX_EDGES = 1200
-CANVAS = 1000        # 布局画布边长（前端 fitView 自适应）
+CANVAS = 2600        # 布局画布边长（前端 fitView 自适应）
 
 CLUSTER_COLORS = [
     "#5B8FF9", "#5AD8A6", "#F6BD16", "#E8684A", "#6DC8EC", "#9270CA",
@@ -422,6 +422,68 @@ def _round_robin_sample(rows: list, limit: int) -> list:
     return out
 
 
+def _cluster_nebula_layout(
+    pts: list[list[float]],
+    labels: list[int],
+    k: int,
+    canvas: int = CANVAS,
+) -> list[tuple[float, float]]:
+    """簇感知布局：不同语义簇环形分开，簇内按黄金角形成“星云”。
+
+    每个簇先取 PCA 质心，簇中心按圆形排列保证簇间间距；
+    簇内节点按相对质心的方向 + 随成员数增长的半径排布，
+    类似 Obsidian 中“相似内容聚成星云、不同内容留白”的效果。
+    """
+    n = len(pts)
+    members: list[list[int]] = [[] for _ in range(k)]
+    sums: list[tuple[float, float]] = [(0.0, 0.0)] * k
+    for i, lab in enumerate(labels):
+        members[lab].append(i)
+        sx, sy = sums[lab]
+        sums[lab] = (sx + pts[i][0], sy + pts[i][1])
+
+    pca_cent = []
+    for j in range(k):
+        m = members[j]
+        if m:
+            pca_cent.append(
+                (sum(pts[i][0] for i in m) / len(m), sum(pts[i][1] for i in m) / len(m))
+            )
+        else:
+            pca_cent.append((0.0, 0.0))
+
+    radius = min(1450, 450 + k * 85)
+    cx = cy = canvas / 2
+    positions: list[tuple[float, float]] = [(0.0, 0.0)] * n
+    golden = 2.39996
+    for j in range(k):
+        ang = -math.pi / 2 + 2 * math.pi * j / max(1, k)
+        ccx = cx + radius * math.cos(ang)
+        ccy = cy + radius * math.sin(ang)
+        m = members[j]
+        for idx, i in enumerate(m):
+            rel_x = pts[i][0] - pca_cent[j][0]
+            rel_y = pts[i][1] - pca_cent[j][1]
+            d = math.hypot(rel_x, rel_y)
+            if d < 1e-9:
+                a = (i * golden) % (2 * math.pi)
+                spread = 0.0
+            else:
+                a = math.atan2(rel_y, rel_x)
+                spread = min(1.0, d / 140.0)
+            frac = idx / max(1, len(m))
+            r = 55 + 500 * math.sqrt(frac) * (0.72 + 0.28 * spread)
+            x = ccx + r * math.cos(a + idx * 0.13)
+            y = ccy + r * math.sin(a + idx * 0.13)
+            x += ((i * 37) % 9 - 4) * 2.2
+            y += ((i * 53) % 11 - 5) * 2.2
+            positions[i] = (
+                min(max(x, 50), canvas - 50),
+                min(max(y, 50), canvas - 50),
+            )
+    return positions
+
+
 # 结果缓存：签名 = (片段总数, 有向量数, limit)，文献库变化自动失效
 _CACHE: dict[str, tuple[tuple, dict]] = {}
 
@@ -483,25 +545,17 @@ def build_smart_graph(db: Session, user_id, limit: int = MAX_NODES) -> dict:
     labels = _kmeans(normed, k)
     k = (max(labels) + 1) if labels else 1
 
-    # PCA 2D → 归一化到画布，并做确定性微抖动（完全重合的片段错开一点）
+    # PCA 2D → 簇感知星云布局（簇间留白、簇内聚合）
     pts = _pca_2d(pooled)
-    xs = [p[0] for p in pts]
-    ys = [p[1] for p in pts]
-    xmin, xmax = min(xs), max(xs)
-    ymin, ymax = min(ys), max(ys)
-    rx = (xmax - xmin) or 1.0
-    ry = (ymax - ymin) or 1.0
+    layout = _cluster_nebula_layout(pts, labels, k)
     nodes = []
     for i, (c, p) in enumerate(sampled):
-        x = 80 + (pts[i][0] - xmin) / rx * (CANVAS - 160)
-        y = 80 + (pts[i][1] - ymin) / ry * (CANVAS - 160)
-        jx = ((i * 37) % 13 - 6) * 1.6
-        jy = ((i * 53) % 11 - 5) * 1.6
+        x, y = layout[i]
         nodes.append(
             {
                 "id": str(c.id),
-                "x": round(x + jx, 1),
-                "y": round(y + jy, 1),
+                "x": round(x, 1),
+                "y": round(y, 1),
                 "cluster": labels[i],
                 "paper_id": str(p.id),
                 "paper_title": p.title or "未命名",
