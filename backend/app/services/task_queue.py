@@ -1,6 +1,9 @@
 """SQLite 持久化任务队列：替代内存 BackgroundTasks，支持重启恢复与重试。"""
 import threading
 import time
+import os
+import shutil
+import tempfile
 from typing import Optional
 
 from app.database import SessionLocal
@@ -79,7 +82,53 @@ def _dispatch(task: AgentTask) -> dict:
         return {"ok": True, "paper_id": paper_id}
     if task.task_type == "conversation_summary":
         return _summarize_conversation(task)
+    if task.task_type == "babeldoc_translate":
+        return _run_babeldoc_translate(task)
     raise ValueError(f"未知任务类型：{task.task_type}")
+
+
+def _run_babeldoc_translate(task: AgentTask) -> dict:
+    """后台执行 BabelDOC 整篇 PDF 翻译，产物保存到 storage/translations/<task_id>/。"""
+    from app.config import settings
+    from app.models.paper import Paper
+    from app.services import babeldoc_service, settings_service
+
+    paper_id = str((task.payload or {}).get("paper_id") or "")
+    lang_in = str((task.payload or {}).get("lang_in") or "en")
+    lang_out = str((task.payload or {}).get("lang_out") or "zh")
+    if not paper_id:
+        raise ValueError("babeldoc_translate 任务缺少 paper_id")
+
+    with SessionLocal() as db:
+        paper = db.get(Paper, paper_id)
+        if paper is None:
+            raise ValueError("论文不存在")
+        src = os.path.join(settings.PDF_DIR, os.path.basename(paper.file_path or ""))
+        if not os.path.isfile(src):
+            raise ValueError("PDF 文件不存在")
+        cfg = settings_service.get_llm_config(db, str(task.user_id))
+
+    out_root = os.path.join(settings.STORAGE_DIR, "translations", str(task.id))
+    os.makedirs(out_root, exist_ok=True)
+    tmpdir = tempfile.mkdtemp(prefix="babeldoc_task_")
+    try:
+        input_pdf = os.path.join(tmpdir, "input.pdf")
+        shutil.copy2(src, input_pdf)
+        files = babeldoc_service.translate_pdf(
+            input_pdf,
+            os.path.join(tmpdir, "out"),
+            lang_in,
+            lang_out,
+            cfg,
+        )
+        chosen = babeldoc_service.pick_translated_pdf(files)
+        if not chosen or not os.path.isfile(chosen):
+            raise ValueError("BabelDOC 未生成翻译 PDF")
+        final_path = os.path.join(out_root, f"{paper.title or 'paper'}-{lang_out}.pdf")
+        shutil.copy2(chosen, final_path)
+        return {"ok": True, "output_path": final_path, "paper_title": paper.title}
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
 
 
 def _summarize_conversation(task: AgentTask) -> dict:

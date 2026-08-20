@@ -493,6 +493,7 @@ export default function ReaderPage() {
     text: string
     result: string
   } | null>(null)
+  const [floatExpanded, setFloatExpanded] = useState(false)
   const [translatingPdf, setTranslatingPdf] = useState(false)
   const [summary, setSummary] = useState('')
   const [summaryLoading, setSummaryLoading] = useState(false)
@@ -964,7 +965,20 @@ export default function ReaderPage() {
     if (!paperId || translatingPdf) return
     setTranslatingPdf(true)
     try {
-      const blob = await translateApi.translatePdf(paperId)
+      const start = await translateApi.startPdfTranslation(paperId)
+      let blob: Blob | null = null
+      for (let i = 0; i < 120; i++) {
+        await new Promise((r) => setTimeout(r, 2000))
+        const st = await translateApi.pdfTranslationStatus(start.task_id)
+        if (st.status === 'success') {
+          blob = await translateApi.downloadPdfTranslation(start.task_id)
+          break
+        }
+        if (st.status === 'failed') {
+          throw new Error(st.error || '整篇翻译失败')
+        }
+      }
+      if (!blob) throw new Error('翻译超时，请稍后重试')
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -1020,7 +1034,7 @@ export default function ReaderPage() {
     await saveAnnotation('note', content)
   }
 
-  const handleTranslate = async () => {
+  const runFloatAction = async (action: 'translate' | 'polish') => {
     if (!selection) return
     const text = selection.text
     setFloatTranslation({
@@ -1029,20 +1043,39 @@ export default function ReaderPage() {
       text,
       result: '',
     })
+    setFloatExpanded(false)
     try {
-      if (text.length <= 300) {
-        // 短句/术语：直接返回完整译文，避免逐 token 等待
-        const res = await translateApi.translate(text, 'zh')
-        setFloatTranslation((f) => (f ? { ...f, result: res.translation } : f))
+      if (action === 'polish') {
+        const polished = await translateApi.polish(text)
+        setFloatTranslation((f) => (f ? { ...f, result: polished } : f))
       } else {
-        await translateApi.translateStream(text, 'zh', (delta) => {
-          setFloatTranslation((f) => (f ? { ...f, result: f.result + delta } : f))
-        })
+        if (text.length <= 300) {
+          // 短句/术语：直接返回完整译文，避免逐 token 等待
+          const res = await translateApi.translate(text, 'zh')
+          setFloatTranslation((f) => (f ? { ...f, result: res.translation } : f))
+        } else {
+          await translateApi.translateStream(text, 'zh', (delta) => {
+            setFloatTranslation((f) => (f ? { ...f, result: f.result + delta } : f))
+          })
+        }
       }
     } catch (err) {
       message.error(getErrorMessage(err))
     }
   }
+
+  const handleTranslate = () => runFloatAction('translate')
+  const handlePolish = () => runFloatAction('polish')
+
+  // Esc 关闭悬浮翻译卡
+  useEffect(() => {
+    if (!floatTranslation) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFloatTranslation(null)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [floatTranslation])
 
   const handleExplain = async () => {
     if (!selection) return
@@ -1567,6 +1600,7 @@ export default function ReaderPage() {
                       钉成卡片
                     </Button>
                     <Button size="small" onClick={handleTranslate}>翻译</Button>
+                    <Button size="small" onClick={handlePolish}>润色</Button>
                     <Button size="small" onClick={handleExplain}>解释</Button>
                   </Space>
                 </div>
@@ -1592,7 +1626,9 @@ export default function ReaderPage() {
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                   <Typography.Text strong style={{ fontSize: 12 }}>
-                    中文翻译
+                    {floatTranslation.text.length > 60
+                      ? `${floatTranslation.text.slice(0, 60)}…`
+                      : floatTranslation.text}
                   </Typography.Text>
                   <Space size={4}>
                     <Button
@@ -1605,13 +1641,50 @@ export default function ReaderPage() {
                     >
                       复制
                     </Button>
+                    <Button
+                      size="small"
+                      disabled={!floatTranslation.result}
+                      onClick={() => {
+                        const u = new SpeechSynthesisUtterance(floatTranslation.result)
+                        u.lang = 'zh-CN'
+                        window.speechSynthesis.speak(u)
+                      }}
+                    >
+                      朗读
+                    </Button>
+                    <Button
+                      size="small"
+                      disabled={!floatTranslation.result}
+                      onClick={() => {
+                        saveAnnotation('note', floatTranslation.result)
+                        setFloatTranslation(null)
+                      }}
+                    >
+                      存注释
+                    </Button>
                     <Button size="small" type="text" onClick={() => setFloatTranslation(null)}>
                       关闭
                     </Button>
                   </Space>
                 </div>
                 <div style={{ fontSize: 13, lineHeight: 1.7, color: '#333', minHeight: 24 }}>
-                  {floatTranslation.result || <Spin size="small" />}
+                  {floatTranslation.result ? (
+                    <>
+                      {floatTranslation.result.length > 80 && !floatExpanded
+                        ? `${floatTranslation.result.slice(0, 80)}…`
+                        : floatTranslation.result}
+                      {floatTranslation.result.length > 80 && (
+                        <a
+                          style={{ marginLeft: 8, fontSize: 12 }}
+                          onClick={() => setFloatExpanded((v) => !v)}
+                        >
+                          {floatExpanded ? '收起' : '展开全文'}
+                        </a>
+                      )}
+                    </>
+                  ) : (
+                    <Spin size="small" />
+                  )}
                 </div>
               </div>
             )}

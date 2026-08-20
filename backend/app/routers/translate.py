@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.models.agent_task import AgentTask
 from app.models.paper import Paper
 from app.models.user import User
 from app.services import llm_service, settings_service
@@ -107,6 +108,33 @@ def _translate_text(db: Session, user_id, text: str, target_lang: str) -> str:
     return translation
 
 
+@router.post("/translate/polish")
+def polish_text(
+    body: dict,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """学术润色：短文本走快速模型，长文本走主模型，结果缓存。"""
+    from app.services import translation_cache
+
+    text = (body.get("text") or "").strip()
+    if not text:
+        return {"polished": ""}
+    cached = translation_cache.get("polish", "zh", text)
+    if cached is not None:
+        return {"polished": cached}
+    llm = _fast_llm(db, user.id) if len(text) <= 800 else _build_llm(db, user.id)
+    system = (
+        "你是学术论文润色专家。请把下面的段落润色为更地道、学术、精炼的文本。"
+        "保留原意、术语与公式/引用标注，不要添加额外注释。只返回润色后的文本。"
+    )
+    messages = llm_service.system_user(system, text)
+    polished = llm.chat(messages, temperature=0.2, max_tokens=1600).strip()
+    if polished:
+        translation_cache.set("polish", "zh", text, polished)
+    return {"polished": polished}
+
+
 @router.post("/translate")
 def translate(body: dict, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     text = body.get("text", "").strip()
@@ -185,13 +213,13 @@ def translate_batch(
 
 
 @router.post("/translate/pdf")
-def translate_pdf(
+def start_translate_pdf(
     body: PdfTranslateRequest,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """BabelDOC 整篇 PDF 翻译：保持排版，输出双语 PDF（可选加速引擎）。"""
-    from app.services import babeldoc_service
+    """BabelDOC 整篇 PDF 翻译：异步后台执行，立即返回任务 ID，避免 120s 超时。"""
+    from app.services import babeldoc_service, task_queue
 
     paper = db.get(Paper, body.paper_id)
     if not paper or paper.user_id != user.id:
@@ -203,39 +231,54 @@ def translate_pdf(
         raise HTTPException(status_code=404, detail="PDF 文件不存在")
     if not babeldoc_service.is_available():
         raise HTTPException(status_code=501, detail=babeldoc_service.install_hint())
-    cfg = settings_service.get_llm_config(db, str(user.id))
+    task = task_queue.enqueue(
+        db,
+        user.id,
+        "babeldoc_translate",
+        {"paper_id": body.paper_id, "lang_in": body.lang_in, "lang_out": body.lang_out},
+    )
+    return {"ok": True, "task_id": str(task.id), "status": task.status}
 
-    tmpdir = tempfile.mkdtemp(prefix="babeldoc_")
-    try:
-        input_pdf = os.path.join(tmpdir, "input.pdf")
-        shutil.copy2(src, input_pdf)
-        outdir = os.path.join(tmpdir, "out")
-        files = babeldoc_service.translate_pdf(
-            input_pdf,
-            outdir,
-            body.lang_in,
-            body.lang_out,
-            cfg,
-        )
-        chosen = babeldoc_service.pick_translated_pdf(files)
-        if not chosen or not os.path.isfile(chosen):
-            raise HTTPException(status_code=500, detail="BabelDOC 未生成翻译 PDF")
-        filename = f"{paper.title or 'paper'}-{body.lang_out}.pdf"
-        return FileResponse(
-            chosen,
-            media_type="application/pdf",
-            filename=filename,
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except RuntimeError as e:
-        raise HTTPException(status_code=502, detail=str(e))
-    except HTTPException:
-        raise
-    except Exception as e:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=f"整篇翻译失败：{e}")
-    finally:
-        shutil.rmtree(tmpdir, ignore_errors=True)
+
+@router.get("/translate/pdf/status/{task_id}")
+def translate_pdf_status(
+    task_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """查询 BabelDOC 整篇翻译任务状态。"""
+    task = db.get(AgentTask, task_id)
+    if not task or task.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Task not found")
+    result = task.result or {}
+    return {
+        "task_id": str(task.id),
+        "status": task.status,
+        "error": task.error,
+        "output_path": result.get("output_path"),
+        "paper_title": result.get("paper_title"),
+    }
+
+
+@router.get("/translate/pdf/download/{task_id}")
+def translate_pdf_download(
+    task_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """下载已完成的 BabelDOC 翻译 PDF。"""
+    task = db.get(AgentTask, task_id)
+    if not task or task.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Task not found")
+    result = task.result or {}
+    path = result.get("output_path") or ""
+    if task.status != "success" or not os.path.isfile(path):
+        raise HTTPException(status_code=400, detail="翻译尚未完成或文件不存在")
+    return FileResponse(
+        path,
+        media_type="application/pdf",
+        filename=os.path.basename(path),
+    )
 
 
 @router.post("/translate/stream")

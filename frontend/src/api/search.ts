@@ -72,14 +72,32 @@ export const translateApi = {
     const { data } = await api.post('/translate', { text, target_lang: targetLang })
     return data
   },
-  // BabelDOC 整篇 PDF 翻译（保持排版，返回双语 PDF）
-  translatePdf: async (paperId: string): Promise<Blob> => {
-    const { data } = await api.post('/translate/pdf', { paper_id: paperId }, { responseType: 'blob' })
+  // BabelDOC 整篇 PDF 翻译：异步任务（避免 120s 超时）
+  startPdfTranslation: async (paperId: string): Promise<{ task_id: string; status: string }> => {
+    const { data } = await api.post('/translate/pdf', { paper_id: paperId })
+    return data
+  },
+  pdfTranslationStatus: async (taskId: string): Promise<{
+    task_id: string
+    status: string
+    error?: string | null
+    output_path?: string | null
+  }> => {
+    const { data } = await api.get(`/translate/pdf/status/${taskId}`)
+    return data
+  },
+  downloadPdfTranslation: async (taskId: string): Promise<Blob> => {
+    const { data } = await api.get(`/translate/pdf/download/${taskId}`, { responseType: 'blob' })
     return data
   },
   // 流式翻译
   translateStream: async (text: string, targetLang: string, onDelta: (delta: string) => void): Promise<void> => {
     await streamSSE('/translate/stream', { text, target_lang: targetLang }, onDelta)
+  },
+  // 学术润色
+  polish: async (text: string): Promise<string> => {
+    const { data } = await api.post('/translate/polish', { text })
+    return data.polished || ''
   },
 }
 
