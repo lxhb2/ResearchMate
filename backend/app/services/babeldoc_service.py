@@ -72,6 +72,8 @@ def translate_pdf(
         "--qps", str(max(1, min(qps, 20))),
     ]
     os.makedirs(output_dir, exist_ok=True)
+    # Windows 下禁止 BabelDOC 弹出可见命令窗口（CREATE_NO_WINDOW = 0x08000000）
+    creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     proc = subprocess.run(
         cmd,
         capture_output=True,
@@ -79,6 +81,7 @@ def translate_pdf(
         timeout=timeout,
         encoding="utf-8",
         errors="replace",
+        creationflags=creationflags,
     )
     if proc.returncode != 0:
         tail = (proc.stderr or proc.stdout or "")[-1200:]
