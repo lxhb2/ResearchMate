@@ -32,11 +32,13 @@ class ProjectOut(BaseModel):
 
 class GenerateTitleRequest(BaseModel):
     direction: str
+    language: str = "zh"
 
 
 class GenerateOutlineRequest(BaseModel):
     topic: str
     notes: Optional[str] = None
+    language: str = "zh"
 
 
 class SearchMaterialsRequest(BaseModel):
@@ -48,7 +50,8 @@ class GenerateDraftRequest(BaseModel):
     outline: dict[str, Any]
     material_chunk_ids: list[str] = []
     section: Optional[str] = None  # if provided, generate only this section
+    language: str = "zh"
 
 
 class GenerateAbstractRequest(BaseModel):
-    pass  # uses project content
+    language: str = "zh"  # 使用项目内容生成指定语言摘要

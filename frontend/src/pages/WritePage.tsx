@@ -17,6 +17,7 @@ import {
   Divider,
   Modal,
   List,
+  Segmented,
 } from 'antd'
 import {
   BulbOutlined,
@@ -63,6 +64,7 @@ export default function WritePage() {
   const [current, setCurrent] = useState(0)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
+  const [lang, setLang] = useState<'zh' | 'en'>('zh')
 
   // 步骤1
   const [direction, setDirection] = useState('')
@@ -86,8 +88,10 @@ export default function WritePage() {
   const [showReviewModal, setShowReviewModal] = useState(false)
 
   // 步骤5
-  const [abstract, setAbstract] = useState('')
-  const [keywords, setKeywords] = useState<string[]>([])
+  const [abstractZh, setAbstractZh] = useState('')
+  const [abstractEn, setAbstractEn] = useState('')
+  const [keywordsZh, setKeywordsZh] = useState<string[]>([])
+  const [keywordsEn, setKeywordsEn] = useState<string[]>([])
 
   const ensureProject = async (): Promise<Project> => {
     if (project) return project
@@ -104,6 +108,10 @@ export default function WritePage() {
       setProject(p)
       setCurrent(Math.max(0, Math.min(5, p.step - 1)))
       if (p.outline?.sections) setSections(p.outline.sections)
+      if (p.outline?.abstract_zh) setAbstractZh(p.outline.abstract_zh)
+      if (p.outline?.abstract_en) setAbstractEn(p.outline.abstract_en)
+      if (p.outline?.keywords_zh) setKeywordsZh(p.outline.keywords_zh)
+      if (p.outline?.keywords_en) setKeywordsEn(p.outline.keywords_en)
       if (p.content) setDraft(p.content)
       setDirection(p.title || '')
     } catch (err) {
@@ -144,7 +152,7 @@ export default function WritePage() {
     try {
       const p = await ensureProject()
       await projectsApi.update(p.id, { title: direction, step: 1 })
-      const { titles } = await projectsApi.generateTitle(p.id, direction)
+      const { titles } = await projectsApi.generateTitle(p.id, direction, lang)
       setTitles(titles)
     } catch (err) {
       message.error(getErrorMessage(err))
@@ -165,11 +173,11 @@ export default function WritePage() {
     if (!project) return
     setBusy(true)
     try {
-      const { outline } = await projectsApi.generateOutline(project.id, direction)
+      const { outline } = await projectsApi.generateOutline(project.id, direction, undefined, lang)
       const outlineObj = outline as { sections: ProjectSection[] }
       const secs = outlineObj.sections
       setSections(secs || [])
-      await persist({ outline: outlineObj })
+      await persist({ outline: { ...(project.outline || {}), sections: secs } })
     } catch (err) {
       message.error(getErrorMessage(err))
     } finally {
@@ -186,7 +194,8 @@ export default function WritePage() {
   }
 
   const saveOutline = async () => {
-    await persist({ outline: { sections } })
+    if (!project) return
+    await persist({ outline: { ...(project.outline || {}), sections } })
     message.success('大纲已保存')
   }
 
@@ -227,6 +236,7 @@ export default function WritePage() {
         { sections },
         Array.from(selectedChunks),
         sectionTitle,
+        lang,
       )
       setDraft(content)
       await persist({ content })
@@ -300,13 +310,25 @@ export default function WritePage() {
   }
 
   // ---- 步骤5 ----
-  const onGenerateAbstract = async () => {
+  const onGenerateAbstracts = async () => {
     if (!project) return
     setBusy(true)
     try {
-      const res = await projectsApi.generateAbstract(project.id)
-      setAbstract(res.abstract)
-      setKeywords(res.keywords)
+      const res = await projectsApi.generateAbstracts(project.id)
+      setAbstractZh(res.zh.abstract)
+      setKeywordsZh(res.zh.keywords)
+      setAbstractEn(res.en.abstract)
+      setKeywordsEn(res.en.keywords)
+      const outline = {
+        ...(project.outline || {}),
+        sections,
+        abstract_zh: res.zh.abstract,
+        abstract_en: res.en.abstract,
+        keywords_zh: res.zh.keywords,
+        keywords_en: res.en.keywords,
+      }
+      await persist({ outline })
+      message.success('中英文摘要与关键词已生成')
     } catch (err) {
       message.error(getErrorMessage(err))
     } finally {
@@ -365,6 +387,17 @@ export default function WritePage() {
           <Typography.Paragraph type="secondary">
             描述你的研究方向，让 AI 为你推荐具体的论文题目。
           </Typography.Paragraph>
+          <Space style={{ marginBottom: 12 }}>
+            <Typography.Text type="secondary">生成语言</Typography.Text>
+            <Segmented
+              options={[
+                { label: '中文', value: 'zh' },
+                { label: 'English', value: 'en' },
+              ]}
+              value={lang}
+              onChange={(v) => setLang(v as 'zh' | 'en')}
+            />
+          </Space>
           <TextArea
             value={direction}
             onChange={(e) => setDirection(e.target.value)}
@@ -398,6 +431,14 @@ export default function WritePage() {
           title="第二步 — 构建大纲"
           extra={
             <Space>
+              <Segmented
+                options={[
+                  { label: '中文', value: 'zh' },
+                  { label: 'English', value: 'en' },
+                ]}
+                value={lang}
+                onChange={(v) => setLang(v as 'zh' | 'en')}
+              />
               <Button onClick={onGenerateOutline} loading={busy}>自动生成（IMRaD）</Button>
               <Button
                 icon={<PlusOutlined />}
@@ -490,6 +531,14 @@ export default function WritePage() {
           title="第四步 — 撰写草稿"
           extra={
             <Space>
+              <Segmented
+                options={[
+                  { label: '中文', value: 'zh' },
+                  { label: 'English', value: 'en' },
+                ]}
+                value={lang}
+                onChange={(v) => setLang(v as 'zh' | 'en')}
+              />
               <Button icon={<FileTextOutlined />} onClick={() => setShowReviewModal(true)}>
                 生成综述段落
               </Button>
@@ -545,25 +594,34 @@ export default function WritePage() {
       {current === 4 && (
         <Card
           title="第五步 — 摘要与关键词"
-          extra={<Button type="primary" onClick={onGenerateAbstract} loading={busy}>生成</Button>}
+          extra={<Button type="primary" onClick={onGenerateAbstracts} loading={busy}>生成中英文摘要</Button>}
         >
-          {abstract ? (
+          {(abstractZh || abstractEn) ? (
             <>
-              <Typography.Title level={5}>摘要</Typography.Title>
-              <TextArea value={abstract} onChange={(e) => setAbstract(e.target.value)} rows={8} />
-              <Typography.Title level={5} style={{ marginTop: 16 }}>
-                关键词
-              </Typography.Title>
+              <Typography.Title level={5}>中文摘要</Typography.Title>
+              <TextArea value={abstractZh} onChange={(e) => setAbstractZh(e.target.value)} rows={8} />
+              <Typography.Title level={5} style={{ marginTop: 12 }}>中文关键词</Typography.Title>
               <Space wrap>
-                {keywords.map((k) => (
+                {keywordsZh.map((k) => (
                   <Tag key={k} color="blue">
+                    {k}
+                  </Tag>
+                ))}
+              </Space>
+              <Divider />
+              <Typography.Title level={5}>English Abstract</Typography.Title>
+              <TextArea value={abstractEn} onChange={(e) => setAbstractEn(e.target.value)} rows={8} />
+              <Typography.Title level={5} style={{ marginTop: 12 }}>Keywords</Typography.Title>
+              <Space wrap>
+                {keywordsEn.map((k) => (
+                  <Tag key={k} color="geekblue">
                     {k}
                   </Tag>
                 ))}
               </Space>
             </>
           ) : (
-            <Empty description="根据草稿自动生成摘要与关键词。" />
+            <Empty description="根据草稿自动生成中英文摘要与关键词（国内论文摘要需双语）。" />
           )}
         </Card>
       )}
@@ -574,12 +632,20 @@ export default function WritePage() {
           <Typography.Paragraph>
             在下方预览最终文档，然后导出为 Word（.docx）文件。
           </Typography.Paragraph>
-          {abstract && (
+          {(abstractZh || abstractEn) && (
             <div style={{ background: '#f6f8fa', padding: 16, borderRadius: 8, marginBottom: 16 }}>
-              <Typography.Title level={5}>摘要</Typography.Title>
-              <Typography.Paragraph>{abstract}</Typography.Paragraph>
+              <Typography.Title level={5}>中文摘要</Typography.Title>
+              <Typography.Paragraph>{abstractZh || '（未生成）'}</Typography.Paragraph>
               <Space wrap>
-                {keywords.map((k) => (
+                {keywordsZh.map((k) => (
+                  <Tag key={k}>{k}</Tag>
+                ))}
+              </Space>
+              <Divider />
+              <Typography.Title level={5}>English Abstract</Typography.Title>
+              <Typography.Paragraph>{abstractEn || '（未生成）'}</Typography.Paragraph>
+              <Space wrap>
+                {keywordsEn.map((k) => (
                   <Tag key={k}>{k}</Tag>
                 ))}
               </Space>
@@ -596,6 +662,18 @@ export default function WritePage() {
           </Button>
         </Card>
       )}
+
+      {/* 步骤导航：上一步 / 下一步 */}
+      <Row justify="space-between" style={{ marginTop: 20 }}>
+        <Button disabled={current === 0} onClick={() => goTo(current - 1)}>
+          上一步
+        </Button>
+        {current < 5 && (
+          <Button type="primary" onClick={() => goTo(current + 1)}>
+            下一步
+          </Button>
+        )}
+      </Row>
 
       {/* 从卡片笔记插入弹窗（Q1-1）：点击卡片 → 插入到草稿光标处（带引用锚文本） */}
       <Modal

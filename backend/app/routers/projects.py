@@ -90,7 +90,7 @@ def generate_title(
     user: User = Depends(get_current_user),
 ):
     _require_project(db, project_id, user.id)
-    titles = writing_service.generate_titles(db, user.id, body.direction)
+    titles = writing_service.generate_titles(db, user.id, body.direction, body.language)
     return {"titles": titles}
 
 
@@ -102,7 +102,7 @@ def generate_outline(
     user: User = Depends(get_current_user),
 ):
     project = _require_project(db, project_id, user.id)
-    outline = writing_service.generate_outline(db, user.id, body.topic, body.notes)
+    outline = writing_service.generate_outline(db, user.id, body.topic, body.notes, body.language)
     project.outline = outline
     if not project.title:
         project.title = body.topic
@@ -131,7 +131,7 @@ def generate_draft(
 ):
     project = _require_project(db, project_id, user.id)
     draft = writing_service.generate_draft(
-        db, user.id, body.outline, body.material_chunk_ids, body.section
+        db, user.id, body.outline, body.material_chunk_ids, body.section, body.language
     )
     if body.section:
         # Append/merge a single section into existing content
@@ -154,8 +154,22 @@ def generate_abstract(
     content = project.content or ""
     if not content.strip():
         raise HTTPException(status_code=400, detail="No draft content to summarize")
-    result = writing_service.generate_abstract(db, user.id, content)
+    result = writing_service.generate_abstract(db, user.id, content, body.language)
     return result
+
+
+@router.post("/{project_id}/generate-abstracts")
+def generate_abstracts(
+    project_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """同时生成中英文摘要与关键词（国内论文摘要双语要求）。"""
+    project = _require_project(db, project_id, user.id)
+    content = project.content or ""
+    if not content.strip():
+        raise HTTPException(status_code=400, detail="No draft content to summarize")
+    return writing_service.generate_abstracts(db, user.id, content)
 
 
 @router.post("/{project_id}/export-word")
@@ -165,7 +179,23 @@ def export_word(
     user: User = Depends(get_current_user),
 ):
     project = _require_project(db, project_id, user.id)
-    content = project.content or ""
+    outline = project.outline or {}
+    abstract_zh = (outline.get("abstract_zh") or "").strip()
+    abstract_en = (outline.get("abstract_en") or "").strip()
+    keywords_zh = outline.get("keywords_zh") or []
+    keywords_en = outline.get("keywords_en") or []
+    parts = []
+    if abstract_zh:
+        parts.append(f"# 摘要\n\n{abstract_zh}")
+        if keywords_zh:
+            parts.append(f"**关键词**：{', '.join(keywords_zh)}")
+    if abstract_en:
+        parts.append(f"# Abstract\n\n{abstract_en}")
+        if keywords_en:
+            parts.append(f"**Keywords**: {', '.join(keywords_en)}")
+    if project.content:
+        parts.append(project.content)
+    content = "\n\n".join(parts)
     title = project.title or "Untitled"
     docx_bytes = export_service.md_to_docx_bytes(content, title)
     safe_title = "".join(c for c in title if c.isalnum() or c in " -_") or "paper"

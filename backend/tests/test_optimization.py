@@ -4,7 +4,7 @@ import uuid
 from app.agent import memory as memory_mod
 from app.agent.top_agent import TopAgent
 from app.database import SessionLocal
-from app.services import export_service, glossary_service, reflection_service, task_queue
+from app.services import export_service, glossary_service, reflection_service, task_queue, writing_guide
 
 
 def test_glossary_crud() -> None:
@@ -57,3 +57,11 @@ def test_printable_html_export() -> None:
     text = html.decode("utf-8")
     assert "<h2>标题</h2>" in text
     assert "<table>" in text
+
+
+def test_writing_guide_dimension_mapping() -> None:
+    assert writing_guide.dimension_for_section("Methods") == "method"
+    assert writing_guide.dimension_for_section("引言") == "background"
+    assert writing_guide.dimension_for_section("Results") == "results"
+    assert "IMRaD" in writing_guide.writing_guidance("en")
+    assert "目的" in writing_guide.abstract_guidance("zh")

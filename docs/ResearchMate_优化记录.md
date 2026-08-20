@@ -2,7 +2,7 @@
 
 > 记录日期：2026-08-20
 > 范围：Zotero 导入修复、P0 安全与可靠性加固、P1 功能补全、Agent 核心集成
-> 验证：后端 31 个测试通过、前端 TypeScript 检查通过
+> 验证：后端 32 个测试通过、前端 TypeScript 检查与生产构建通过
 
 ---
 
@@ -82,5 +82,16 @@ npx tsc --noEmit -p tsconfig.json --pretty false
 - **Agent**：真实 MCP 客户端、多轮上下文、`workflow_execute`、会话摘要记忆、反思沉淀、实时事件流（含前端接入）、工具与任务进度页。
 - **P2**：文档/图表导出、术语表与翻译记忆、桌面集成（单实例、文件关联、系统通知、托盘常驻）。
 - **局域网访问**：默认监听 `0.0.0.0`，启动脚本支持 `HOST` 覆盖，提供 `allow_lan.bat` 防火墙放行。
+
+## 七、写作模块优化
+
+- 写作向导新增「上一步 / 下一步」导航，步骤间流转更清晰。
+- 选题、大纲、草稿每一步都可自由选择中文或英文生成。
+- 摘要步骤改为同时生成中英文摘要与中英文关键词，适配国内论文投稿要求。
+- 新增学术写作规范库 `backend/app/services/writing_guide.py`：
+  - 英文侧融合 Glasman-Deal《Science Research Writing》的 IMRaD、叙事包裹、句子/段落功能、动词时态与读者导向原则；
+  - 中文侧适配国内学术规范（摘要目的/方法/结果/结论四要素、GB/T 7714 参考文献、学术书面语）。
+- 素材检索接入 RAG 6 维向量库：按章节标题自动映射到 background / method / results / conclusion / contributions 等维度。
+- Word 导出会包含中英文摘要与关键词。
 
 已被需求移除、不在当前路线图内的可选方向：Zotero 深度集成、CSL 引文、笔记本/专题工作区、网页 / RSS / 视频多源导入、OCR、GROBID。

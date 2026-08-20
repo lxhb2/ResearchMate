@@ -8,24 +8,38 @@ from sqlalchemy.orm import Session
 from app.models.project import Project
 from app.models.paper_chunk import PaperChunk
 from app.services import llm_service, search_service
+from app.services import writing_guide
 
 
-def generate_titles(db: Session, user_id, direction: str) -> list[str]:
+def generate_titles(db: Session, user_id, direction: str, language: str = "zh") -> list[str]:
+    lang_label = "中文" if language != "en" else "English"
     system = (
-        "You are an academic writing advisor. Given a research direction, propose 3 concrete, "
-        "scholarly paper titles. Return ONLY a JSON object: {\"titles\": [\"...\", \"...\", \"...\"]}."
+        f"You are an academic writing advisor. Given a research direction, propose 3 concrete, "
+        f"scholarly paper titles in {lang_label}. "
+        "Titles should be predictive, specific, and consistent with the paper content. "
+        'Return ONLY a JSON object: {"titles": ["...", "...", "..."]}.'
     )
-    messages = llm_service.system_user(system, direction)
+    user = f"Research direction: {direction}\n\nTitle language: {lang_label}"
+    messages = llm_service.system_user(system, user)
     data = llm_service.chat_json(db, user_id, messages, temperature=0.7)
     return data.get("titles", [])[:3]
 
 
-def generate_outline(db: Session, user_id, topic: str, notes: Optional[str] = None) -> dict:
+def generate_outline(
+    db: Session,
+    user_id,
+    topic: str,
+    notes: Optional[str] = None,
+    language: str = "zh",
+) -> dict:
+    sections_hint = " / ".join(writing_guide.outline_sections(language))
     system = (
-        "You are an academic writing advisor. Generate a structured IMRaD-style paper outline for the given topic. "
+        f"You are an academic writing advisor. Generate a structured IMRaD-style paper outline for the given topic. "
+        f"Suggested sections: {sections_hint}. Use the target language for section titles and points. "
+        f"{writing_guide.writing_guidance(language)} "
         "Return ONLY JSON in this exact shape:\n"
         '{"sections": [{"title": "Introduction", "points": ["point 1", "point 2"]}, ...]}\n'
-        "Include sections: Introduction, Related Work, Methods, Results, Discussion, Conclusion."
+        "Do not include a top-level document title."
     )
     user = f"Topic: {topic}\n"
     if notes:
@@ -35,16 +49,24 @@ def generate_outline(db: Session, user_id, topic: str, notes: Optional[str] = No
 
 
 def search_materials(db: Session, user_id, section_titles: list[str], top_k: int = 5) -> dict:
-    """For each section title, run a semantic search and collect recommended chunks."""
+    """For each section title, run a dimension-aware semantic search on the 6-dim vector library."""
     result = {}
     for title in section_titles:
-        hits = search_service.semantic_search(db, query=title, top_k=top_k, user_id=user_id)
+        dimension = writing_guide.dimension_for_section(title)
+        hits = search_service.semantic_search(
+            db,
+            query=title,
+            top_k=top_k,
+            dimension=dimension,
+            user_id=user_id,
+        )
         result[title] = [
             {
                 "chunk_id": str(h["chunk_id"]),
                 "paper_id": str(h["paper_id"]),
                 "paper_title": h["paper_title"],
                 "dimension": h["dimension"],
+                "dimension_label": search_service.DIMENSION_LABELS.get(h["dimension"], h["dimension"]),
                 "content": h["content"],
                 "score": h["score"],
             }
@@ -59,6 +81,7 @@ def generate_draft(
     outline: dict,
     material_chunk_ids: list[UUID],
     section: Optional[str] = None,
+    language: str = "zh",
 ) -> str:
     # Gather material texts
     materials_text = ""
@@ -76,24 +99,31 @@ def generate_draft(
         sec = next((s for s in sections if s.get("title") == section), None)
         if not sec:
             sec = {"title": section, "points": []}
-        return _generate_section(db, user_id, sec, materials_text)
+        return _generate_section(db, user_id, sec, materials_text, language)
 
     # Generate all sections
     out_parts = []
     for sec in sections:
-        out_parts.append(_generate_section(db, user_id, sec, materials_text))
+        out_parts.append(_generate_section(db, user_id, sec, materials_text, language))
     return "\n\n".join(out_parts)
 
 
-def _generate_section(db: Session, user_id, section: dict, materials_text: str) -> str:
+def _generate_section(
+    db: Session,
+    user_id,
+    section: dict,
+    materials_text: str,
+    language: str = "zh",
+) -> str:
     title = section.get("title", "Section")
     points = section.get("points", [])
     points_str = "\n".join(f"- {p}" for p in points) if points else "(no specific points)"
 
     system = (
         "You are an academic writing assistant. Write a coherent, well-developed section of an academic paper "
-        "in Markdown. Use the provided outline points and reference materials. "
-        "Begin with a level-2 Markdown heading (## Section Title). Write in formal academic English. "
+        f"in Markdown. {writing_guide.writing_guidance(language)} "
+        "Use the provided outline points and reference materials. "
+        "Begin with a level-2 Markdown heading (## Section Title). "
         "Cite referenced materials inline as (Author, Year) where inferable; otherwise omit. "
         "Do not include a top-level document title."
     )
@@ -111,11 +141,20 @@ def _generate_section(db: Session, user_id, section: dict, materials_text: str) 
     return text.strip()
 
 
-def generate_abstract(db: Session, user_id, content: str) -> dict:
+def generate_abstract(db: Session, user_id, content: str, language: str = "zh") -> dict:
+    lang_label = "中文" if language != "en" else "English"
     system = (
-        "You are an academic writing assistant. Based on the full paper draft, generate a concise abstract "
-        "(150-250 words) and 5 keywords. Return ONLY JSON: "
+        f"You are an academic writing assistant. {writing_guide.abstract_guidance(language)} "
+        f"Generate the abstract and keywords in {lang_label}. Return ONLY JSON: "
         '{"abstract": "...", "keywords": ["...", "...", "...", "...", "..."]}.'
     )
     messages = llm_service.system_user(system, content[:12000])
     return llm_service.chat_json(db, user_id, messages, temperature=0.4)
+
+
+def generate_abstracts(db: Session, user_id, content: str) -> dict:
+    """同时生成中英文摘要与关键词（国内论文摘要要求双语）。"""
+    return {
+        "zh": generate_abstract(db, user_id, content, language="zh"),
+        "en": generate_abstract(db, user_id, content, language="en"),
+    }

@@ -92,7 +92,13 @@ export interface Project {
   id: string
   user_id: string
   title: string | null
-  outline: { sections: ProjectSection[] } | null
+  outline: {
+    sections: ProjectSection[]
+    abstract_zh?: string
+    abstract_en?: string
+    keywords_zh?: string[]
+    keywords_en?: string[]
+  } | null
   content: string | null
   references: Record<string, unknown>[] | null
   step: number

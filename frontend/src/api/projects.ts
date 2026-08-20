@@ -22,12 +22,12 @@ export const projectsApi = {
     await api.delete(`/projects/${id}`)
   },
 
-  generateTitle: async (id: string, direction: string): Promise<{ titles: string[] }> => {
-    const { data } = await api.post(`/projects/${id}/generate-title`, { direction })
+  generateTitle: async (id: string, direction: string, language = 'zh'): Promise<{ titles: string[] }> => {
+    const { data } = await api.post(`/projects/${id}/generate-title`, { direction, language })
     return data
   },
-  generateOutline: async (id: string, topic: string, notes?: string): Promise<{ outline: unknown }> => {
-    const { data } = await api.post(`/projects/${id}/generate-outline`, { topic, notes })
+  generateOutline: async (id: string, topic: string, notes?: string, language = 'zh'): Promise<{ outline: unknown }> => {
+    const { data } = await api.post(`/projects/${id}/generate-outline`, { topic, notes, language })
     return data
   },
   searchMaterials: async (
@@ -46,16 +46,24 @@ export const projectsApi = {
     outline: unknown,
     materialChunkIds: string[],
     section?: string,
+    language = 'zh',
   ): Promise<{ content: string }> => {
     const { data } = await api.post(`/projects/${id}/generate-draft`, {
       outline,
       material_chunk_ids: materialChunkIds,
       section,
+      language,
     })
     return data
   },
-  generateAbstract: async (id: string): Promise<{ abstract: string; keywords: string[] }> => {
-    const { data } = await api.post(`/projects/${id}/generate-abstract`, {})
+  generateAbstract: async (id: string, language = 'zh'): Promise<{ abstract: string; keywords: string[] }> => {
+    const { data } = await api.post(`/projects/${id}/generate-abstract`, { language })
+    return data
+  },
+  generateAbstracts: async (
+    id: string,
+  ): Promise<{ zh: { abstract: string; keywords: string[] }; en: { abstract: string; keywords: string[] } }> => {
+    const { data } = await api.post(`/projects/${id}/generate-abstracts`, {})
     return data
   },
   exportWordUrl: (id: string): string => `/api/v1/projects/${id}/export-word`,
