@@ -11,6 +11,7 @@ setlocal
 cd /d "%~dp0"
 set "APP=%~dp0backend\ResearchMate.exe"
 set "PORT=8000"
+if "%HOST%"=="" set "HOST=0.0.0.0"
 
 echo ============================================
 echo   Starting ResearchMate (first run ~5-10s)...

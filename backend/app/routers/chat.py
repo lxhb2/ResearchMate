@@ -38,6 +38,20 @@ def _get_or_create_conv(db: Session, user_id, body: ChatRequest) -> Conversation
     return conv
 
 
+def _maybe_enqueue_summary(db: Session, user_id, messages: list[dict]) -> None:
+    """长对话自动压缩为会话摘要，写入长期记忆（后台任务，不阻塞回复）。"""
+    if len(messages) < 8:
+        return
+    from app.services import task_queue
+    recent = [
+        {"role": m.get("role"), "content": str(m.get("content") or "")[:1200]}
+        for m in messages[-12:]
+        if m.get("content")
+    ]
+    if recent:
+        task_queue.enqueue(db, user_id, "conversation_summary", {"messages": recent})
+
+
 @router.post("/chat")
 def chat(body: ChatRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """全局权限 Agent 对话：记忆注入 + 工具调用 + 智能推荐 + 路由。"""
@@ -52,6 +66,7 @@ def chat(body: ChatRequest, db: Session = Depends(get_db), user: User = Depends(
         use_library=body.use_library,
         web_search=body.web_search,
         contexts=body.contexts,
+        history=messages[:-1],
     )
     answer = out.get("answer", "")
     route_meta = {
@@ -66,6 +81,7 @@ def chat(body: ChatRequest, db: Session = Depends(get_db), user: User = Depends(
     conv.messages = messages
     db.commit()
     db.refresh(conv)
+    _maybe_enqueue_summary(db, user.id, messages)
     return {
         "answer": answer,
         "conversation_id": conv.id,
@@ -91,6 +107,7 @@ def chat_stream(body: ChatRequest, db: Session = Depends(get_db), user: User = D
                 use_library=body.use_library,
                 web_search=body.web_search,
                 contexts=body.contexts,
+                history=messages[:-1],
             ):
                 full += chunk
                 yield f"data: {json.dumps({'delta': chunk})}\n\n"
@@ -98,12 +115,51 @@ def chat_stream(body: ChatRequest, db: Session = Depends(get_db), user: User = D
             messages.append({"role": "assistant", "content": full})
             conv.messages = messages
             db.commit()
+            _maybe_enqueue_summary(db, user.id, messages)
         except Exception as exc:  # noqa: BLE001
             # 流中异常：把真实错误作为 delta 输出，避免连接中断后前端只显示
             # 笼统的 "An unexpected error occurred"
             err = f"处理失败：{exc}"
             full += f"\n\n⚠️ {err}"
             yield f"data: {json.dumps({'delta': f'\n\n⚠️ {err}'})}\n\n"
+            try:
+                db.rollback()
+            except Exception:  # noqa: BLE001
+                pass
+        yield f"data: {json.dumps({'conversation_id': conv.id})}\n\n"
+
+    return StreamingResponse(gen(), media_type="text/event-stream")
+
+
+@router.post("/chat/events")
+def chat_events(body: ChatRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """实时事件流对话：先落库用户消息，再推送 thinking / tool_start / tool_result / answer。"""
+    conv = _get_or_create_conv(db, user.id, body)
+    messages = list(conv.messages or [])
+    messages.append({"role": "user", "content": body.message})
+    conv.messages = messages
+    db.commit()
+
+    agent = TopAgent(db, user.id, llm=_build_llm(db, user.id))
+
+    def gen():
+        yield f"data: {json.dumps({'conversation_id': conv.id})}\n\n"
+        try:
+            for ev in agent.event_stream(
+                body.message,
+                use_library=body.use_library,
+                web_search=body.web_search,
+                contexts=body.contexts,
+                history=messages[:-1],
+            ):
+                yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"
+                if ev.get("type") == "answer":
+                    messages.append({"role": "assistant", "content": ev.get("answer", "")})
+                    conv.messages = messages
+                    db.commit()
+                    _maybe_enqueue_summary(db, user.id, messages)
+        except Exception as exc:  # noqa: BLE001
+            yield f"data: {json.dumps({'type': 'error', 'error': str(exc)})}\n\n"
             try:
                 db.rollback()
             except Exception:  # noqa: BLE001

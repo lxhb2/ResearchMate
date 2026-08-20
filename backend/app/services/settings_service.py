@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings as app_settings
 from app.models.app_setting import AppSetting
+from app.utils import secrets as secret_utils
 
 # 默认值：优先用环境变量，否则用内置默认
 _DEFAULTS: dict[str, Any] = {
@@ -22,6 +23,9 @@ _DEFAULTS: dict[str, Any] = {
     "embedding_dim": app_settings.EMBEDDING_DIM,
     "theme_color": "#4f46e5",
 }
+
+# 落库时需要加密的敏感配置项
+_SECRET_KEYS = {"llm_api_key"}
 
 # 推荐模型预设：后端统一维护，前端可兜底也可动态拉取
 # 结构说明：每个 preset 包含展示名、base_url、推荐的聊天模型列表、推荐 embedding 模型、说明
@@ -170,7 +174,10 @@ def get_all(db: Session, user_id: str) -> dict[str, Any]:
     rows = db.query(AppSetting).filter(AppSetting.user_id == user_id).all()
     loaded: dict[str, Any] = {}
     for row in rows:
-        loaded[row.key] = _to_value(row.value)
+        value = _to_value(row.value)
+        if row.key in _SECRET_KEYS and isinstance(value, str):
+            value = secret_utils.decrypt_secret(value)
+        loaded[row.key] = value
 
     with _lock:
         _cache[user_id] = loaded
@@ -196,10 +203,10 @@ def update_many(db: Session, user_id: str, payload: dict[str, Any]) -> dict[str,
             .first()
         )
         if existing:
-            existing.value = _from_value(value)
+            existing.value = _store_value(key, value)
         else:
             db.add(
-                AppSetting(user_id=user_id, key=key, value=_from_value(value))
+                AppSetting(user_id=user_id, key=key, value=_store_value(key, value))
             )
     db.commit()
 
@@ -224,3 +231,11 @@ def get_llm_config(db: Session, user_id: str) -> dict[str, Any]:
         "embedding_model": cfg.get("embedding_model") or app_settings.EMBEDDING_MODEL,
         "embedding_dim": int(cfg.get("embedding_dim") or app_settings.EMBEDDING_DIM),
     }
+
+
+def _store_value(key: str, value: Any) -> str:
+    """写入前加密敏感字段，其它字段保持原样。"""
+    stored = _from_value(value)
+    if key in _SECRET_KEYS and value not in (None, ""):
+        stored = secret_utils.encrypt_secret(str(value))
+    return stored

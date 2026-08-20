@@ -200,3 +200,15 @@ def keyword_search(
         }
         for score, chunk, paper in scored[:top_k]
     ]
+
+
+def fulltext_search(
+    db: Session,
+    query: str,
+    top_k: int = 20,
+    offset: int = 0,
+    user_id=None,
+) -> dict:
+    """FTS5 全文检索入口（无索引/非 SQLite 时返回空结果）。"""
+    from app.services import fts_service
+    return fts_service.fts_search(db, query, user_id=user_id, limit=top_k, offset=offset)

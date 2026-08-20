@@ -6,7 +6,10 @@ BibTeX / RIS 为自包含的轻量解析器，不额外引入第三方依赖。
 """
 import os
 import re
+import shutil
 import sqlite3
+import tempfile
+import time
 from typing import Optional
 
 
@@ -43,13 +46,76 @@ ZOTERO_FIELD_MAP = {
 }
 
 
-def _open_zotero_db(sqlite_path: str) -> sqlite3.Connection:
-    """以只读方式打开 zotero.sqlite（Zotero 用 WAL，只读连接不干扰运行）。"""
+_ZOTERO_BUSY_RETRIES = 2
+_ZOTERO_BUSY_WAIT_SEC = 0.2
+
+
+def _copy_zotero_snapshot(sqlite_path: str) -> str:
+    """把被 Zotero 占用的数据库连同日志复制到临时目录。"""
+    tmp = tempfile.mkdtemp(prefix="researchmate_zotero_")
+    dest = os.path.join(tmp, "zotero.sqlite")
     try:
-        return sqlite3.connect(f"file:{sqlite_path}?mode=ro", uri=True, timeout=10)
+        shutil.copy2(sqlite_path, dest)
+        for suffix in ("-journal", "-wal", "-shm"):
+            src = sqlite_path + suffix
+            if os.path.isfile(src):
+                shutil.copy2(src, dest + suffix)
+        return dest
+    except OSError:
+        shutil.rmtree(tmp, ignore_errors=True)
+        raise
+
+
+def _open_zotero_db(sqlite_path: str) -> tuple[sqlite3.Connection, str | None]:
+    """以只读方式打开 zotero.sqlite；被占用时短暂重试并退回临时快照。
+
+    Zotero 运行时可能持有数据库写锁，只读 URI 直接查询会报
+    ``database is locked``。返回 ``(conn, snapshot_dir)``，snapshot_dir
+    非空时由调用方在关闭连接后清理。
+    """
+    last_error = None
+    for attempt in range(_ZOTERO_BUSY_RETRIES):
+        try:
+            conn = sqlite3.connect(f"file:{sqlite_path}?mode=ro", uri=True, timeout=1)
+            # SELECT 1 不读库页，无法发现 EXCLUSIVE 锁；用 sqlite_master 强制取读锁
+            conn.execute("SELECT count(*) FROM sqlite_master").fetchone()
+            return conn, None
+        except sqlite3.Error as e:
+            last_error = e
+            try:
+                conn.close()
+            except Exception:  # noqa: BLE001
+                pass
+            if attempt + 1 < _ZOTERO_BUSY_RETRIES:
+                time.sleep(_ZOTERO_BUSY_WAIT_SEC)
+
+    try:
+        snapshot = _copy_zotero_snapshot(sqlite_path)
+    except OSError as e:
+        raise sqlite3.OperationalError(f"Zotero 数据库被占用且无法复制快照：{e}") from last_error
+
+    conn = None
+    try:
+        conn = sqlite3.connect(snapshot, timeout=1)
+        conn.execute("SELECT count(*) FROM sqlite_master").fetchone()
+        return conn, os.path.dirname(snapshot)
     except sqlite3.Error:
-        # 兜底：部分环境只读 URI 不可用（如加密/权限），退回普通连接
-        return sqlite3.connect(sqlite_path, timeout=10)
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:  # noqa: BLE001
+                pass
+        # 日志可能正被 Zotero 写入，复制到一半无法恢复时跳过日志再试
+        for suffix in ("-journal", "-wal", "-shm"):
+            side = snapshot + suffix
+            if os.path.isfile(side):
+                try:
+                    os.remove(side)
+                except OSError:
+                    pass
+        conn = sqlite3.connect(snapshot, timeout=1)
+        conn.execute("SELECT count(*) FROM sqlite_master").fetchone()
+        return conn, os.path.dirname(snapshot)
 
 
 def _parse_year(date_str: str) -> Optional[int]:
@@ -72,19 +138,22 @@ def _author_name(first: str, last: str, field_mode: int) -> str:
 def _resolve_attachment(att: dict, storage_dir: str, data_dir: str) -> Optional[str]:
     """把 Zotero 附件条目解析为本地 PDF 绝对路径（存在才返回）。"""
     path = (att.get("path") or "").strip()
-    link_mode = att.get("linkMode")
-    if link_mode == 2:
-        # imported file：path = "storage:filename.pdf"，文件在 storage/<key>/<filename>
-        filename = path.split(":", 1)[-1].strip()
+    if not path:
+        return None
+    if path.startswith("storage:"):
+        # imported file / imported URL 快照：storage:<filename>，文件在 storage/<key>/<filename>
+        filename = path[len("storage:"):].strip()
         cand = os.path.join(storage_dir, att.get("key", ""), filename)
         return cand if os.path.isfile(cand) else None
-    if link_mode == 1:
-        # linked file：可能是绝对路径或相对路径
-        if os.path.isabs(path):
-            return path if os.path.isfile(path) else None
-        cand = os.path.normpath(os.path.join(data_dir, path))
+    if path.startswith("attachments:"):
+        # 旧版 Zotero 目录：attachments:<filename>
+        filename = path[len("attachments:"):].strip()
+        cand = os.path.join(data_dir, "attachments", att.get("key", ""), filename)
         return cand if os.path.isfile(cand) else None
-    return None
+    if os.path.isabs(path):
+        return path if os.path.isfile(path) else None
+    cand = os.path.normpath(os.path.join(data_dir, path))
+    return cand if os.path.isfile(cand) else None
 
 
 def parse_zotero(data_dir: str) -> dict:
@@ -98,7 +167,7 @@ def parse_zotero(data_dir: str) -> dict:
         return {"entries": [], "attachments_found": 0, "errors": [f"未找到 {sqlite_path}"]}
     storage_dir = os.path.join(data_dir, "storage")
     try:
-        conn = _open_zotero_db(sqlite_path)
+        conn, snapshot_dir = _open_zotero_db(sqlite_path)
     except Exception as e:  # noqa: BLE001
         return {"entries": [], "attachments_found": 0, "errors": [f"无法打开 zotero.sqlite: {e}"]}
 
@@ -128,9 +197,8 @@ def parse_zotero(data_dir: str) -> dict:
         item_types_by_id = {iid: item_types.get(t, "") for iid, t, _k in item_rows}
         cur.execute("SELECT itemID, parentItemID, linkMode, contentType, path FROM itemAttachments")
         attachment_by_parent: dict[int, list] = {}
+        orphan_attachments: dict[int, dict] = {}
         for item_id, parent_id, link_mode, ctype, path in cur.fetchall():
-            if parent_id is None:
-                continue
             att = {
                 "itemID": item_id,
                 "parentItemID": parent_id,
@@ -139,7 +207,10 @@ def parse_zotero(data_dir: str) -> dict:
                 "path": path or "",
                 "key": item_keys.get(item_id, ""),
             }
-            attachment_by_parent.setdefault(parent_id, []).append(att)
+            if parent_id is None:
+                orphan_attachments[item_id] = att
+            else:
+                attachment_by_parent.setdefault(parent_id, []).append(att)
         cur.execute("SELECT collectionID, collectionName FROM collections")
         collection_names = dict(cur.fetchall())
         cur.execute("SELECT collectionID, itemID FROM collectionItems")
@@ -152,17 +223,47 @@ def parse_zotero(data_dir: str) -> dict:
         item_tags: dict[int, list] = {}
         for iid, tid in cur.fetchall():
             item_tags.setdefault(iid, []).append(tag_names.get(tid, ""))
-        conn.close()
     except Exception as e:  # noqa: BLE001
+        return {"entries": [], "attachments_found": 0, "errors": [f"解析失败: {e}"]}
+    finally:
         try:
             conn.close()
         except Exception:  # noqa: BLE001
             pass
-        return {"entries": [], "attachments_found": 0, "errors": [f"解析失败: {e}"]}
+        if snapshot_dir:
+            shutil.rmtree(snapshot_dir, ignore_errors=True)
 
     entries = []
     attachments_found = 0
     for item_id, type_name in item_types_by_id.items():
+        if type_name == "attachment":
+            # 无父条目的独立 PDF：直接用附件条目标题入库，保证 PDF 可打开
+            att = orphan_attachments.get(item_id)
+            if not att or (att.get("contentType") or "").lower() != "application/pdf":
+                continue
+            pdf_path = _resolve_attachment(att, storage_dir, data_dir)
+            if not pdf_path:
+                continue
+            data = item_data.get(item_id, {})
+            title = (data.get("title") or "").strip()
+            if not title:
+                title = os.path.splitext(os.path.basename(att.get("path", "").split(":", 1)[-1]))[0]
+            if not title:
+                continue
+            attachments_found += 1
+            entries.append(
+                {
+                    "title": title,
+                    "authors": [],
+                    "year": None,
+                    "doi": "",
+                    "abstract": "",
+                    "journal": "",
+                    "tags": list(item_tags.get(item_id, [])) + list(item_collections.get(item_id, [])),
+                    "pdf_path": pdf_path,
+                }
+            )
+            continue
         if type_name not in ZOTERO_ITEM_TYPES:
             continue
         data = item_data.get(item_id, {})
@@ -181,7 +282,7 @@ def parse_zotero(data_dir: str) -> dict:
         # 附件：只认本地 PDF
         pdf_path = None
         for att in attachment_by_parent.get(item_id, []):
-            if att["contentType"].lower() == "application/pdf" and att["linkMode"] in (1, 2):
+            if att["contentType"].lower() == "application/pdf":
                 pdf_path = _resolve_attachment(att, storage_dir, data_dir)
                 if pdf_path:
                     attachments_found += 1

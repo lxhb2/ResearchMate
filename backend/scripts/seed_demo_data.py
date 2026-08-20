@@ -11,6 +11,7 @@ from app.database import SessionLocal
 from app.models.annotation import Annotation
 from app.models.paper import Paper
 from app.models.paper_chunk import PaperChunk
+from app.models.project import Project
 
 db = SessionLocal()
 try:
@@ -55,10 +56,16 @@ try:
             db.commit()
             print(f"  [chunks] 为「{p.title[:20]}…」注入 {len(chunks[:40])} 个片段（约 {n_pages} 页）")
 
+    # 卡片笔记与写作项目与具体论文内容绑定，只注入到 CPTU 浮选论文。
+    cptu = next(
+        (p for p in papers if "cptu" in (p.title or "").lower() or "硫脲" in (p.title or "")),
+        None,
+    )
+    if cptu is not None:
         # ---- 3) 补充卡片笔记标注（Q1-1 演示；不足 3 张时补齐）----
         existing_pins = (
             db.query(Annotation)
-            .filter(Annotation.paper_id == p.id, Annotation.comment.isnot(None))
+            .filter(Annotation.paper_id == cptu.id, Annotation.comment.isnot(None))
             .count()
         )
         notes = [
@@ -69,8 +76,8 @@ try:
         for page, snippet, note in notes[existing_pins:]:
             db.add(
                 Annotation(
-                    user_id=p.user_id,
-                    paper_id=p.id,
+                    user_id=cptu.user_id,
+                    paper_id=cptu.id,
                     type="highlight",
                     content=snippet,
                     comment=note,
@@ -87,8 +94,47 @@ try:
             )
         if len(notes) > existing_pins:
             db.commit()
-            print(f"  [pins] 为「{p.title[:20]}…」补充 {len(notes) - existing_pins} 张卡片笔记")
+            print(f"  [pins] 为「{cptu.title[:20]}…」补充 {len(notes) - existing_pins} 张卡片笔记")
+
+        # ---- 4) 演示写作项目（Q1-1/Q1-2 试用路径需要）----
+        demo_title = "黄铜矿浮选中的硫脲类捕收剂应用综述（演示）"
+        existing_project = (
+            db.query(Project)
+            .filter(Project.user_id == cptu.user_id, Project.title == demo_title)
+            .first()
+        )
+        if existing_project is None:
+            db.add(
+                Project(
+                    user_id=cptu.user_id,
+                    title=demo_title,
+                    outline={
+                        "sections": [
+                            {"title": "选题背景", "points": ["硫脲类捕收剂在铜硫分离中的重要性"]},
+                            {"title": "研究现状", "points": ["CPTU 对黄铜矿与黄铁矿的选择性差异"]},
+                            {"title": "机理解析", "points": ["表面吸附与电化学作用机制"]},
+                            {"title": "结论与展望", "points": ["工业应用前景与改进方向"]},
+                        ]
+                    },
+                    content=(
+                        "# 黄铜矿浮选中的硫脲类捕收剂应用综述\n\n"
+                        "## 选题背景\n\n"
+                        "## 研究现状\n\n"
+                        "## 机理解析\n\n"
+                        "## 结论与展望\n\n"
+                    ),
+                    references=[
+                        {
+                            "paper_id": str(cptu.id),
+                            "title": cptu.title,
+                        }
+                    ],
+                    step=1,
+                )
+            )
+            db.commit()
+            print(f"  [project] 创建演示写作项目「{demo_title}」")
     db.commit()
-    print("演示数据就绪 ✓")
+    print("演示数据就绪")
 finally:
     db.close()

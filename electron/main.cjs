@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, Notification, Tray, Menu, nativeImage } = require('electron')
 const { spawn } = require('child_process')
 const path = require('path')
 const fs = require('fs')
@@ -9,6 +9,7 @@ const APP_PORT = Number(process.env.RESEARCHMATE_PORT || 18080)
 let mainWindow = null
 let backendProc = null
 let quitting = false
+let tray = null
 
 function resolveBackendExe() {
   if (app.isPackaged) {
@@ -97,13 +98,61 @@ function createWindow() {
   })
   mainWindow.once('ready-to-show', () => mainWindow.show())
   mainWindow.loadURL(`http://127.0.0.1:${APP_PORT}/`)
+  // 关闭窗口时隐藏到托盘，而不是退出（托盘菜单可真正退出）
+  mainWindow.on('close', (e) => {
+    if (!quitting) {
+      e.preventDefault()
+      mainWindow.hide()
+    }
+  })
   mainWindow.on('closed', () => {
     mainWindow = null
   })
 }
 
+function showMainWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    createWindow()
+    return
+  }
+  mainWindow.show()
+  mainWindow.focus()
+}
+
+function createTray() {
+  const icon = nativeImage.createFromDataURL(
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAIklEQVR4nGP48u33f0owA9UMSE77SBIeNWDUgOFqwIDlRgAyBzv+OHOwZAAAAABJRU5ErkJggg=='
+  )
+  tray = new Tray(icon)
+  tray.setToolTip('ResearchMate')
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: '打开 ResearchMate', click: showMainWindow },
+      { type: 'separator' },
+      {
+        label: '退出',
+        click: () => {
+          quitting = true
+          app.quit()
+        },
+      },
+    ])
+  )
+  tray.on('click', showMainWindow)
+}
+
 function registerIpc() {
   ipcMain.handle('app:version', () => app.getVersion())
+
+  ipcMain.handle('app:notify', (_event, payload) => {
+    if (Notification.isSupported()) {
+      new Notification({
+        title: String(payload?.title || 'ResearchMate'),
+        body: String(payload?.body || ''),
+      }).show()
+    }
+    return { ok: true }
+  })
 
   ipcMain.handle('update:check', async () => {
     try {
@@ -136,8 +185,17 @@ function registerIpc() {
 }
 
 app.whenReady().then(async () => {
+  app.setAppUserModelId('com.researchmate.desktop')
   registerIpc()
   startBackend()
+  autoUpdater.on('update-available', () => {
+    if (Notification.isSupported()) {
+      new Notification({
+        title: 'ResearchMate 更新可用',
+        body: '新版本已发布，可在应用内检查并下载。',
+      }).show()
+    }
+  })
   try {
     await waitForServer()
   } catch (err) {
@@ -147,12 +205,14 @@ app.whenReady().then(async () => {
     return
   }
   createWindow()
+  createTray()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
 app.on('window-all-closed', () => {
+  if (!quitting) return
   stopBackend()
   app.quit()
 })

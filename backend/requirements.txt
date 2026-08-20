@@ -1,5 +1,5 @@
-# ResearchMate - 轻量化本地部署依赖
-# 说明：SQLite 单文件存储，无需 PostgreSQL/pgvector/GROBID；无 LLM Key 时自动降级。
+# ResearchMate lightweight local deployment dependencies
+# SQLite single-file storage, no PostgreSQL/pgvector/GROBID, automatic fallback without an LLM key.
 fastapi>=0.115.0
 uvicorn[standard]>=0.30.6
 sqlalchemy>=2.0.35

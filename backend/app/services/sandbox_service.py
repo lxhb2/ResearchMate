@@ -16,6 +16,25 @@ class SandboxResult:
     chart: str | None = None  # 生成的图表文件路径
 
 
+def _sandbox_env() -> dict[str, str]:
+    """构造受限子进程环境：只保留运行必需变量，剔除密钥与代理。"""
+    allowed = {
+        "PATH", "SystemRoot", "WINDIR", "TEMP", "TMP",
+        "USERPROFILE", "HOMEDRIVE", "HOMEPATH", "COMPUTERNAME",
+    }
+    env = {k: v for k, v in os.environ.items() if k in allowed}
+    # 显式兜底：任何疑似密钥/令牌的变量都不传入
+    for k in list(env):
+        upper = k.upper()
+        if any(s in upper for s in ("KEY", "TOKEN", "SECRET", "PASSWORD", "CREDENTIAL")):
+            env.pop(k, None)
+    env["MPLBACKEND"] = "Agg"
+    env["PYTHONIOENCODING"] = "utf-8"
+    env["NO_PROXY"] = "*"
+    env["no_proxy"] = "*"
+    return env
+
+
 def run_python(code: str, timeout: int = 20) -> SandboxResult:
     """在受限子进程中执行 Python 代码，返回输出与图表路径。"""
     # 注入 matplotlib 无界面后端；重定向 print 以捕获输出；画布保存为本地 PNG
@@ -53,12 +72,13 @@ def run_python(code: str, timeout: int = 20) -> SandboxResult:
         )
         try:
             proc = subprocess.run(
-                [sys.executable, "-c", full_code],
+                # -I：隔离模式，忽略用户 site、PYTHONPATH 与环境变量影响
+                [sys.executable, "-I", "-S", "-E", "-c", full_code],
                 capture_output=True,
                 text=True,
                 timeout=timeout,
                 cwd=tmp,
-                env={**os.environ, "MPLBACKEND": "Agg"},
+                env=_sandbox_env(),
             )
         except subprocess.TimeoutExpired:
             return SandboxResult(output=f"[错误] 代码执行超时（>{timeout}s），已终止")

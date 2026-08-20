@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends
 import json
+from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -10,6 +12,14 @@ from app.services import llm_service, settings_service
 from app.agent.llm_adapter import LLMAdapter
 
 router = APIRouter(prefix="/term", tags=["term"])
+
+
+class GlossaryEntry(BaseModel):
+    term: str
+    definition: str = ""
+    translation: str = ""
+    source_lang: str = ""
+    target_lang: str = ""
 
 
 def _build_llm(db: Session, user_id) -> LLMAdapter:
@@ -30,6 +40,40 @@ def _system_prompt(web_search: bool) -> str:
     if web_search:
         system += " If you have web browsing tool capabilities, use them to enrich the explanation with the latest sources."
     return system
+
+
+@router.get("/glossary")
+def list_glossary(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """返回个人术语表。"""
+    from app.services import glossary_service
+    return {"terms": glossary_service.list_terms(str(user.id))}
+
+
+@router.post("/glossary")
+def add_glossary(body: GlossaryEntry, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """保存/更新一个术语到个人术语表。"""
+    from app.services import glossary_service
+    try:
+        item = glossary_service.add_term(
+            str(user.id),
+            body.term,
+            definition=body.definition,
+            translation=body.translation,
+            source_lang=body.source_lang,
+            target_lang=body.target_lang,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"ok": True, "term": item}
+
+
+@router.delete("/glossary/{term_id}")
+def delete_glossary(term_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """删除个人术语表中的一条术语。"""
+    from app.services import glossary_service
+    if not glossary_service.delete_term(str(user.id), term_id):
+        raise HTTPException(status_code=404, detail="术语不存在")
+    return {"ok": True}
 
 
 @router.post("/lookup")

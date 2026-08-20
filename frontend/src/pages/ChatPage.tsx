@@ -49,6 +49,7 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false)
   const [useLibrary, setUseLibrary] = useState(true)
   const [webSearch, setWebSearch] = useState(false)
+  const [agentStatus, setAgentStatus] = useState('')
   // 多文档综述（Q1-2）：当前综述的引用来源（渲染 citation 芯片）
   const [reviewCitations, setReviewCitations] = useState<ReviewCitation[]>([])
 
@@ -133,6 +134,7 @@ export default function ChatPage() {
     setActive(null)
     setInput('')
     setContexts([])
+    setAgentStatus('')
   }
 
   const removeConv = async (id: string) => {
@@ -166,22 +168,37 @@ export default function ChatPage() {
       updated_at: prev?.updated_at || '',
     }))
     setLoading(true)
+    setAgentStatus('正在思考…')
     try {
-      const convId = await chatApi.sendStream(msg, active?.id, useLibrary, webSearch, (delta) => {
-        setActive((prev) => {
-          if (!prev) return prev
-          const msgs = [...(prev.messages || [])]
-          const cur = (msgs[assistantIndex]?.content || '') + delta
-          msgs[assistantIndex] = { ...assistantMsg, content: cur }
-          return { ...prev, messages: msgs }
-        })
-      }, undefined, sentContexts)
+      const convId = await chatApi.sendEvents(msg, active?.id, useLibrary, webSearch, sentContexts, (evt) => {
+        if (evt.type === 'thinking') setAgentStatus('正在思考…')
+        else if (evt.type === 'tool_start') setAgentStatus(`正在调用工具：${evt.tool}`)
+        else if (evt.type === 'tool_result') setAgentStatus('工具调用完成，正在整理回答…')
+        else if (evt.type === 'answer') {
+          setAgentStatus('')
+          setActive((prev) => {
+            if (!prev) return prev
+            const msgs = [...(prev.messages || [])]
+            msgs[assistantIndex] = { ...assistantMsg, content: evt.answer || '' }
+            return { ...prev, messages: msgs }
+          })
+        } else if (evt.type === 'error') {
+          setAgentStatus('')
+          setActive((prev) => {
+            if (!prev) return prev
+            const msgs = [...(prev.messages || [])]
+            msgs[assistantIndex] = { ...assistantMsg, content: `⚠️ ${evt.error || '处理失败'}` }
+            return { ...prev, messages: msgs }
+          })
+        }
+      })
       if (convId) setActive((prev) => (prev ? { ...prev, id: convId } : prev))
       loadConversations()
     } catch (err) {
       message.error(getErrorMessage(err))
     } finally {
       setLoading(false)
+      setAgentStatus('')
     }
   }
 
@@ -356,7 +373,7 @@ export default function ChatPage() {
             {loading && (
               <div style={{ textAlign: 'center', padding: 12 }}>
                 <Spin size="small" />
-                <div style={{ color: C.sub, fontSize: 12, marginTop: 6 }}>助手思考中…</div>
+                <div style={{ color: C.sub, fontSize: 12, marginTop: 6 }}>{agentStatus || '助手思考中…'}</div>
               </div>
             )}
           </div>

@@ -15,7 +15,8 @@ fi
 # 单端口托管前端（dist 中已含构建好的前端），数据存本地 SQLite
 export FRONTEND_DIST="../frontend/dist"
 PORT="${PORT:-8000}"
+HOST="${HOST:-0.0.0.0}"
 echo "============================================="
 echo "ResearchMate 启动中 -> http://localhost:${PORT}/"
 echo "============================================="
-exec ./.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port "${PORT}"
+exec ./.venv/bin/uvicorn app.main:app --host "${HOST}" --port "${PORT}"

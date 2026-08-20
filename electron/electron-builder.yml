@@ -24,6 +24,16 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
+fileAssociations:
+  - ext: pdf
+    name: ResearchMate PDF
+    description: ResearchMate PDF 文件
+  - ext: bib
+    name: BibTeX
+    description: BibTeX 文献文件
+  - ext: ris
+    name: RIS
+    description: RIS 文献文件
 publish:
   provider: github
   owner: lxhb2

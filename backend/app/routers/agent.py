@@ -46,6 +46,8 @@ class AgentChatRequest(BaseModel):
     web_search: bool = False
     # @ 引用上下文：[{"type": "skill|memory|tool|module", "name": "..."}]
     contexts: list[dict] = []
+    # 可选多轮历史：[{"role": "user|assistant", "content": "..."}]
+    history: list[dict] = []
 
 
 class RecommendRequest(BaseModel):
@@ -80,6 +82,11 @@ class McpSaveRequest(BaseModel):
 
 class GithubImportRequest(BaseModel):
     repo_url: str
+
+
+class McpCallRequest(BaseModel):
+    name: str
+    arguments: dict = {}
 
 
 # ---- 模块目录 & 智能推荐 ----
@@ -157,6 +164,18 @@ def agent_contexts(db: Session = Depends(get_db), user: User = Depends(get_curre
     return {"count": len(items), "items": items}
 
 
+@router.get("/capabilities")
+def agent_capabilities(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """返回内置工具 + 已发现 MCP 工具的完整目录（供 Agent 中心展示）。"""
+    from app.agent import mcp_runtime
+
+    return {
+        "builtin": tools_mod.tool_catalog(),
+        "mcp": mcp_runtime.active_tool_catalog(),
+        "total": len(tools_mod.TOOL_REGISTRY),
+    }
+
+
 # ---- 全局 Agent 对话 ----
 
 @router.post("/chat")
@@ -172,6 +191,7 @@ def agent_chat(
         use_library=body.use_library,
         web_search=body.web_search,
         contexts=body.contexts,
+        history=body.history,
     )
     return out
 
@@ -202,6 +222,7 @@ def agent_chat_stream(
                 use_library=body.use_library,
                 web_search=body.web_search,
                 contexts=body.contexts,
+                history=body.history,
             )
         except Exception as exc:  # noqa: BLE001
             # 把真实错误作为 delta 输出，避免流中断后前端只显示笼统错误
@@ -215,6 +236,34 @@ def agent_chat_stream(
         for i in range(0, len(full), 8):
             yield f"data: {json.dumps({'delta': full[i : i + 8]})}\n\n"
         yield f"data: {json.dumps({'done': True})}\n\n"
+
+    return StreamingResponse(gen(), media_type="text/event-stream")
+
+
+@router.post("/chat/events")
+def agent_chat_events(
+    body: AgentChatRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """全局 Agent 实时事件流：route / thinking / tool_start / tool_result / answer。"""
+    agent = TopAgent(db, user.id, llm=_build_llm(db, user.id))
+    recommendation = modules_mod.recommend(body.message)
+
+    def gen():
+        yield f"data: {json.dumps({'type': 'recommendation', 'recommendation': recommendation})}\n\n"
+        try:
+            for ev in agent.event_stream(
+                body.message,
+                use_library=body.use_library,
+                web_search=body.web_search,
+                contexts=body.contexts,
+                history=body.history,
+            ):
+                yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"
+        except Exception as exc:  # noqa: BLE001
+            yield f"data: {json.dumps({'type': 'error', 'error': str(exc)})}\n\n"
+        yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
     return StreamingResponse(gen(), media_type="text/event-stream")
 
@@ -388,6 +437,37 @@ def delete_mcp(name: str, db: Session = Depends(get_db), user: User = Depends(ge
 @router.post("/mcp/test/{name}")
 def test_mcp(name: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     return mcp_store.test_server(name)
+
+
+@router.post("/mcp/{name}/discover")
+def discover_mcp(name: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """连接 MCP 服务器发现工具，并把动态工具注册进 Agent 工具表。"""
+    from app.agent import mcp_runtime
+
+    return mcp_runtime.refresh_server(name)
+
+
+@router.get("/mcp/{name}/tools")
+def list_mcp_tools(name: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """返回某 MCP 服务器已缓存/已发现的工具清单。"""
+    server = mcp_store.get_server(name)
+    if not server:
+        raise HTTPException(status_code=404, detail="MCP 服务器不存在")
+    tools = server.get("tools") or []
+    return {"name": name, "count": len(tools), "tools": tools}
+
+
+@router.post("/mcp/{name}/call")
+def call_mcp_tool(
+    name: str,
+    body: McpCallRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """直接调用 MCP 服务器上的某个工具（供界面/联调使用）。"""
+    from app.agent import mcp_runtime
+
+    return mcp_runtime.call_tool(name, body.name, body.arguments or {})
 
 
 @router.post("/mcp/upload")

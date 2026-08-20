@@ -1,6 +1,7 @@
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -217,3 +218,26 @@ def delete_annotation(
         raise HTTPException(status_code=404, detail="Annotation not found")
     db.delete(ann)
     db.commit()
+
+
+@router.get("/export")
+def export_annotations(
+    paper_id: str = Query(None),
+    format: str = Query("md"),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """导出当前用户（或单篇文献）的标注/笔记为 Markdown / JSON / Zotero RDF。"""
+    fmt = format if format in ("md", "json", "rdf") else "md"
+    from app.services import annotation_export
+    content, filename, media_type = annotation_export.export_annotations(
+        db,
+        user.id,
+        paper_id=paper_id or None,
+        fmt=fmt,
+    )
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

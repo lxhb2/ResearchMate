@@ -5,11 +5,11 @@ MCP（Model Context Protocol）允许 Agent 接入外部工具/数据源。本�
 - 提供列表/增删改查与「测试连接」接口；
 - 向 Agent 工具目录暴露已配置服务器及其声明的工具（供 LLM 判断可调用能力）。
 
-真正的 MCP 客户端握手由前端/运行时负责，这里聚焦配置管理与目录能力。
+真正的 MCP 客户端握手由 mcp_client / mcp_runtime 负责，这里聚焦配置管理、
+工具发现缓存与连接测试。
 """
 import json
 import os
-import subprocess
 from typing import Any
 
 from app.config import settings as app_settings
@@ -65,6 +65,12 @@ def save_server(server: dict) -> dict:
     servers = _load()
     for i, s in enumerate(servers):
         if s.get("name") == name:
+            # 覆盖配置时先清理旧的动态工具，避免改名/删工具后残留注册
+            try:
+                from app.agent import tools as tools_mod
+                tools_mod.unregister_tools_by_source(f"mcp:{name}")
+            except Exception:  # noqa: BLE001
+                pass
             servers[i] = server
             _save(servers)
             return server
@@ -79,6 +85,12 @@ def remove_server(name: str) -> bool:
     if len(rest) == len(servers):
         return False
     _save(rest)
+    # 清理该服务器在工具注册表中的动态 MCP 工具
+    try:
+        from app.agent import tools as tools_mod
+        tools_mod.unregister_tools_by_source(f"mcp:{name}")
+    except Exception:  # noqa: BLE001
+        pass
     return True
 
 
@@ -91,42 +103,24 @@ def server_tools(name: str) -> list[dict]:
 
 
 def test_server(name: str) -> dict:
-    """测试 MCP 服务器连通性。
-
-    - http/sse：发起一次 HEAD/GET 探测；
-    - stdio：尝试启动命令并立即终止（验证命令是否存在可执行）。
-    """
+    """完整握手测试：initialize + tools/list，成功后缓存工具清单。"""
     s = get_server(name)
     if not s:
         return {"ok": False, "error": "服务器不存在"}
-    stype = s.get("type", TYPE_HTTP)
+    from app.agent import mcp_client
+    result = mcp_client.test_server(s)
+    if result.get("ok"):
+        refresh_tools(name, timeout=10.0)
+    return result
 
-    if stype == TYPE_HTTP:
-        url = (s.get("url") or "").strip()
-        if not url:
-            return {"ok": False, "error": "缺少 url"}
-        import httpx
 
-        try:
-            resp = httpx.get(url, timeout=8.0, follow_redirects=True)
-            return {"ok": resp.status_code < 500, "status": resp.status_code, "url": url}
-        except Exception as e:  # noqa: BLE001
-            return {"ok": False, "error": f"连接失败：{e}", "url": url}
-
-    if stype == TYPE_STDIO:
-        command = (s.get("command") or "").strip()
-        args = s.get("args") or []
-        if not command:
-            return {"ok": False, "error": "缺少 command"}
-        try:
-            proc = subprocess.run(
-                [command, *args, "--help"],
-                capture_output=True, timeout=8.0,
-            )
-            return {"ok": True, "exit_code": proc.returncode, "tip": "命令可执行（--help 探测）"}
-        except FileNotFoundError:
-            return {"ok": False, "error": f"命令不存在：{command}"}
-        except Exception as e:  # noqa: BLE001
-            return {"ok": False, "error": f"启动失败：{e}"}
-
-    return {"ok": False, "error": f"未知类型：{stype}"}
+def refresh_tools(name: str, timeout: float = 10.0) -> list[dict]:
+    """连接服务器发现工具并缓存到配置，返回规范化工具列表。"""
+    s = get_server(name)
+    if not s:
+        return []
+    from app.agent import mcp_client
+    tools = mcp_client.list_tools(s, timeout=timeout)
+    s["tools"] = tools
+    save_server(s)
+    return tools

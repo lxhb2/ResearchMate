@@ -1,5 +1,6 @@
 """Application configuration loaded from environment variables."""
 import os
+import secrets
 import sys
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -24,13 +25,37 @@ def _env_files() -> list[str]:
     return files
 
 
+DEFAULT_SECRET_KEY = "change-me-in-production-please-use-a-long-random-string"
+
+
+def _load_or_create_secret_key(storage_dir: str) -> str:
+    """首启生成随机密钥并持久化，避免固定默认密钥。"""
+    path = os.path.join(storage_dir, "secret_key")
+    if os.path.isfile(path):
+        try:
+            with open(path, encoding="utf-8") as f:
+                key = f.read().strip()
+            if key:
+                return key
+        except OSError:
+            pass
+    key = secrets.token_urlsafe(48)
+    try:
+        os.makedirs(storage_dir, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(key + "\n")
+    except OSError:
+        pass
+    return key
+
+
 class Settings(BaseSettings):
     # App
     APP_NAME: str = "ResearchMate"
     APP_VERSION: str = "0.2.0"
     GITHUB_REPO: str = "lxhb2/ResearchMate"
     API_V1_PREFIX: str = "/api/v1"
-    SECRET_KEY: str = "change-me-in-production-please-use-a-long-random-string"
+    SECRET_KEY: str = DEFAULT_SECRET_KEY
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
@@ -68,6 +93,11 @@ class Settings(BaseSettings):
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
+
+    def model_post_init(self, __context) -> None:
+        """未显式配置 SECRET_KEY 时，自动生成本地持久化随机密钥。"""
+        if self.SECRET_KEY == DEFAULT_SECRET_KEY:
+            object.__setattr__(self, "SECRET_KEY", _load_or_create_secret_key(self.STORAGE_DIR))
 
 
 @lru_cache

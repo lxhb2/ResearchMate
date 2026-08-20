@@ -29,8 +29,10 @@ if not exist ".venv\Scripts\uvicorn.exe" (
 
 set "FRONTEND_DIST=..\frontend\dist"
 if "%PORT%"=="" set "PORT=8000"
+if "%HOST%"=="" set "HOST=0.0.0.0"
 echo =============================================
 echo ResearchMate starting -^> http://localhost:%PORT%/
+echo LAN access       -^> http://本机局域网IP:%PORT%/
 echo =============================================
-.venv\Scripts\python -m uvicorn app.main:app --host 127.0.0.1 --port %PORT%
+.venv\Scripts\python -m uvicorn app.main:app --host %HOST% --port %PORT%
 pause

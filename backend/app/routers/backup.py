@@ -77,6 +77,13 @@ def export_backup(user: User = Depends(get_current_user)):
                     fp = os.path.join(root, fn)
                     rel = os.path.join("pdfs", fn)
                     zf.write(fp, rel)
+        agent_dir = os.path.join(settings.STORAGE_DIR, "agent")
+        if os.path.isdir(agent_dir):
+            for root, _dirs, files in os.walk(agent_dir):
+                for fn in files:
+                    fp = os.path.join(root, fn)
+                    rel = os.path.join("agent", os.path.relpath(fp, agent_dir))
+                    zf.write(fp, rel)
 
     buf.seek(0)
     return StreamingResponse(
@@ -147,6 +154,21 @@ def restore_backup(
                 if os.path.isfile(fp):
                     shutil.copy2(fp, os.path.join(pdf_dir, fn))
 
+        # 恢复 Agent 数据（技能 / 插件 / MCP 配置 / 长期记忆），需重启后完全生效
+        src_agent = os.path.join(tmpdir, "agent")
+        if os.path.isdir(src_agent):
+            storage_abs = os.path.abspath(settings.STORAGE_DIR)
+            agent_abs = os.path.abspath(os.path.join(settings.STORAGE_DIR, "agent"))
+            if agent_abs != storage_abs and not agent_abs.startswith(storage_abs + os.sep):
+                raise HTTPException(status_code=500, detail="存储目录配置异常，无法恢复 Agent 数据")
+            os.makedirs(settings.STORAGE_DIR, exist_ok=True)
+            try:
+                if os.path.isdir(agent_abs):
+                    shutil.rmtree(agent_abs)
+                shutil.copytree(src_agent, agent_abs)
+            except Exception as e:  # noqa: BLE001
+                raise HTTPException(status_code=500, detail=f"恢复 Agent 数据失败: {e}") from e
+
         # 清理临时备份
         if backup_current and os.path.exists(backup_current):
             try:
@@ -156,4 +178,4 @@ def restore_backup(
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
 
-    return {"ok": True, "message": "恢复成功，请刷新页面。"}
+    return {"ok": True, "message": "恢复成功，请刷新页面；若恢复了 Agent 数据，建议重启应用。"}
