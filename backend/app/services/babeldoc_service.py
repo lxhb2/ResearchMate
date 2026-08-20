@@ -16,6 +16,9 @@ from typing import Any
 
 def _cli_path() -> str | None:
     """返回 babeldoc CLI 路径（优先当前 Python 环境）。"""
+    env_cli = os.environ.get("BABELDOC_CLI", "").strip()
+    if env_cli and os.path.isfile(env_cli):
+        return env_cli
     exe = shutil.which("babeldoc")
     if exe:
         return exe
