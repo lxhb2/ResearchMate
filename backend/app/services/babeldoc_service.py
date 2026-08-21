@@ -13,6 +13,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+_cli_probe: bool | None = None
+
 
 def _cli_path() -> str | None:
     """返回 babeldoc CLI 路径（优先当前 Python 环境）。"""
@@ -32,8 +34,31 @@ def _cli_path() -> str | None:
 
 
 def is_available() -> bool:
-    """BabelDOC 是否已安装。"""
-    return importlib.util.find_spec("babeldoc") is not None or _cli_path() is not None
+    """BabelDOC 是否已安装且 CLI 可正常启动。"""
+    global _cli_probe
+
+    if importlib.util.find_spec("babeldoc") is not None:
+        return True
+    cli = _cli_path()
+    if not cli:
+        return False
+    if _cli_probe is not None:
+        return _cli_probe
+    creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    try:
+        proc = subprocess.run(
+            [cli, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            encoding="utf-8",
+            errors="replace",
+            creationflags=creationflags,
+        )
+        _cli_probe = proc.returncode == 0
+    except Exception:  # noqa: BLE001
+        _cli_probe = False
+    return _cli_probe
 
 
 def install_hint() -> str:

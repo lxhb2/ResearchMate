@@ -37,6 +37,7 @@ def _bridge_path() -> str | None:
     candidates = [
         os.path.join(_project_backend(), "scripts", "pdf2zh_bridge.py"),
         os.path.join(os.path.dirname(sys.executable), "pdf2zh_bridge.py"),
+        os.path.join(os.path.dirname(sys.executable), "scripts", "pdf2zh_bridge.py"),
     ]
     if getattr(sys, "_MEIPASS", None):
         candidates.insert(0, os.path.join(str(sys._MEIPASS), "scripts", "pdf2zh_bridge.py"))

@@ -2,7 +2,7 @@
 
 > 记录日期：2026-08-21
 > 范围：Zotero 导入修复、P0 安全与可靠性加固、P1 功能补全、Agent 核心集成、pdf2zh-next 整篇翻译与划词加速
-> 验证：后端 41 个测试通过、前端 TypeScript 检查与生产构建通过
+> 验证：后端 43 个测试通过、前端 TypeScript 检查与生产构建通过
 
 ---
 
@@ -133,5 +133,11 @@ npx tsc --noEmit -p tsconfig.json --pretty false
 - 顶层 Agent 增加联网意图自动识别：输入“搜索/查一下/最新资料/学术名词”等会直接调用 `web_search`，不会被本地 RAG 路由抢占。
 - 新增操作指南文案与 `docs/AnySearch_接入评估.md`，说明搜索链路、隐私边界与开源替代。
 - 版本号统一升级为 `v0.3.2`，重新打包 Electron 安装包并上传 GitHub Release。
+
+## 十三、整篇翻译引擎打包与回退修复（v0.3.3，2026-08-21）
+
+- 修复打包后 `pdf2zh-next 未安装`：Electron 现在把 `backend/scripts/pdf2zh_bridge.py` 作为资源打进安装包，并在启动后端时注入 `PDF2ZH_BRIDGE`。
+- 修复 BabelDOC 回退误报：`babeldoc_service.is_available()` 会先探测 CLI 是否能真正启动，不再把损坏的半成品 `babeldoc.exe` 当成可用引擎。
+- 新增 `/api/v1/translate/pdf/engines` 诊断接口，可查看 pdf2zh/BabelDOC 的可用状态与实际路径，方便排查。
 
 已被需求移除、不在当前路线图内的可选方向：Zotero 深度集成、CSL 引文、笔记本/专题工作区、网页 / RSS / 视频多源导入、OCR、GROBID。

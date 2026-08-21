@@ -9,6 +9,8 @@ files:
 extraResources:
   - from: ../backend/packaging/windows_sqlite/dist/ResearchMate.exe
     to: backend/ResearchMate.exe
+  - from: ../backend/scripts/pdf2zh_bridge.py
+    to: backend/scripts/pdf2zh_bridge.py
 asar: true
 win:
   target:

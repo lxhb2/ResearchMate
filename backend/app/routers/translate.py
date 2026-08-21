@@ -267,6 +267,24 @@ def start_translate_pdf(
     }
 
 
+@router.get("/translate/pdf/engines")
+def translate_pdf_engines(user: User = Depends(get_current_user)):
+    """返回整篇翻译引擎可用状态，便于排查安装/打包问题。"""
+    from app.services import babeldoc_service, pdf2zh_service
+
+    return {
+        "pdf2zh": {
+            "available": pdf2zh_service.is_available(),
+            "python": pdf2zh_service._python_path() or "",
+            "bridge": pdf2zh_service._bridge_path() or "",
+        },
+        "babeldoc": {
+            "available": babeldoc_service.is_available(),
+            "cli": babeldoc_service._cli_path() or "",
+        },
+    }
+
+
 @router.get("/translate/pdf/status/{task_id}")
 def translate_pdf_status(
     task_id: str,

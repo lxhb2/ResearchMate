@@ -72,6 +72,7 @@ function startBackend() {
       PDF_DIR: path.join(dataDir, 'storage', 'pdfs'),
       STORAGE_DIR: path.join(dataDir, 'storage'),
       DATABASE_URL: `sqlite:///${path.join(dataDir, 'researchmate.db').replace(/\\/g, '/')}`,
+      PDF2ZH_BRIDGE: path.join(process.resourcesPath, 'backend', 'scripts', 'pdf2zh_bridge.py'),
     },
     windowsHide: true,
   })
