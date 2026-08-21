@@ -140,4 +140,10 @@ npx tsc --noEmit -p tsconfig.json --pretty false
 - 修复 BabelDOC 回退误报：`babeldoc_service.is_available()` 会先探测 CLI 是否能真正启动，不再把损坏的半成品 `babeldoc.exe` 当成可用引擎。
 - 新增 `/api/v1/translate/pdf/engines` 诊断接口，可查看 pdf2zh/BabelDOC 的可用状态与实际路径，方便排查。
 
+## 十四、整篇翻译余额不足自动降级（v0.3.4，2026-08-21）
+
+- 修复 pdf2zh-next 使用 SiliconFlow LLM Key 时余额不足直接失败的问题。
+- 任务队列现在会按“用户配置引擎 → SiliconFlow Free 免费引擎”的顺序重试，免费引擎失败后才回退 BabelDOC。
+- 后端 43 个测试继续通过；`v0.3.4` 安装包已重新构建并上传。
+
 已被需求移除、不在当前路线图内的可选方向：Zotero 深度集成、CSL 引文、笔记本/专题工作区、网页 / RSS / 视频多源导入、OCR、GROBID。

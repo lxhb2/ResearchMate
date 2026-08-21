@@ -147,23 +147,32 @@ def _run_babeldoc_translate(task: AgentTask) -> dict:
             glossary_path = pdf2zh_service.write_glossary_csv(
                 str(task.user_id), tmpdir, lang_out
             )
-            try:
-                files = pdf2zh_service.translate_pdf(
-                    input_pdf,
-                    os.path.join(tmpdir, "out"),
-                    lang_in,
-                    lang_out,
-                    cfg,
-                    engine=engine,
-                    progress_cb=lambda p, stage: _update_task_progress(str(task.id), p, stage),
-                )
-                chosen = pdf2zh_service.pick_translated_pdf(files)
-                engine_used = "pdf2zh-next"
-                if glossary_path:
-                    os.remove(glossary_path)
-            except Exception as e:  # noqa: BLE001
-                pdf_error = str(e)
-                _update_task_progress(str(task.id), 0, "pdf2zh-next 失败，正在回退 BabelDOC")
+            attempts = [engine]
+            if engine not in ("siliconflowfree", "free"):
+                attempts.append("siliconflowfree")
+            for attempt_engine in attempts:
+                try:
+                    files = pdf2zh_service.translate_pdf(
+                        input_pdf,
+                        os.path.join(tmpdir, "out"),
+                        lang_in,
+                        lang_out,
+                        cfg,
+                        engine=attempt_engine,
+                        progress_cb=lambda p, stage: _update_task_progress(str(task.id), p, stage),
+                    )
+                    chosen = pdf2zh_service.pick_translated_pdf(files)
+                    engine_used = "pdf2zh-next"
+                    if glossary_path:
+                        os.remove(glossary_path)
+                    break
+                except Exception as e:  # noqa: BLE001
+                    pdf_error = (pdf_error + " | " if pdf_error else "") + f"{attempt_engine}: {e}"
+                    _update_task_progress(
+                        str(task.id),
+                        0,
+                        f"pdf2zh-next（{attempt_engine}）失败，尝试备用引擎",
+                    )
 
         if not chosen and babeldoc_service.is_available():
             try:
