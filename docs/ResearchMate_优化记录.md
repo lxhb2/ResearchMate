@@ -126,4 +126,11 @@ npx tsc --noEmit -p tsconfig.json --pretty false
 - 开源替代：支持自建 SearXNG（AGPL-3.0，仅通过 HTTP JSON API 调用，不复制其代码），配置 `SEARXNG_URL` 后优先于 AnySearch，满足完全本地化需求。
 - 隐私说明：AnySearch 匿名模式会把搜索关键词发送到 `https://api.anysearch.com`，官方声明为零保留；如不能接受，可关闭 `ANYSEARCH_ENABLED=false` 或配置 SearXNG。
 
+## 十二、搜索 API 配置界面与 v0.3.2 发布（2026-08-21）
+
+- 设置页新增「联网搜索 API 配置」卡片：可开关 AnySearch、填写 AnySearch API Key / Base URL、SearXNG 地址，并提供「测试搜索连接」按钮。
+- 搜索配置持久化到用户设置（`anysearch_enabled` / `anysearch_api_key` / `anysearch_base_url` / `searxng_url`），`web_search` 工具实时读取，无需重启。
+- 新增操作指南文案与 `docs/AnySearch_接入评估.md`，说明搜索链路、隐私边界与开源替代。
+- 版本号统一升级为 `v0.3.2`，重新打包 Electron 安装包并上传 GitHub Release。
+
 已被需求移除、不在当前路线图内的可选方向：Zotero 深度集成、CSL 引文、笔记本/专题工作区、网页 / RSS / 视频多源导入、OCR、GROBID。

@@ -605,18 +605,24 @@ def _web_search(ctx: ToolContext, args: dict) -> dict:
     errors: list[str] = []
     from app.services import web_search_providers
 
-    if web_search_providers.searxng_configured():
+    search_cfg = None
+    if ctx and ctx.db is not None and ctx.user_id:
+        from app.services import settings_service
+
+        search_cfg = settings_service.get_search_config(ctx.db, str(ctx.user_id))
+
+    if web_search_providers.searxng_configured(search_cfg):
         try:
-            result = web_search_providers.searxng_search(query, limit)
+            result = web_search_providers.searxng_search(query, limit, config=search_cfg)
             if result.get("items"):
                 return result
             errors.append("searxng: 无结果")
         except Exception as e:  # noqa: BLE001
             errors.append(f"searxng: {e}")
 
-    if web_search_providers.anysearch_enabled():
+    if web_search_providers.anysearch_enabled(search_cfg):
         try:
-            result = web_search_providers.anysearch_search(query, limit)
+            result = web_search_providers.anysearch_search(query, limit, config=search_cfg)
             if result.get("items"):
                 return result
             errors.append("anysearch: 无结果")

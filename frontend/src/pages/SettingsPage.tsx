@@ -31,6 +31,7 @@ import {
   AppstoreOutlined,
   AppstoreAddOutlined,
   DeleteOutlined,
+  GlobalOutlined,
 } from '@ant-design/icons'
 import type { UploadProps } from 'antd'
 import { Upload, List, Switch, Popconfirm, Empty } from 'antd'
@@ -395,6 +396,9 @@ export default function SettingsPage() {
   // 已保存 Key 的脱敏展示（如 sk-1****abcd）与是否已配置
   const [keyMasked, setKeyMasked] = useState('')
   const [keyConfigured, setKeyConfigured] = useState(false)
+  const [searchKeyMasked, setSearchKeyMasked] = useState('')
+  const [searchKeyConfigured, setSearchKeyConfigured] = useState(false)
+  const [searchTesting, setSearchTesting] = useState(false)
 
   // 尝试从后端拉取模型预设，失败则使用前端兜底列表
   useEffect(() => {
@@ -425,12 +429,18 @@ export default function SettingsPage() {
         // - 未配置：提示输入新 Key
         setKeyMasked(cfg.llm_api_key || '')
         setKeyConfigured(!!(cfg.llm_api_key && cfg.llm_api_key.trim()))
+        setSearchKeyMasked(cfg.anysearch_api_key || '')
+        setSearchKeyConfigured(!!(cfg.anysearch_api_key && cfg.anysearch_api_key.trim()))
         form.setFieldsValue({
           llm_api_key: '',
           llm_base_url: cfg.llm_base_url,
           llm_model: cfg.llm_model,
           embedding_model: cfg.embedding_model,
           embedding_dim: cfg.embedding_dim,
+          anysearch_enabled: cfg.anysearch_enabled,
+          anysearch_api_key: '',
+          anysearch_base_url: cfg.anysearch_base_url,
+          searxng_url: cfg.searxng_url,
         })
         // 同步主题色
         const color = cfg.theme_color || themeColor
@@ -486,12 +496,21 @@ export default function SettingsPage() {
       } else {
         delete payload.llm_api_key
       }
+      const newSearchKey = (values.anysearch_api_key || '').trim()
+      if (newSearchKey) {
+        payload.anysearch_api_key = newSearchKey
+      } else {
+        delete payload.anysearch_api_key
+      }
       const updated = await settingsApi.update(payload)
       setThemeColor(pickedColor)
       // 保存后 Key 输入框清空，占位符换为新脱敏值
       form.setFieldsValue({ llm_api_key: '' })
       setKeyMasked(updated.llm_api_key || '')
       setKeyConfigured(!!updated.llm_api_key?.trim())
+      form.setFieldsValue({ anysearch_api_key: '' })
+      setSearchKeyMasked(updated.anysearch_api_key || '')
+      setSearchKeyConfigured(!!updated.anysearch_api_key?.trim())
       message.success('设置已保存')
     } catch (err) {
       if ((err as any)?.errorFields) return // form validation error
@@ -540,6 +559,25 @@ export default function SettingsPage() {
     }
   }
 
+  const handleTestSearch = async () => {
+    try {
+      const values = await form.validateFields(['anysearch_base_url', 'searxng_url'])
+      const newKey = (form.getFieldValue('anysearch_api_key') || '').trim()
+      setSearchTesting(true)
+      const res = await settingsApi.testSearch({
+        provider: 'auto',
+        anysearch_api_key: newKey || undefined,
+        anysearch_base_url: values.anysearch_base_url,
+        searxng_url: values.searxng_url,
+      })
+      message.success(`搜索连接正常：${res.engine}（返回 ${res.count} 条结果）`)
+    } catch (err) {
+      message.error('搜索测试失败：' + getErrorMessage(err))
+    } finally {
+      setSearchTesting(false)
+    }
+  }
+
   const applyThemePreview = (color: string) => {
     setPickedColor(color)
     setThemeColor(color) // 实时预览
@@ -573,7 +611,7 @@ export default function SettingsPage() {
       <Title level={3} style={{ marginBottom: 4 }}>
         <ApiOutlined /> 设置
       </Title>
-      <Text type="secondary">配置 AI 模型 API、界面主题色，以及全局助手的技能 / MCP / 长期记忆</Text>
+      <Text type="secondary">配置 AI 模型 API、联网搜索、界面主题色，以及全局助手的技能 / MCP / 长期记忆</Text>
 
       <Tabs
         style={{ marginTop: 8 }}
@@ -683,6 +721,86 @@ export default function SettingsPage() {
               {presets[presetIdx]?.help}
             </Paragraph>
           )}
+        </Form>
+      </Card>
+
+      {/* 联网搜索 API 配置 */}
+      <Card
+        title={
+          <Space>
+            <GlobalOutlined style={{ color: themeColor }} />
+            <span>联网搜索 API 配置</span>
+          </Space>
+        }
+        style={{ marginBottom: 16 }}
+        extra={
+          <Tag color="blue" bordered={false}>
+            AnySearch / SearXNG
+          </Tag>
+        }
+      >
+        <Alert
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message="搜索默认调用 AnySearch 公开 API"
+          description="AnySearch 匿名可用，无需 Key；搜索关键词会发送到 api.anysearch.com。如需完全本地化，可配置自建 SearXNG 地址，配置后优先使用 SearXNG。敏感数据场景请关闭 AnySearch。"
+        />
+        <Form form={form} layout="vertical" requiredMark={false}>
+          <Form.Item
+            label="启用 AnySearch"
+            name="anysearch_enabled"
+            valuePropName="checked"
+            tooltip="关闭后仅使用 SearXNG 或 Bing/DuckDuckGo 兜底"
+          >
+            <Switch />
+          </Form.Item>
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label={
+                  <Space size={6}>
+                    <span>AnySearch API Key（可选）</span>
+                    {searchKeyConfigured && (
+                      <Tag bordered={false} color="success" style={{ marginInlineEnd: 0 }}>
+                        已配置 {searchKeyMasked}
+                      </Tag>
+                    )}
+                  </Space>
+                }
+                name="anysearch_api_key"
+                tooltip="到 anysearch.com/console/api-keys 免费创建；留空保存即保持现有 Key 不变"
+              >
+                <Input.Password
+                  placeholder={searchKeyConfigured ? `已保存（${searchKeyMasked}），留空保持不变` : '可选，留空使用匿名访问'}
+                  autoComplete="new-password"
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item label="AnySearch Base URL" name="anysearch_base_url">
+                <Input placeholder="https://api.anysearch.com" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item
+            label="SearXNG 地址（可选，自建开源替代）"
+            name="searxng_url"
+            tooltip="例如 http://localhost:8888；配置后搜索会优先走自建 SearXNG"
+          >
+            <Input placeholder="http://localhost:8888" />
+          </Form.Item>
+          <Space>
+            <Button
+              type="primary"
+              icon={<ThunderboltOutlined />}
+              loading={searchTesting}
+              onClick={handleTestSearch}
+            >
+              测试搜索连接
+            </Button>
+            <Text type="secondary">测试会实际请求一次搜索接口，验证 Key 与地址是否可用。</Text>
+          </Space>
         </Form>
       </Card>
 

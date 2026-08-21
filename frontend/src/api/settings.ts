@@ -7,6 +7,10 @@ export interface AppSettings {
   embedding_model: string
   embedding_dim: number
   theme_color: string
+  anysearch_enabled: boolean
+  anysearch_api_key: string
+  anysearch_base_url: string
+  searxng_url: string
 }
 
 export interface SettingsUpdate {
@@ -16,6 +20,10 @@ export interface SettingsUpdate {
   embedding_model?: string
   embedding_dim?: number
   theme_color?: string
+  anysearch_enabled?: boolean
+  anysearch_api_key?: string
+  anysearch_base_url?: string
+  searxng_url?: string
 }
 
 export interface TestConnectionPayload {
@@ -24,12 +32,21 @@ export interface TestConnectionPayload {
   model: string
 }
 
+export interface SearchTestPayload {
+  provider?: 'auto' | 'anysearch' | 'searxng'
+  anysearch_api_key?: string
+  anysearch_base_url?: string
+  searxng_url?: string
+}
+
 export const settingsApi = {
   get: () => api.get<AppSettings>('/settings').then((r) => r.data),
   update: (payload: SettingsUpdate) =>
     api.put<AppSettings>('/settings', payload).then((r) => r.data),
   testConnection: (payload: TestConnectionPayload) =>
     api.post<{ ok: boolean; reply: string }>('/settings/test-connection', payload).then((r) => r.data),
+  testSearch: (payload: SearchTestPayload) =>
+    api.post<{ ok: boolean; engine: string; count: number }>('/settings/search/test', payload).then((r) => r.data),
   getModelPresets: () => api.get<ModelPreset[]>('/settings/model-presets').then((r) => r.data),
 }
 

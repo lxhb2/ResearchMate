@@ -22,10 +22,14 @@ _DEFAULTS: dict[str, Any] = {
     "embedding_model": app_settings.EMBEDDING_MODEL,
     "embedding_dim": app_settings.EMBEDDING_DIM,
     "theme_color": "#4f46e5",
+    "anysearch_enabled": bool(app_settings.ANYSEARCH_ENABLED),
+    "anysearch_api_key": app_settings.ANYSEARCH_API_KEY,
+    "anysearch_base_url": app_settings.ANYSEARCH_BASE_URL,
+    "searxng_url": app_settings.SEARXNG_URL,
 }
 
 # 落库时需要加密的敏感配置项
-_SECRET_KEYS = {"llm_api_key"}
+_SECRET_KEYS = {"llm_api_key", "anysearch_api_key"}
 
 # 推荐模型预设：后端统一维护，前端可兜底也可动态拉取
 # 结构说明：每个 preset 包含展示名、base_url、推荐的聊天模型列表、推荐 embedding 模型、说明
@@ -230,6 +234,17 @@ def get_llm_config(db: Session, user_id: str) -> dict[str, Any]:
         "model": cfg.get("llm_model") or app_settings.LLM_MODEL,
         "embedding_model": cfg.get("embedding_model") or app_settings.EMBEDDING_MODEL,
         "embedding_dim": int(cfg.get("embedding_dim") or app_settings.EMBEDDING_DIM),
+    }
+
+
+def get_search_config(db: Session, user_id: str) -> dict[str, Any]:
+    """返回当前生效的联网搜索配置，供 web_search 工具读取。"""
+    cfg = get_all(db, user_id)
+    return {
+        "enabled": bool(cfg.get("anysearch_enabled", app_settings.ANYSEARCH_ENABLED)),
+        "api_key": str(cfg.get("anysearch_api_key") or app_settings.ANYSEARCH_API_KEY),
+        "base_url": str(cfg.get("anysearch_base_url") or app_settings.ANYSEARCH_BASE_URL),
+        "searxng_url": str(cfg.get("searxng_url") or app_settings.SEARXNG_URL),
     }
 
 

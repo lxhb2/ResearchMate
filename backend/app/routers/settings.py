@@ -28,6 +28,10 @@ class SettingsOut(BaseModel):
     embedding_model: str
     embedding_dim: int
     theme_color: str
+    anysearch_enabled: bool
+    anysearch_api_key: str
+    anysearch_base_url: str
+    searxng_url: str
 
 
 class SettingsUpdate(BaseModel):
@@ -37,12 +41,23 @@ class SettingsUpdate(BaseModel):
     embedding_model: str | None = None
     embedding_dim: int | None = None
     theme_color: str | None = None
+    anysearch_enabled: bool | None = None
+    anysearch_api_key: str | None = None
+    anysearch_base_url: str | None = None
+    searxng_url: str | None = None
 
 
 class TestConnectionRequest(BaseModel):
     api_key: str
     base_url: str
     model: str
+
+
+class SearchTestRequest(BaseModel):
+    provider: str = "auto"  # auto | anysearch | searxng
+    anysearch_api_key: str = ""
+    anysearch_base_url: str = ""
+    searxng_url: str = ""
 
 
 class ModelPresetOut(BaseModel):
@@ -79,6 +94,10 @@ def update_settings(
         k = payload["llm_api_key"] or ""
         if "*" in k or not k.strip():
             payload.pop("llm_api_key", None)
+    if "anysearch_api_key" in payload:
+        k = payload["anysearch_api_key"] or ""
+        if "*" in k or not k.strip():
+            payload.pop("anysearch_api_key", None)
     cfg = settings_service.update_many(db, str(user.id), payload)
     # 清空 LLM 熔断状态：让新配置立即生效。
     # 否则旧的熔断记录会让「保存后立刻重试」的请求继续降级，
@@ -104,7 +123,65 @@ def _masked_out(cfg: dict) -> SettingsOut:
         embedding_model=cfg.get("embedding_model", ""),
         embedding_dim=int(cfg.get("embedding_dim") or 1536),
         theme_color=cfg.get("theme_color", "#4f46e5"),
+        anysearch_enabled=bool(cfg.get("anysearch_enabled", True)),
+        anysearch_api_key=_mask_key(cfg.get("anysearch_api_key") or ""),
+        anysearch_base_url=cfg.get("anysearch_base_url", "https://api.anysearch.com"),
+        searxng_url=cfg.get("searxng_url", ""),
     )
+
+
+def _mask_key(key: str) -> str:
+    key = (key or "").strip()
+    if not key:
+        return ""
+    if len(key) > 8:
+        return key[:4] + "*" * (len(key) - 8) + key[-4:]
+    return "*" * len(key)
+
+
+@router.post("/search/test")
+def test_search(
+    body: SearchTestRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """测试联网搜索提供方（AnySearch / SearXNG）。"""
+    from app.services import web_search_providers
+
+    cfg = settings_service.get_search_config(db, str(user.id))
+    if body.anysearch_api_key:
+        cfg["api_key"] = body.anysearch_api_key
+    if body.anysearch_base_url:
+        cfg["base_url"] = body.anysearch_base_url
+    if body.searxng_url:
+        cfg["searxng_url"] = body.searxng_url
+
+    provider = (body.provider or "auto").strip().lower()
+    if provider == "anysearch":
+        cfg["enabled"] = True
+
+    errors: list[str] = []
+    if provider in ("auto", "searxng") and web_search_providers.searxng_configured(cfg):
+        try:
+            result = web_search_providers.searxng_search("ResearchMate", 1, timeout=20, config=cfg)
+            return {"ok": True, "engine": "searxng", "count": result.get("count", 0)}
+        except Exception as e:  # noqa: BLE001
+            errors.append(f"SearXNG：{e}")
+
+    if provider in ("auto", "anysearch") and web_search_providers.anysearch_enabled(cfg):
+        try:
+            result = web_search_providers.anysearch_search(
+                "ResearchMate", 1, timeout=20, config=cfg
+            )
+            return {"ok": True, "engine": "anysearch", "count": result.get("count", 0)}
+        except Exception as e:  # noqa: BLE001
+            errors.append(f"AnySearch：{e}")
+
+    if provider == "searxng" and not web_search_providers.searxng_configured(cfg):
+        errors.append("未配置 SearXNG URL")
+    if provider == "anysearch" and not web_search_providers.anysearch_enabled(cfg):
+        errors.append("AnySearch 未启用")
+    raise HTTPException(status_code=400, detail="；".join(errors) or "没有可测试的搜索提供方")
 
 
 @router.post("/test-connection")

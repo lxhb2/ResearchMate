@@ -19,14 +19,18 @@ from app.config import settings
 _TAG_RE = re.compile(r"<[^>]+>")
 
 
-def anysearch_enabled() -> bool:
+def anysearch_enabled(config: dict[str, Any] | None = None) -> bool:
+    if config is not None:
+        return bool(config.get("enabled", settings.ANYSEARCH_ENABLED))
     env = os.environ.get("ANYSEARCH_ENABLED", "").strip().lower()
     if env:
         return env not in ("0", "false", "no", "off")
     return bool(settings.ANYSEARCH_ENABLED)
 
 
-def anysearch_api_key() -> str:
+def anysearch_api_key(config: dict[str, Any] | None = None) -> str:
+    if config is not None:
+        return str(config.get("api_key") or "")
     return (
         os.environ.get("ANYSEARCH_API_KEY", "").strip()
         or settings.ANYSEARCH_API_KEY.strip()
@@ -58,12 +62,21 @@ def _anysearch_items(payload: dict[str, Any]) -> list[dict[str, Any]]:
     return items
 
 
-def anysearch_search(query: str, limit: int = 5, timeout: float = 30.0) -> dict[str, Any]:
-    base = (settings.ANYSEARCH_BASE_URL or "https://api.anysearch.com").rstrip("/")
-    key = anysearch_api_key()
+def anysearch_search(
+    query: str,
+    limit: int = 5,
+    timeout: float = 30.0,
+    config: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    base = str(
+        (config or {}).get("base_url")
+        or settings.ANYSEARCH_BASE_URL
+        or "https://api.anysearch.com"
+    ).rstrip("/")
+    key = anysearch_api_key(config)
     headers = {
         "Content-Type": "application/json",
-        "X-Anysearch-Client": "researchmate/0.3.1",
+        "X-Anysearch-Client": f"researchmate/{settings.APP_VERSION}",
     }
     if key:
         headers["Authorization"] = f"Bearer {key}"
@@ -81,12 +94,16 @@ def anysearch_search(query: str, limit: int = 5, timeout: float = 30.0) -> dict[
     return {"count": len(items), "query": query, "engine": "anysearch", "items": items}
 
 
-def anysearch_extract(url: str, timeout: float = 60.0) -> str:
-    base = (settings.ANYSEARCH_BASE_URL or "https://api.anysearch.com").rstrip("/")
-    key = anysearch_api_key()
+def anysearch_extract(url: str, timeout: float = 60.0, config: dict[str, Any] | None = None) -> str:
+    base = str(
+        (config or {}).get("base_url")
+        or settings.ANYSEARCH_BASE_URL
+        or "https://api.anysearch.com"
+    ).rstrip("/")
+    key = anysearch_api_key(config)
     headers = {
         "Content-Type": "application/json",
-        "X-Anysearch-Client": "researchmate/0.3.1",
+        "X-Anysearch-Client": f"researchmate/{settings.APP_VERSION}",
     }
     if key:
         headers["Authorization"] = f"Bearer {key}"
@@ -103,13 +120,24 @@ def anysearch_extract(url: str, timeout: float = 60.0) -> str:
     return "\n\n".join(p for p in parts if p)
 
 
-def searxng_configured() -> bool:
+def searxng_configured(config: dict[str, Any] | None = None) -> bool:
+    if config is not None:
+        return bool((config.get("searxng_url") or "").strip())
     return bool((settings.SEARXNG_URL or "").strip())
 
 
-def searxng_search(query: str, limit: int = 5, timeout: float = 30.0) -> dict[str, Any]:
-    base = settings.SEARXNG_URL.strip().rstrip("/")
-    headers = {"Accept": "application/json", "User-Agent": "ResearchMate/0.3.1"}
+def searxng_search(
+    query: str,
+    limit: int = 5,
+    timeout: float = 30.0,
+    config: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    base = str(
+        (config or {}).get("searxng_url") or settings.SEARXNG_URL or ""
+    ).strip().rstrip("/")
+    if not base:
+        raise RuntimeError("未配置 SearXNG URL")
+    headers = {"Accept": "application/json", "User-Agent": f"ResearchMate/{settings.APP_VERSION}"}
     params = {
         "q": query,
         "format": "json",
