@@ -19,6 +19,8 @@ from typing import Any, Optional
 
 import httpx
 
+from app.config import settings
+
 PROTOCOL_VERSION = "2025-06-18"
 MAX_RESULT_CHARS = 40000
 
@@ -150,7 +152,7 @@ def _run_stdio(server: dict, method: str, params: Optional[dict] = None, timeout
         session.request("initialize", {
             "protocolVersion": PROTOCOL_VERSION,
             "capabilities": {},
-            "clientInfo": {"name": "ResearchMate", "version": "0.3.0"},
+            "clientInfo": {"name": "ResearchMate", "version": settings.APP_VERSION},
         }, timeout=timeout)
         session.notify("notifications/initialized", {})
         return session.request(method, params or {}, timeout=timeout)
@@ -265,7 +267,7 @@ def _http_initialize(server: dict, timeout: float = 10.0) -> tuple[str, Optional
             "params": {
                 "protocolVersion": PROTOCOL_VERSION,
                 "capabilities": {},
-                "clientInfo": {"name": "ResearchMate", "version": "0.3.0"},
+                "clientInfo": {"name": "ResearchMate", "version": settings.APP_VERSION},
             },
         },
         session_id=None,

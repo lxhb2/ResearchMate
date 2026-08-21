@@ -2,7 +2,7 @@
 
 > 记录日期：2026-08-21
 > 范围：Zotero 导入修复、P0 安全与可靠性加固、P1 功能补全、Agent 核心集成、pdf2zh-next 整篇翻译与划词加速
-> 验证：后端 38 个测试通过、前端 TypeScript 检查与生产构建通过
+> 验证：后端 41 个测试通过、前端 TypeScript 检查与生产构建通过
 
 ---
 
@@ -116,5 +116,14 @@ npx tsc --noEmit -p tsconfig.json --pretty false
 - 划词翻译优化：短文本/段落（≤5000 字符）按「术语表 → 本地缓存 → DeepL → SiliconFlow Free → 快速 LLM」链路返回，长文本才走 LLM 流式；前端增加请求序号防串卡并提升长文本直连阈值。
 - 配置项：`PDF2ZH_ENGINE`、`PDF2ZH_SILICONFLOW_API_KEY`、`PDF2ZH_SILICONFLOW_MODEL`、`TRANSLATION_FREE_SERVICE` 等，详见 `backend/.env.example`。
 - 风险提示：pdf2zh-next 与 BabelDOC 同属 AGPL-3.0；SiliconFlow Free 有配额/限速，失败时会自动回退，如需稳定可配置 SiliconFlow / OpenAI / DeepL Key。
+
+## 十一、联网搜索默认提供方与版本显示防残留（2026-08-21）
+
+- 前端版本显示残留 `v0.3.0` 的根因：`AppLayout` 与设置页存在写死的旧版本号，设置页还用 `0.3.0` 作为 API 失败兜底。
+- 修复：构建时由 `package.json` 注入 `__APP_VERSION__`，运行态按“后端 `/app/info` → Electron `getVersion()` → 构建版本”三级读取，彻底移除写死的版本号。
+- MCP `clientInfo` 版本也改为读取 `settings.APP_VERSION`，不再出现 0.3.0 残留。
+- 接入 AnySearch：项目 `anysearch-skill` / `anysearch-mcp-server` 为 Apache-2.0，提供匿名可用的 REST API；新增 `backend/app/services/web_search_providers.py`，`web_search` 工具默认优先调用 AnySearch，失败回退 Bing / DuckDuckGo。
+- 开源替代：支持自建 SearXNG（AGPL-3.0，仅通过 HTTP JSON API 调用，不复制其代码），配置 `SEARXNG_URL` 后优先于 AnySearch，满足完全本地化需求。
+- 隐私说明：AnySearch 匿名模式会把搜索关键词发送到 `https://api.anysearch.com`，官方声明为零保留；如不能接受，可关闭 `ANYSEARCH_ENABLED=false` 或配置 SearXNG。
 
 已被需求移除、不在当前路线图内的可选方向：Zotero 深度集成、CSL 引文、笔记本/专题工作区、网页 / RSS / 视频多源导入、OCR、GROBID。

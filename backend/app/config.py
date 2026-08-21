@@ -85,6 +85,12 @@ class Settings(BaseSettings):
     # Translation (optional DeepL fallback)
     DEEPL_API_KEY: str = ""
 
+    # Web search providers (AnySearch anonymous by default, SearXNG optional)
+    ANYSEARCH_ENABLED: bool = True
+    ANYSEARCH_API_KEY: str = ""
+    ANYSEARCH_BASE_URL: str = "https://api.anysearch.com"
+    SEARXNG_URL: str = ""
+
     # CORS
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
 

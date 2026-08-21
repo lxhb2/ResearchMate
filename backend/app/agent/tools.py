@@ -589,9 +589,10 @@ def _fetch_duckduckgo_html(query: str, limit: int) -> list[dict]:
 
 
 def _web_search(ctx: ToolContext, args: dict) -> dict:
-    """联网搜索：优先 Bing RSS，回退 Bing HTML / DuckDuckGo，返回标题/链接/摘要。
+    """联网搜索：优先 SearXNG/AnySearch，回退 Bing RSS/HTML 与 DuckDuckGo。
 
-    无需第三方搜索 API Key；失败时返回可读提示而非抛错。
+    AnySearch 匿名可用，无需 Key；SearXNG 需自建并配置 SEARXNG_URL。
+    所有提供方失败时返回可读提示而非抛错。
     """
     query = _clean_search_query(args.get("query") or "")
     try:
@@ -602,6 +603,26 @@ def _web_search(ctx: ToolContext, args: dict) -> dict:
         return {"count": 0, "items": [], "error": "缺少 query 参数"}
 
     errors: list[str] = []
+    from app.services import web_search_providers
+
+    if web_search_providers.searxng_configured():
+        try:
+            result = web_search_providers.searxng_search(query, limit)
+            if result.get("items"):
+                return result
+            errors.append("searxng: 无结果")
+        except Exception as e:  # noqa: BLE001
+            errors.append(f"searxng: {e}")
+
+    if web_search_providers.anysearch_enabled():
+        try:
+            result = web_search_providers.anysearch_search(query, limit)
+            if result.get("items"):
+                return result
+            errors.append("anysearch: 无结果")
+        except Exception as e:  # noqa: BLE001
+            errors.append(f"anysearch: {e}")
+
     for engine, fetcher in (
         ("bing_rss", _fetch_bing_rss),
         ("bing_html", _fetch_bing_html),
@@ -1043,7 +1064,7 @@ def _build_registry() -> dict[str, Tool]:
         # ---- 全局能力工具 ----
         "web_search": Tool(
             name="web_search",
-            description="联网搜索：抓取 Bing 搜索结果，返回标题/链接/摘要。用于查询实时资料、最新进展。",
+            description="联网搜索：优先 AnySearch/SearXNG，回退 Bing/DuckDuckGo，返回标题/链接/摘要。用于查询实时资料、最新进展。",
             parameters={
                 "type": "object",
                 "properties": {

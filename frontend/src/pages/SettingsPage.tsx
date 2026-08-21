@@ -47,6 +47,7 @@ import {
 import { getErrorMessage, api } from '../api/client'
 import { useThemeStore } from '../store/themeStore'
 import { appApi, type AppInfo, type UpdateCheckResult } from '../api/app'
+import { fetchAppVersion } from '../utils/appVersion'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -222,6 +223,7 @@ function PluginPanel() {
 /** 版本与更新面板：Web 模式跳 GitHub Releases，Electron 模式可原生下载安装。 */
 function UpdatePanel() {
   const [info, setInfo] = useState<AppInfo | null>(null)
+  const [versionText, setVersionText] = useState('')
   const [update, setUpdate] = useState<UpdateCheckResult | null>(null)
   const [checking, setChecking] = useState(false)
   const [downloading, setDownloading] = useState(false)
@@ -229,16 +231,29 @@ function UpdatePanel() {
   const native = window.researchmate
 
   useEffect(() => {
+    let cancelled = false
     appApi
       .info()
-      .then(setInfo)
+      .then((i) => {
+        if (cancelled) return
+        setInfo(i)
+        setVersionText(i.version)
+      })
       .catch(() => setInfo(null))
+    fetchAppVersion().then((v) => {
+      if (!cancelled && v) setVersionText(v)
+    })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const check = async () => {
     setChecking(true)
     try {
-      setUpdate(await appApi.checkUpdate())
+      const result = await appApi.checkUpdate()
+      setUpdate(result)
+      if (result.current) setVersionText(result.current)
     } catch (err) {
       message.error('检查更新失败：' + getErrorMessage(err))
     } finally {
@@ -279,7 +294,7 @@ function UpdatePanel() {
       <Space direction="vertical" size={10} style={{ width: '100%' }}>
         <Space wrap align="center">
           <Tag color="blue" bordered={false}>
-            ResearchMate v{info?.version || '0.3.0'}
+            ResearchMate v{info?.version || versionText || '加载中'}
           </Tag>
           <Text type="secondary">
             {info?.repo ? `GitHub: ${info.repo}` : '本地单机版'}

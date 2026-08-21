@@ -139,6 +139,9 @@ CI 已配置：每次 push/PR 自动运行后端 pytest 与前端构建（`.gith
 | `FRONTEND_DIST` | 前端 dist 目录（单端口托管时设） | 空 |
 | `SECRET_KEY` | JWT 密钥（生产请改） | 占位 |
 | `EMBEDDING_MODEL` / `EMBEDDING_DIM` | 向量模型与维度 | `text-embedding-3-small` / `1536` |
+| `ANYSEARCH_ENABLED` | 启用 AnySearch 匿名联网搜索（Apache-2.0 开源项目，公开 API） | `true` |
+| `ANYSEARCH_API_KEY` | AnySearch 免费 API Key，提高限流（可选） | 空 |
+| `SEARXNG_URL` | 自建 SearXNG 地址，配置后优先使用（开源免费、本地化） | 空 |
 
 ### 7. 可选：整篇 PDF 翻译（pdf2zh-next / BabelDOC）
 

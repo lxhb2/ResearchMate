@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Layout, Menu, Typography } from 'antd'
 import {
   BookOutlined,
@@ -10,6 +11,7 @@ import {
 } from '@ant-design/icons'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useThemeStore } from '../store/themeStore'
+import { fetchAppVersion } from '../utils/appVersion'
 
 const { Header, Sider, Content } = Layout
 
@@ -26,8 +28,19 @@ export default function AppLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const themeColor = useThemeStore((s) => s.color)
+  const [appVersion, setAppVersion] = useState('')
 
   const activeKey = '/' + location.pathname.split('/')[1]
+
+  useEffect(() => {
+    let cancelled = false
+    fetchAppVersion().then((v) => {
+      if (!cancelled) setAppVersion(v)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <Layout className="app-layout">
@@ -64,7 +77,7 @@ export default function AppLayout() {
             borderTop: '1px solid var(--app-border)',
           }}
         >
-          ResearchMate · v0.3.0
+          ResearchMate · v{appVersion || '加载中'}
         </div>
       </Sider>
       <Layout>
