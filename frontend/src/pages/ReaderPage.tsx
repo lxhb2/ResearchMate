@@ -49,6 +49,7 @@ import { annotationsApi, translateApi, termApi, type PinCard } from '../api/sear
 import { projectsApi } from '../api/projects'
 import { api, getErrorMessage } from '../api/client'
 import { formatMarkdownContent } from '../utils/format'
+import { useUiStateStore } from '../store/uiStateStore'
 
 // 配置 pdf.js worker：用 Vite 的 ?worker 把 worker 单独打包成独立文件。
 // 沙盒环境禁止 module Worker（new Worker(src, {type:'module'})）与动态 import()，
@@ -499,6 +500,9 @@ export default function ReaderPage() {
   const [pdfStage, setPdfStage] = useState('')
   const [pdfEngine, setPdfEngine] = useState('')
   const floatRequestId = useRef(0)
+  const pollActiveRef = useRef(true)
+  const setReader = useUiStateStore((s) => s.setReader)
+  const setPdfTask = useUiStateStore((s) => s.setPdfTask)
   const [summary, setSummary] = useState('')
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [tab, setTab] = useState('analysis')
@@ -647,8 +651,12 @@ export default function ReaderPage() {
         setPaper(p)
         // 长期记忆恢复：上次 AI 总结 + 上次阅读页码（?page= 跳转参数优先）
         if (p.summary) setSummary(p.summary)
+        const saved = useUiStateStore.getState().reader
+        const savedPage = saved?.paperId === paperId ? saved.page : 0
         if (jumpPage > 0) setPageNumber(jumpPage)
+        else if (savedPage > 0) setPageNumber(savedPage)
         else if (p.last_page && p.last_page > 0) setPageNumber(p.last_page)
+        if (saved?.paperId === paperId && saved.tab) setTab(saved.tab)
       })
       .catch((err) => message.error(getErrorMessage(err)))
       .finally(() => setLoading(false))
@@ -677,6 +685,17 @@ export default function ReaderPage() {
     return () => window.clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paperId, pageNumber, loading])
+
+  // 页面状态保存：切换模块后再次进入仍回到上次论文/页码/标签页
+  useEffect(() => {
+    if (!paperId || loading) return
+    setReader({
+      paperId,
+      page: pageNumber,
+      tab,
+      title: paper?.title || '',
+    })
+  }, [paperId, pageNumber, tab, loading, paper?.title, setReader])
 
   // 用带鉴权的请求获取 PDF 文件的 Blob，直接交给 react-pdf 渲染（文件接口需要登录）。
   // 不再转成 blob URL——react-pdf 对 Blob 会走 loadFromFile -> {data} 路径，
@@ -965,6 +984,52 @@ export default function ReaderPage() {
   }
 
   // 整篇翻译：优先 pdf2zh-next 快速引擎，保持原版式输出双语 PDF
+  const downloadTranslatedPdf = (blob: Blob, usedEngine: string) => {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${paper?.title || 'paper'}-translated.pdf`
+    a.click()
+    URL.revokeObjectURL(url)
+    message.success(`整篇翻译完成（${usedEngine || '快速引擎'}），已开始下载双语 PDF`)
+  }
+
+  // 轮询整篇翻译任务；离开阅读器时停止，但任务状态会保存，返回后自动续接
+  const pollPdfTask = async (taskId: string, engine = ''): Promise<Blob | null> => {
+    let usedEngine = engine
+    let blob: Blob | null = null
+    for (let i = 0; i < 1800; i++) {
+      if (!pollActiveRef.current) return null
+      await new Promise((r) => setTimeout(r, 2000))
+      if (!pollActiveRef.current) return null
+      const st = await translateApi.pdfTranslationStatus(taskId)
+      if (!pollActiveRef.current) return null
+      setPdfProgress(st.progress ?? 0)
+      setPdfStage(st.stage || '')
+      if (st.engine) {
+        setPdfEngine(st.engine)
+        usedEngine = st.engine
+      }
+      setPdfTask({
+        paperId: paperId || '',
+        taskId,
+        engine: usedEngine,
+        status: st.status,
+        progress: st.progress ?? 0,
+        stage: st.stage || '',
+      })
+      if (st.status === 'success') {
+        blob = await translateApi.downloadPdfTranslation(taskId)
+        break
+      }
+      if (st.status === 'failed') {
+        throw new Error(st.error || '整篇翻译失败')
+      }
+    }
+    if (!blob) throw new Error('翻译超时，请稍后重试')
+    return blob
+  }
+
   const translateWholePdf = async () => {
     if (!paperId || translatingPdf) return
     setTranslatingPdf(true)
@@ -973,41 +1038,61 @@ export default function ReaderPage() {
     setPdfEngine('')
     try {
       const start = await translateApi.startPdfTranslation(paperId)
-      setPdfEngine(start.engine || '')
-      let usedEngine = start.engine || ''
+      const usedEngine = start.engine || ''
+      setPdfEngine(usedEngine)
+      setPdfTask({
+        paperId,
+        taskId: start.task_id,
+        engine: usedEngine,
+        status: 'running',
+        progress: 0,
+        stage: '已提交',
+      })
       message.info('整篇翻译已提交，正在后台解析与翻译，可继续阅读')
-      let blob: Blob | null = null
-      for (let i = 0; i < 1800; i++) {
-        await new Promise((r) => setTimeout(r, 2000))
-        const st = await translateApi.pdfTranslationStatus(start.task_id)
-        setPdfProgress(st.progress ?? 0)
-        setPdfStage(st.stage || '')
-        if (st.engine) {
-          setPdfEngine(st.engine)
-          usedEngine = st.engine
-        }
-        if (st.status === 'success') {
-          blob = await translateApi.downloadPdfTranslation(start.task_id)
-          break
-        }
-        if (st.status === 'failed') {
-          throw new Error(st.error || '整篇翻译失败')
-        }
-      }
-      if (!blob) throw new Error('翻译超时，请稍后重试')
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${paper?.title || 'paper'}-translated.pdf`
-      a.click()
-      URL.revokeObjectURL(url)
-      message.success(`整篇翻译完成（${usedEngine || '快速引擎'}），已开始下载双语 PDF`)
+      const blob = await pollPdfTask(start.task_id, usedEngine)
+      if (!blob || !pollActiveRef.current) return
+      downloadTranslatedPdf(blob, usedEngine)
+      setPdfTask(null)
     } catch (err) {
-      message.error(getErrorMessage(err))
+      if (pollActiveRef.current) message.error(getErrorMessage(err))
+      setPdfTask(null)
     } finally {
-      setTranslatingPdf(false)
+      if (pollActiveRef.current) setTranslatingPdf(false)
     }
   }
+
+  // 返回阅读器时自动续接上次的整篇翻译任务，直到成功/失败提示后清除
+  useEffect(() => {
+    pollActiveRef.current = true
+    const saved = useUiStateStore.getState().pdfTask
+    if (paperId && saved && saved.paperId === paperId && saved.status !== 'success' && saved.status !== 'failed') {
+      setTranslatingPdf(true)
+      setPdfProgress(saved.progress || 0)
+      setPdfStage(saved.stage || '')
+      setPdfEngine(saved.engine || '')
+      const taskId = saved.taskId
+      const engine = saved.engine || ''
+      ;(async () => {
+        try {
+          const blob = await pollPdfTask(taskId, engine)
+          if (!blob || !pollActiveRef.current) return
+          downloadTranslatedPdf(blob, engine)
+          setPdfTask(null)
+        } catch (err) {
+          if (pollActiveRef.current) {
+            message.error(getErrorMessage(err))
+            setPdfTask(null)
+          }
+        } finally {
+          if (pollActiveRef.current) setTranslatingPdf(false)
+        }
+      })()
+    }
+    return () => {
+      pollActiveRef.current = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paperId])
 
   // 保存一条带颜色 + 矩形坐标的标注
   const saveAnnotation = async (type: Annotation['type'], content?: string) => {

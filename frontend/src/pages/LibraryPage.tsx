@@ -30,6 +30,7 @@ import {
   ImportOutlined,
   DownloadOutlined,
   FileSearchOutlined,
+  ReadOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import type { Paper } from '../types'
@@ -37,11 +38,14 @@ import { papersApi } from '../api/papers'
 import { searchApi } from '../api/search'
 import { importsApi, type ImportPreview, type ImportResult } from '../api/imports'
 import { getErrorMessage } from '../api/client'
+import { useUiStateStore } from '../store/uiStateStore'
 
 const { Dragger } = Upload
 
 export default function LibraryPage() {
   const navigate = useNavigate()
+  const reader = useUiStateStore((s) => s.reader)
+  const pdfTask = useUiStateStore((s) => s.pdfTask)
   const [papers, setPapers] = useState<Paper[]>([])
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
@@ -345,6 +349,26 @@ export default function LibraryPage() {
           </Dropdown>
         </Col>
       </Row>
+
+      {reader && (
+        <Alert
+          type="info"
+          showIcon
+          icon={<ReadOutlined />}
+          style={{ marginBottom: 16 }}
+          message={`继续阅读上次论文：${reader.title || '未命名'}`}
+          description={
+            pdfTask?.paperId === reader.paperId
+              ? `整篇翻译进行中（${Math.round(pdfTask.progress || 0)}%）· 上次位置第 ${reader.page || 1} 页`
+              : `上次位置：第 ${reader.page || 1} 页`
+          }
+          action={
+            <Button type="primary" size="small" onClick={() => navigate(`/reader/${reader.paperId}?page=${reader.page || 1}`)}>
+              继续阅读
+            </Button>
+          }
+        />
+      )}
 
       {selectedIds.size > 0 && (
         <Row gutter={16} style={{ marginBottom: 16 }} align="middle">
