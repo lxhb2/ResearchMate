@@ -69,7 +69,7 @@ def _build_settings(cfg: dict) -> SettingsModel:
     engine = _build_engine(cfg)
     settings = SettingsModel(
         report_interval=float(cfg.get("report_interval") or 0.2),
-        basic=BasicSettings(input_files=set()),
+        basic=BasicSettings(input_files=set(), debug=bool(cfg.get("debug", True))),
         translation=TranslationSettings(
             lang_in=str(cfg.get("lang_in") or "en"),
             lang_out=str(cfg.get("lang_out") or "zh"),

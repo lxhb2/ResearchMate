@@ -10,6 +10,7 @@ not installed or fails.
 
 from __future__ import annotations
 
+import atexit
 import csv
 import importlib.util
 import json
@@ -24,6 +25,36 @@ from typing import Any, Callable
 ProgressCallback = Callable[[float, str], None]
 
 _PLACEHOLDER_KEYS = {"sk-xxx", "sk-placeholder", "sk-[YOUR_API_KEY]", "sk-sandbox-placeholder"}
+_active_procs: set[subprocess.Popen] = set()
+_procs_lock = threading.Lock()
+
+
+def _track_proc(proc: subprocess.Popen) -> None:
+    with _procs_lock:
+        _active_procs.add(proc)
+
+
+def _untrack_proc(proc: subprocess.Popen) -> None:
+    with _procs_lock:
+        _active_procs.discard(proc)
+
+
+def terminate_all() -> int:
+    """终止仍存活的 pdf2zh 桥接进程，避免占用 PyInstaller 临时目录。"""
+    with _procs_lock:
+        procs = list(_active_procs)
+    killed = 0
+    for proc in procs:
+        try:
+            if proc.poll() is None:
+                proc.kill()
+                killed += 1
+        except Exception:  # noqa: BLE001
+            pass
+    return killed
+
+
+atexit.register(terminate_all)
 
 
 def _project_backend() -> str:
@@ -191,6 +222,7 @@ def _run_bridge(
         creationflags=creationflags,
         env=env,
     )
+    _track_proc(proc)
     q: queue.Queue[tuple[str, str | None]] = queue.Queue()
     stderr_lines: list[str] = []
     stderr_lock = threading.Lock()
@@ -253,6 +285,7 @@ def _run_bridge(
                     raise RuntimeError("pdf2zh-next 未生成翻译 PDF")
                 return files
     finally:
+        _untrack_proc(proc)
         try:
             proc.wait(timeout=10)
         except subprocess.TimeoutExpired:
@@ -298,6 +331,7 @@ def translate_pdf(
         "translate_table": _env_bool("PDF2ZH_TRANSLATE_TABLE", False),
         "auto_glossary": _env_bool("PDF2ZH_AUTO_GLOSSARY", False),
         "skip_scanned_detection": _env_bool("PDF2ZH_SKIP_SCANNED", False),
+        "debug": True,
     }
     cfg_path = os.path.join(output_dir, ".pdf2zh_request.json")
     try:

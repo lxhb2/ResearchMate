@@ -186,6 +186,18 @@ def _recover_interrupted_papers() -> None:
 
 app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION)
 
+def _shutdown_pdf2zh() -> None:
+    """退出时清理 pdf2zh 桥接进程，避免 PyInstaller 临时目录被占用。"""
+    try:
+        from app.services import pdf2zh_service
+
+        pdf2zh_service.terminate_all()
+    except Exception:  # noqa: BLE001
+        pass
+
+
+app.add_event_handler("shutdown", _shutdown_pdf2zh)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
