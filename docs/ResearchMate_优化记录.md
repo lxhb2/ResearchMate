@@ -130,6 +130,7 @@ npx tsc --noEmit -p tsconfig.json --pretty false
 
 - 设置页新增「联网搜索 API 配置」卡片：可开关 AnySearch、填写 AnySearch API Key / Base URL、SearXNG 地址，并提供「测试搜索连接」按钮。
 - 搜索配置持久化到用户设置（`anysearch_enabled` / `anysearch_api_key` / `anysearch_base_url` / `searxng_url`），`web_search` 工具实时读取，无需重启。
+- 顶层 Agent 增加联网意图自动识别：输入“搜索/查一下/最新资料/学术名词”等会直接调用 `web_search`，不会被本地 RAG 路由抢占。
 - 新增操作指南文案与 `docs/AnySearch_接入评估.md`，说明搜索链路、隐私边界与开源替代。
 - 版本号统一升级为 `v0.3.2`，重新打包 Electron 安装包并上传 GitHub Release。
 

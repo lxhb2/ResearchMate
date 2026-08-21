@@ -67,6 +67,7 @@ class TopAgent:
         history: Optional[list[dict]] = None,
     ) -> dict:
         """完整处理一条消息（全局权限 Agent）。"""
+        web_search = web_search or _wants_web_search(text)
         r = self.route(text, web_search=web_search)
         if r["path"] == "skill":
             out = self._run_skill(r["skill"], text)
@@ -116,6 +117,7 @@ class TopAgent:
         """
         notice = "正在处理你的请求，稍候…\n\n"
         yield notice
+        web_search = web_search or _wants_web_search(text)
         r = self.route(text, web_search=web_search)
         if r["path"] == "chat":
             out = self._global_chat(
@@ -151,6 +153,7 @@ class TopAgent:
 
         供 SSE 前端展示执行过程；现有 stream() 文本流接口保持不变。
         """
+        web_search = web_search or _wants_web_search(text)
         r = self.route(text, web_search=web_search)
         yield {"type": "route", "path": r["path"]}
         if r["path"] != "chat":
@@ -618,6 +621,21 @@ def _modules_text() -> str:
     return "\n".join(
         f"- {m['name']}（{m['desc']}）→ {m['path']}" for m in modules_mod.catalog()
     )
+
+
+def _wants_web_search(text: str) -> bool:
+    """识别“搜索某主题/名词/资料”等明确的联网意图，优先于本地 RAG。"""
+    text = (text or "").strip()
+    low = text.lower()
+    library_hints = ("文献库", "搜索文献", "检索文献", "我的文献", "相关论文", "文献检索")
+    if any(k in text for k in library_hints):
+        return False
+    web_hints = ("搜索", "搜一下", "搜一搜", "联网", "查询", "查一下", "找一下", "最新", "资料", "名词")
+    if any(k in text for k in web_hints):
+        return True
+    if any(k in low for k in ("web search", "search the web", "latest news")):
+        return True
+    return False
 
 
 def _format_search_only(query: str, result: dict) -> str:

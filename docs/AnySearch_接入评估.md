@@ -30,6 +30,7 @@ AnySearch 可以接入 ResearchMate，且已按“直接调用公开 REST API”
 
 - 默认启用 AnySearch，`web_search` 工具优先调用 `/v1/search`；
 - AnySearch 失败或关闭时自动回退 Bing RSS / Bing HTML / DuckDuckGo；
+- 对话中输入“搜索/查一下/最新资料”等联网意图时，即使未手动打开联网开关也会自动走 `web_search`；
 - 可选配置 `ANYSEARCH_API_KEY` 提高限流；
 - 可选配置 `SEARXNG_URL=http://localhost:8888`，自建 SearXNG 时优先使用；
 - 配置项均写入 `backend/.env.example`，可在 `.env` 中修改。
