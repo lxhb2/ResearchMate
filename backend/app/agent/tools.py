@@ -457,7 +457,12 @@ def _clean_search_query(q: str) -> str:
         "",
         q.strip(),
     )
-    cleaned = _re.sub(r"相关|有关", "", cleaned)
+    cleaned = _re.sub(
+        r"(相关|有关)?的?(学术名词|学术论文|学术资料|研究进展|相关文献|相关资料|相关论文)",
+        " ",
+        cleaned,
+        flags=_re.IGNORECASE,
+    )
     cleaned = _re.sub(r"\s+", " ", cleaned).strip()
     return cleaned or q
 
@@ -472,7 +477,7 @@ def _search_headers() -> dict[str, str]:
     }
 
 
-def _fetch_bing_rss(query: str, limit: int) -> list[dict]:
+def _fetch_bing_rss(query: str, limit: int, timeout: float = 15.0) -> list[dict]:
     """Bing RSS：比 HTML 抓取更稳定，自带标题/链接/摘要/日期。"""
     import httpx
     from bs4 import BeautifulSoup
@@ -482,7 +487,7 @@ def _fetch_bing_rss(query: str, limit: int) -> list[dict]:
         "https://www.bing.com/search",
         params={"format": "rss", "q": query, "mkt": "zh-CN", "count": min(limit, 10)},
         headers=_search_headers(),
-        timeout=15.0,
+        timeout=timeout,
         follow_redirects=True,
     )
     resp.raise_for_status()
@@ -510,7 +515,7 @@ def _fetch_bing_rss(query: str, limit: int) -> list[dict]:
     return items
 
 
-def _fetch_bing_html(query: str, limit: int) -> list[dict]:
+def _fetch_bing_html(query: str, limit: int, timeout: float = 15.0) -> list[dict]:
     """Bing HTML 抓取，作为 RSS 无结果时的兜底。"""
     import httpx
     from bs4 import BeautifulSoup
@@ -519,7 +524,7 @@ def _fetch_bing_html(query: str, limit: int) -> list[dict]:
         "https://www.bing.com/search",
         params={"q": query, "count": min(limit, 10), "mkt": "zh-CN"},
         headers=_search_headers(),
-        timeout=15.0,
+        timeout=timeout,
         follow_redirects=True,
     )
     resp.raise_for_status()
@@ -549,7 +554,7 @@ def _fetch_bing_html(query: str, limit: int) -> list[dict]:
     return items
 
 
-def _fetch_duckduckgo_html(query: str, limit: int) -> list[dict]:
+def _fetch_duckduckgo_html(query: str, limit: int, timeout: float = 8.0) -> list[dict]:
     """DuckDuckGo HTML 兜底：部分网络环境下可用，失败会自动跳过。"""
     import httpx
     from bs4 import BeautifulSoup
@@ -558,7 +563,7 @@ def _fetch_duckduckgo_html(query: str, limit: int) -> list[dict]:
         "https://html.duckduckgo.com/html/",
         params={"q": query},
         headers=_search_headers(),
-        timeout=8.0,
+        timeout=timeout,
         follow_redirects=True,
     )
     resp.raise_for_status()
@@ -589,10 +594,10 @@ def _fetch_duckduckgo_html(query: str, limit: int) -> list[dict]:
 
 
 def _web_search(ctx: ToolContext, args: dict) -> dict:
-    """联网搜索：优先 SearXNG/AnySearch，回退 Bing RSS/HTML 与 DuckDuckGo。
+    """联网深度搜索：并行聚合配置源、公共搜索和开放学术源。
 
-    AnySearch 匿名可用，无需 Key；SearXNG 需自建并配置 SEARXNG_URL。
-    所有提供方失败时返回可读提示而非抛错。
+    结果会按 URL/标题去重、关键词与来源可信度重排，并读取少量网页正文作为证据。
+    任何单一提供方失败都不会阻断整次搜索。
     """
     query = _clean_search_query(args.get("query") or "")
     try:
@@ -611,41 +616,15 @@ def _web_search(ctx: ToolContext, args: dict) -> dict:
 
         search_cfg = settings_service.get_search_config(ctx.db, str(ctx.user_id))
 
-    if web_search_providers.searxng_configured(search_cfg):
-        try:
-            result = web_search_providers.searxng_search(query, limit, config=search_cfg)
-            if result.get("items"):
-                return result
-            errors.append("searxng: 无结果")
-        except Exception as e:  # noqa: BLE001
-            errors.append(f"searxng: {e}")
-
-    if web_search_providers.anysearch_enabled(search_cfg):
-        try:
-            result = web_search_providers.anysearch_search(query, limit, config=search_cfg)
-            if result.get("items"):
-                return result
-            errors.append("anysearch: 无结果")
-        except Exception as e:  # noqa: BLE001
-            errors.append(f"anysearch: {e}")
-
-    for engine, fetcher in (
-        ("bing_rss", _fetch_bing_rss),
-        ("bing_html", _fetch_bing_html),
-        ("duckduckgo_html", _fetch_duckduckgo_html),
-    ):
-        try:
-            items = fetcher(query, limit)
-            if items:
-                return {
-                    "count": len(items),
-                    "query": query,
-                    "engine": engine,
-                    "items": items,
-                }
-            errors.append(f"{engine}: 无结果")
-        except Exception as e:  # noqa: BLE001
-            errors.append(f"{engine}: {e}")
+    result = web_search_providers.deep_web_search(
+        query,
+        limit=limit,
+        config=search_cfg,
+        read_pages=2,
+    )
+    if result.get("items"):
+        return result
+    errors.extend(result.get("errors") or [])
     return {
         "count": 0,
         "items": [],
@@ -1070,7 +1049,7 @@ def _build_registry() -> dict[str, Tool]:
         # ---- 全局能力工具 ----
         "web_search": Tool(
             name="web_search",
-            description="联网搜索：优先 AnySearch/SearXNG，回退 Bing/DuckDuckGo，返回标题/链接/摘要。用于查询实时资料、最新进展。",
+            description="联网深度搜索：并行使用 AnySearch/SearXNG/Bing/DuckDuckGo 与 arXiv/Crossref/OpenAlex，返回去重排序后的链接、摘要、正文证据和来源编号。用于查询实时资料、最新进展和公开学术信息。",
             parameters={
                 "type": "object",
                 "properties": {

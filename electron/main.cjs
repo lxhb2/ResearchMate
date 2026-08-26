@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Notification, Tray, Menu, nativeImage, session } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, Notification, Tray, Menu, nativeImage, session, shell } = require('electron')
 const { spawn } = require('child_process')
 const path = require('path')
 const fs = require('fs')
@@ -112,7 +112,29 @@ function createWindow() {
     },
   })
   mainWindow.once('ready-to-show', () => mainWindow.show())
-  mainWindow.loadURL(`http://127.0.0.1:${APP_PORT}/`)
+  mainWindow.loadURL(`http://127.0.0.1:${APP_PORT}/`).then(() => {
+    // ResearchMate 是单页应用；外部页面必须交给系统浏览器，避免替换整个客户端。
+    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+      if (/^https?:\/\//i.test(url)) {
+        shell.openExternal(url).catch(() => {})
+      }
+      return { action: 'deny' }
+    })
+    mainWindow.webContents.on('will-navigate', (event, url) => {
+      try {
+        const next = new URL(url)
+        const origin = `http://127.0.0.1:${APP_PORT}`
+        if (next.origin !== origin) {
+          event.preventDefault()
+          if (/^https?:$/i.test(next.protocol)) {
+            shell.openExternal(url).catch(() => {})
+          }
+        }
+      } catch {
+        event.preventDefault()
+      }
+    })
+  })
   // 关闭窗口时隐藏到托盘，而不是退出（托盘菜单可真正退出）
   mainWindow.on('close', (e) => {
     if (!quitting) {

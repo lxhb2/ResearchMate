@@ -239,7 +239,16 @@ class TopAgent:
             if tool_name == "web_search" and isinstance(result, dict):
                 web_search_result = result
             yield {"type": "tool_result", "tool": tool_name, "args": args, "result": _preview(result)}
-            messages.append({"role": "assistant", "content": f"（工具 {tool_name} 已调用，结果：{result}）"})
+            if tool_name == "web_search" and isinstance(result, dict):
+                evidence = _format_search_context(result)
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "content": "（工具 web_search 已调用。请只依据下列编号证据回答，并使用 [编号] 标注引用。）\n" + evidence,
+                    }
+                )
+            else:
+                messages.append({"role": "assistant", "content": f"（工具 {tool_name} 已调用，结果：{result}）"})
 
         forced_search: Optional[dict] = None
         if web_search and "web_search" not in used_tools:
@@ -257,7 +266,10 @@ class TopAgent:
                 messages.append(
                     {
                         "role": "assistant",
-                        "content": f"（已按用户要求联网搜索「{text}」，结果：{result}）请基于以上搜索结果回答用户，并标注来源链接。",
+                        "content": (
+                            f"（已按用户要求联网搜索「{text}」。请只依据下列编号证据回答，"
+                            "使用 [编号] 标注引用，不得编造 URL。）\n" + _format_search_context(forced_search or {})
+                        ),
                     }
                 )
 
@@ -338,6 +350,7 @@ class TopAgent:
             parts.append(
                 "用户要求联网查询：请使用 web_search 工具获取最新资料后回答。"
                 "只能使用 web_search 返回的链接，不得编造 URL；"
+                "正文中的关键结论使用 [编号] 引用对应搜索证据；"
                 "回答末尾列出「来源链接」，逐条给出标题与可点击 URL。"
             )
 
@@ -673,6 +686,28 @@ def _format_search_sources(result: dict) -> str:
         if snippet:
             lines.append(f"   {snippet[:120]}")
     return "\n".join(lines)
+
+
+def _format_search_context(result: dict) -> str:
+    """把搜索结果压缩成编号证据，避免完整 JSON 撑爆模型上下文。"""
+    items = result.get("items") or []
+    evidence = {str(row.get("url")): row for row in (result.get("evidence") or []) if isinstance(row, dict)}
+    blocks: list[str] = []
+    total_chars = 0
+    for i, item in enumerate(items[:10], 1):
+        url = str(item.get("url") or "")
+        excerpt = ""
+        if url in evidence:
+            excerpt = str(evidence[url].get("text") or "")
+        if not excerpt:
+            excerpt = str(item.get("snippet") or "")
+        excerpt = " ".join(excerpt.split())[:700]
+        block = f'[{i}] {item.get("title") or "未命名"}\nURL: {url}\n摘录: {excerpt or "无可用摘要"}'
+        if total_chars + len(block) > 8000:
+            break
+        blocks.append(block)
+        total_chars += len(block)
+    return "\n\n".join(blocks) or "无可用搜索证据"
 
 
 def _preview(result: Any) -> str:
