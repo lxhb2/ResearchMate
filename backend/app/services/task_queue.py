@@ -119,6 +119,7 @@ def _run_babeldoc_translate(task: AgentTask) -> dict:
     lang_in = str((task.payload or {}).get("lang_in") or "en")
     lang_out = str((task.payload or {}).get("lang_out") or "zh")
     engine = str((task.payload or {}).get("engine") or "auto")
+    page_range = str((task.payload or {}).get("page_range") or "").strip()
     if not paper_id:
         raise ValueError("babeldoc_translate 任务缺少 paper_id")
 
@@ -130,6 +131,28 @@ def _run_babeldoc_translate(task: AgentTask) -> dict:
         if not os.path.isfile(src):
             raise ValueError("PDF 文件不存在")
         cfg = settings_service.get_llm_config(db, str(task.user_id))
+
+    # PDF hash cache: skip re-translation for the same file + language + page range
+    cache_dir = os.path.join(settings.STORAGE_DIR, "translation_cache")
+    try:
+        cache_key = pdf2zh_service.pdf_cache_key(src, lang_in, lang_out, page_range or None)
+        cached_path = pdf2zh_service.find_cached_pdf(cache_dir, cache_key)
+        if cached_path:
+            out_root = os.path.join(settings.STORAGE_DIR, "translations", str(task.id))
+            os.makedirs(out_root, exist_ok=True)
+            final_path = os.path.join(out_root, f"{paper.title or 'paper'}-{lang_out}.pdf")
+            shutil.copy2(cached_path, final_path)
+            _update_task_progress(str(task.id), 100.0, "缓存命中，直接返回上次翻译结果")
+            return {
+                "ok": True,
+                "output_path": final_path,
+                "paper_title": paper.title,
+                "engine": "cache",
+                "progress": 100,
+                "stage": "缓存命中",
+            }
+    except Exception:
+        pass
 
     out_root = os.path.join(settings.STORAGE_DIR, "translations", str(task.id))
     os.makedirs(out_root, exist_ok=True)
@@ -159,6 +182,7 @@ def _run_babeldoc_translate(task: AgentTask) -> dict:
                         lang_out,
                         cfg,
                         engine=attempt_engine,
+                        pages=page_range or None,
                         progress_cb=lambda p, stage: _update_task_progress(str(task.id), p, stage),
                     )
                     chosen = pdf2zh_service.pick_translated_pdf(files)
@@ -197,6 +221,11 @@ def _run_babeldoc_translate(task: AgentTask) -> dict:
             )
         final_path = os.path.join(out_root, f"{paper.title or 'paper'}-{lang_out}.pdf")
         shutil.copy2(chosen, final_path)
+        try:
+            save_key = pdf2zh_service.pdf_cache_key(input_pdf, lang_in, lang_out, page_range or None)
+            pdf2zh_service.save_to_cache(cache_dir, save_key, chosen)
+        except Exception:
+            pass
         return {
             "ok": True,
             "output_path": final_path,

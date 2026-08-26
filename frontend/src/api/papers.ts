@@ -35,6 +35,11 @@ export const papersApi = {
     await api.delete(`/papers/${id}`)
   },
 
+  bulkRemove: async (ids: string[]): Promise<{ deleted: number }> => {
+    const { data } = await api.post<{ deleted: number }>('/papers/bulk-delete', { ids })
+    return data
+  },
+
   tags: async (): Promise<{ tags: { name: string; count: number }[] }> => {
     const { data } = await api.get<{ tags: { name: string; count: number }[] }>('/papers/tags')
     return data

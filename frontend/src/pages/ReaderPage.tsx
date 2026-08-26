@@ -499,6 +499,7 @@ export default function ReaderPage() {
   const [pdfProgress, setPdfProgress] = useState(0)
   const [pdfStage, setPdfStage] = useState('')
   const [pdfEngine, setPdfEngine] = useState('')
+  const [pdfPageRange, setPdfPageRange] = useState('')
   const floatRequestId = useRef(0)
   const pollActiveRef = useRef(true)
   const setReader = useUiStateStore((s) => s.setReader)
@@ -1037,7 +1038,7 @@ export default function ReaderPage() {
     setPdfStage('')
     setPdfEngine('')
     try {
-      const start = await translateApi.startPdfTranslation(paperId)
+      const start = await translateApi.startPdfTranslation(paperId, pdfPageRange)
       const usedEngine = start.engine || ''
       setPdfEngine(usedEngine)
       setPdfTask({
@@ -1525,10 +1526,21 @@ export default function ReaderPage() {
             >
               <Button icon={<ExportOutlined />}>导出引文</Button>
             </Dropdown>
+            <Tooltip title="留空翻译全部页面；输入页码范围如 1-5 或 1,3,5-10 可节省 Token 并加速">
+              <Input
+                size="small"
+                placeholder="页码范围（可选）"
+                value={pdfPageRange}
+                onChange={(e) => setPdfPageRange(e.target.value)}
+                style={{ width: 130 }}
+                disabled={translatingPdf}
+              />
+            </Tooltip>
             <Button
               icon={<GlobalOutlined />}
               loading={translatingPdf}
               onClick={translateWholePdf}
+              disabled={!!pdfPageRange.trim() && !/^[\d\s,\-]+$/.test(pdfPageRange.trim())}
             >
               {translatingPdf
                 ? `翻译中${pdfProgress > 0 ? ` ${Math.round(pdfProgress)}%` : ''}`

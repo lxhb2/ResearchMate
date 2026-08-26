@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Card,
   Row,
@@ -73,6 +73,7 @@ export default function LibraryPage() {
   const [risText, setRisText] = useState('')
   // 批量导出：勾选文献
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkDeleting, setBulkDeleting] = useState(false)
   // 生成综述弹窗（Q1-2）：题目 / 结构 / 引用样式 → 跳转 ChatPage 流式生成
   const [reviewModal, setReviewModal] = useState<{
     open: boolean
@@ -195,6 +196,22 @@ export default function LibraryPage() {
   }
 
   const displayed = semanticResults ?? papers
+  const displayedIds = useMemo(() => displayed.map((paper) => paper.id), [displayed])
+  const displayedIdsKey = displayedIds.join('\n')
+  const selectedDisplayedIds = useMemo(
+    () => displayedIds.filter((id) => selectedIds.has(id)),
+    [displayedIds, selectedIds],
+  )
+  const allDisplayedSelected = displayedIds.length > 0 && selectedDisplayedIds.length === displayedIds.length
+
+  // 搜索、标签筛选或语义检索变化后，不让不可见的旧选择参与删除。
+  useEffect(() => {
+    const visible = new Set(displayedIdsKey ? displayedIdsKey.split('\n') : [])
+    setSelectedIds((prev) => {
+      const next = new Set([...prev].filter((id) => visible.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [displayedIdsKey])
 
   const saveTags = async () => {
     const { paper, value } = tagModal
@@ -268,6 +285,46 @@ export default function LibraryPage() {
       if (next.has(id)) next.delete(id)
       else next.add(id)
       return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (allDisplayedSelected) {
+        displayedIds.forEach((id) => next.delete(id))
+      } else {
+        displayedIds.forEach((id) => next.add(id))
+      }
+      return next
+    })
+  }
+
+  const handleBulkDelete = () => {
+    const ids = [...selectedDisplayedIds]
+    if (!ids.length) {
+      message.warning('请先勾选要删除的文献')
+      return
+    }
+    Modal.confirm({
+      title: '批量删除文献？',
+      content: `当前结果中的 ${ids.length} 篇论文及其 PDF、标注和对话记录将被永久删除。`,
+      okText: '全部删除',
+      cancelText: '取消',
+      okType: 'danger',
+      onOk: async () => {
+        setBulkDeleting(true)
+        try {
+          const res = await papersApi.bulkRemove(ids)
+          message.success(`已删除 ${res.deleted} 篇论文`)
+          setSelectedIds((prev) => new Set([...prev].filter((id) => !ids.includes(id))))
+          await load()
+        } catch (err) {
+          message.error(getErrorMessage(err))
+        } finally {
+          setBulkDeleting(false)
+        }
+      },
     })
   }
 
@@ -390,6 +447,32 @@ export default function LibraryPage() {
               </Button>
               <Button onClick={() => setSelectedIds(new Set())}>取消选择</Button>
             </Space>
+          </Col>
+        </Row>
+      )}
+
+      {displayed.length > 0 && (
+        <Row gutter={16} style={{ marginBottom: 16 }} align="middle">
+          <Col flex="auto">
+            <Checkbox
+              checked={allDisplayedSelected}
+              indeterminate={selectedDisplayedIds.length > 0 && !allDisplayedSelected}
+              onChange={toggleSelectAll}
+              disabled={bulkDeleting}
+            >
+              全选当前结果（{displayedIds.length} 篇）
+            </Checkbox>
+          </Col>
+          <Col>
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              loading={bulkDeleting}
+              disabled={!selectedDisplayedIds.length}
+              onClick={handleBulkDelete}
+            >
+              删除所选（{selectedDisplayedIds.length}）
+            </Button>
           </Col>
         </Row>
       )}

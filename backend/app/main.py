@@ -184,7 +184,8 @@ def _recover_interrupted_papers() -> None:
         print(f"[recovery] 启动恢复失败：{e}")
 
 
-app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION)
+from contextlib import asynccontextmanager
+
 
 def _shutdown_pdf2zh() -> None:
     """退出时清理 pdf2zh 桥接进程，避免 PyInstaller 临时目录被占用。"""
@@ -196,7 +197,13 @@ def _shutdown_pdf2zh() -> None:
         pass
 
 
-app.add_event_handler("shutdown", _shutdown_pdf2zh)
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    yield
+    _shutdown_pdf2zh()
+
+
+app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION, lifespan=_lifespan)
 
 app.add_middleware(
     CORSMiddleware,

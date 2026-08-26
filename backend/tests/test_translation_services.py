@@ -26,11 +26,18 @@ def test_pdf2zh_engine_uses_configured_llm(monkeypatch):
     assert cfg["model"] == "fast-model"
 
 
-def test_pdf2zh_pick_prefers_dual():
+def test_pdf2zh_pick_prefers_mono():
     from app.services import pdf2zh_service
 
-    files = ["paper.zh.mono.pdf", "paper.zh.dual.pdf"]
-    assert pdf2zh_service.pick_translated_pdf(files) == "paper.zh.dual.pdf"
+    files = ["paper.zh.dual.pdf", "paper.zh.mono.pdf"]
+    assert pdf2zh_service.pick_translated_pdf(files) == "paper.zh.mono.pdf"
+
+
+def test_babeldoc_pick_prefers_mono():
+    from app.services import babeldoc_service
+
+    files = ["paper.zh.dual.pdf", "paper.zh.mono.pdf"]
+    assert babeldoc_service.pick_translated_pdf(files) == "paper.zh.mono.pdf"
 
 
 def test_free_translate_can_be_disabled(monkeypatch):

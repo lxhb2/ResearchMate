@@ -169,6 +169,47 @@ class PaperExportRequest(BaseModel):
     format: str = "bibtex"
 
 
+class PaperBulkDeleteRequest(BaseModel):
+    ids: list[str]
+
+
+@router.post("/bulk-delete")
+def bulk_delete_papers(
+    body: PaperBulkDeleteRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Delete selected papers, their related records and PDF files in one action."""
+    unique_ids = list(dict.fromkeys(item for item in body.ids if item.strip()))
+    if not unique_ids:
+        raise HTTPException(status_code=400, detail="未选中任何文献")
+
+    papers = (
+        db.query(Paper)
+        .filter(Paper.user_id == user.id, Paper.id.in_(unique_ids))
+        .all()
+    )
+    for paper in papers:
+        if paper.file_path:
+            fp = os.path.join(settings.PDF_DIR, os.path.basename(paper.file_path))
+            if os.path.exists(fp):
+                try:
+                    os.remove(fp)
+                except OSError:
+                    pass
+
+    paper_ids = [paper.id for paper in papers]
+    # Paper chat messages have no ORM relationship on Paper; clean them explicitly.
+    if paper_ids:
+        db.query(PaperChatMessage).filter(
+            PaperChatMessage.paper_id.in_(paper_ids)
+        ).delete(synchronize_session=False)
+    for paper in papers:
+        db.delete(paper)
+    db.commit()
+    return {"deleted": len(papers)}
+
+
 @router.post("/export")
 def export_papers(
     body: PaperExportRequest,

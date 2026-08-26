@@ -26,6 +26,7 @@ class PdfTranslateRequest(BaseModel):
     lang_in: str = "en"
     lang_out: str = "zh"
     engine: str = "auto"
+    page_range: str = ""
 
 
 class BatchTranslateRequest(BaseModel):
@@ -111,9 +112,17 @@ def _translate_text(db: Session, user_id, text: str, target_lang: str) -> str:
         except Exception:  # noqa: BLE001
             pass
     llm = _fast_llm(db, user_id) if len(text) <= 300 else _build_llm(db, user_id)
-    translation = _translate_with_llm(llm, text, target_lang)
-    if translation:
-        translation_cache.set("auto", target_lang, text, translation)
+    try:
+        translation = _translate_with_llm(llm, text, target_lang)
+    except Exception as exc:  # noqa: BLE001
+        # LLM 不可达时给出友好错误而不是 500
+        raise HTTPException(
+            status_code=502,
+            detail=f"翻译服务暂时不可用（LLM 连接失败），请检查设置页的 API 配置：{exc}",
+        ) from exc
+    if not translation:
+        return {"translation": "", "error": "翻译结果为空，请检查 LLM 配置"}
+    translation_cache.set("auto", target_lang, text, translation)
     return translation
 
 
@@ -257,6 +266,7 @@ def start_translate_pdf(
             "lang_in": body.lang_in,
             "lang_out": body.lang_out,
             "engine": body.engine or "auto",
+            "page_range": (body.page_range or "").strip(),
         },
     )
     return {
@@ -374,11 +384,15 @@ def translate_stream(body: dict, db: Session = Depends(get_db), user: User = Dep
     llm = _build_llm(db, user.id)
 
     def gen():
-        # chat_stream 在 LLM 不可达时自动降级为离线 mock 流（含降级提示），不抛异常
         parts: list[str] = []
-        for tok in llm.chat_stream(messages, temperature=0.2, max_tokens=1200):
-            yield f"data: {json.dumps({'delta': tok})}\n\n"
-            parts.append(tok)
-        translation_cache.set("auto", target_lang, text, "".join(parts))
+        try:
+            for tok in llm.chat_stream(messages, temperature=0.2, max_tokens=1200):
+                yield f"data: {json.dumps({'delta': tok})}\n\n"
+                parts.append(tok)
+        except Exception as exc:  # noqa: BLE001
+            yield f"data: {json.dumps({'error': f'LLM 翻译失败：{exc}'})}\n\n"
+            return
+        if parts:
+            translation_cache.set("auto", target_lang, text, "".join(parts))
 
     return StreamingResponse(gen(), media_type="text/event-stream")

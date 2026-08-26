@@ -122,11 +122,12 @@ def translate_pdf(
 
 
 def pick_translated_pdf(files: list[str]) -> str | None:
-    """优先返回双语翻译件，其次第一份。"""
+    """优先返回纯译文（mono），其次排除双语版，最后取第一份。"""
     if not files:
         return None
     for f in files:
         low = os.path.basename(f).lower()
-        if "dual" in low or "bilingual" in low:
+        if "mono" in low:
             return f
-    return files[0]
+    non_dual = [f for f in files if "dual" not in f.lower() and "bilingual" not in f.lower()]
+    return non_dual[0] if non_dual else files[0]

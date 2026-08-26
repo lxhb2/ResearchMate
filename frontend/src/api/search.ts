@@ -73,12 +73,12 @@ export const translateApi = {
     return data
   },
   // pdf2zh-next 整篇 PDF 翻译：异步任务（避免 120s 超时）
-  startPdfTranslation: async (paperId: string): Promise<{
+  startPdfTranslation: async (paperId: string, pageRange?: string): Promise<{
     task_id: string
     status: string
     engine?: string
   }> => {
-    const { data } = await api.post('/translate/pdf', { paper_id: paperId })
+    const { data } = await api.post('/translate/pdf', { paper_id: paperId, page_range: pageRange || '' })
     return data
   },
   pdfTranslationStatus: async (taskId: string): Promise<{

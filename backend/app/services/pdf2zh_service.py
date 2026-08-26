@@ -12,11 +12,13 @@ from __future__ import annotations
 
 import atexit
 import csv
+import hashlib
 import importlib.util
 import json
 import os
 import queue
 import subprocess
+import shutil
 import sys
 import threading
 import time
@@ -298,16 +300,45 @@ def _run_bridge(
     raise RuntimeError(f"pdf2zh-next 未返回结果。\n{tail or '（无 stderr）'}")
 
 
+def pdf_cache_key(pdf_path: str, lang_in: str, lang_out: str, pages: str | None = None) -> str:
+    """Generate a deterministic cache key for a translated PDF."""
+    h = hashlib.sha256()
+    with open(pdf_path, "rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    parts = [h.hexdigest()[:16], lang_in, lang_out]
+    if pages:
+        parts.append(pages.strip())
+    return "-".join(parts)
+
+
+def find_cached_pdf(cache_dir: str, cache_key: str) -> str | None:
+    """Return the cached translated PDF path if one exists for this key."""
+    if not os.path.isdir(cache_dir):
+        return None
+    candidate = os.path.join(cache_dir, f"{cache_key}.pdf")
+    return candidate if os.path.isfile(candidate) else None
+
+
+def save_to_cache(cache_dir: str, cache_key: str, src_path: str) -> str:
+    """Copy a translated PDF into the hash-keyed cache directory."""
+    os.makedirs(cache_dir, exist_ok=True)
+    dst = os.path.join(cache_dir, f"{cache_key}.pdf")
+    shutil.copy2(src_path, dst)
+    return dst
+
+
 def translate_pdf(
     pdf_path: str,
     output_dir: str,
     lang_in: str,
     lang_out: str,
     llm_cfg: dict[str, Any],
-    qps: int = 4,
+    qps: int | None = None,
     timeout: int | None = None,
     progress_cb: ProgressCallback | None = None,
     engine: str | None = None,
+    pages: str | None = None,
 ) -> list[str]:
     """Translate a PDF with pdf2zh-next and return generated PDF paths."""
     python = _python_path()
@@ -324,15 +355,19 @@ def translate_pdf(
         "output": os.path.abspath(output_dir),
         "lang_in": lang_in,
         "lang_out": lang_out,
-        "qps": max(1, min(int(qps or 4), 20)),
+        "qps": max(1, min(int(qps or os.environ.get("PDF2ZH_QPS") or 12), 20)),
         "report_interval": float(os.environ.get("PDF2ZH_REPORT_INTERVAL") or 0.2),
-        "no_mono": True,
+        "no_mono": False,
+        "no_dual": True,
         "watermark": os.environ.get("PDF2ZH_WATERMARK") or "no_watermark",
         "translate_table": _env_bool("PDF2ZH_TRANSLATE_TABLE", False),
         "auto_glossary": _env_bool("PDF2ZH_AUTO_GLOSSARY", False),
-        "skip_scanned_detection": _env_bool("PDF2ZH_SKIP_SCANNED", False),
+        "skip_scanned_detection": _env_bool("PDF2ZH_SKIP_SCANNED", True),
+        "pages": (pages or "").strip() or None,
         "debug": True,
     }
+    if cfg["pages"]:
+        cfg["only_include_translated_pages"] = _env_bool("PDF2ZH_ONLY_TRANSLATED_PAGES", True)
     cfg_path = os.path.join(output_dir, ".pdf2zh_request.json")
     try:
         with open(cfg_path, "w", encoding="utf-8") as f:
@@ -346,11 +381,13 @@ def translate_pdf(
 
 
 def pick_translated_pdf(files: list[str]) -> str | None:
-    """Prefer the bilingual/dual PDF, otherwise return the first PDF."""
+    """Prefer the monolingual translated PDF (pure translation, no original)."""
     if not files:
         return None
     for f in files:
         low = os.path.basename(f).lower()
-        if "dual" in low or "bilingual" in low:
+        if "mono" in low:
             return f
-    return files[0]
+    # Exclude dual/bilingual if possible
+    non_dual = [f for f in files if "dual" not in f.lower() and "bilingual" not in f.lower()]
+    return non_dual[0] if non_dual else files[0]

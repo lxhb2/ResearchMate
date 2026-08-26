@@ -46,11 +46,16 @@ hiddenimports = (
         "uvicorn.lifespan",
         "uvicorn.lifespan.on",
         "sqlalchemy.dialects.sqlite",
+        "jose",
+        "jose.jwt",
+        "jose.backends",
+        "passlib",
+        "passlib.context",
     ]
 )
 
 # 收集带数据文件/动态导入的第三方库
-for pkg in ("litellm", "openai", "tiktoken", "tiktoken_ext", "pydantic", "pymupdf", "pydantic_settings"):
+for pkg in ("litellm", "openai", "tiktoken", "tiktoken_ext", "pydantic", "pymupdf", "pydantic_settings", "jose", "passlib"):
     try:
         d, b, h = collect_all(pkg)
         datas += d
