@@ -1,6 +1,6 @@
 ---
 name: statistical-power
-description: Sample-size and statistical power calculations for planning studies. Use whenever someone asks "how many subjects/samples/replicates do I need", wants an a priori power analysis, a minimum detectable effect (MDE), a power curve, or needs to justify a sample size for a grant, IRB protocol, or pre-registration. Covers closed-form power for t-tests, ANOVA, proportions, correlations, chi-square, and regression, plus simulation-based (Monte Carlo) power for designs with no formula — logistic/Poisson regression, mixed models, cluster-randomized trials, survival, and interactions. Use this skill even when the request only mentions an effect size, alpha, or "80% power" without saying "power analysis" explicitly. For laying out the study (randomization, blocking, factorial/DOE, crossover, sequential designs) use experimental-design; for analyzing data already collected and reporting it use statistical-analysis.
+description: "用于规划研究的样本大小和统计功率计算。当有人问“我需要多少subjects/samples/replicates”时，需要先验的功率分析、最小的可探测效果(MDE),一个功率曲线，或者需要证明赠款的样本大小，IRB协议，或者预先登记。"
 allowed-tools: Read Write Edit Bash
 compatibility: Requires Python >=3.10. Examples target statsmodels >=0.14.6, scipy >=1.11, pingouin >=0.6, numpy >=1.26, and matplotlib. Optional extras are statsmodels mixed models and lifelines for simulation-based power.
 license: MIT license
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Statistical Power & Sample Size
 
 ## Overview

@@ -1,6 +1,6 @@
 ---
 name: model-merging
-description: Merge multiple fine-tuned models using mergekit to combine capabilities without retraining. Use when creating specialized models by blending domain-specific expertise (math + coding + chat), improving performance beyond single models, or experimenting rapidly with model variants. Covers SLERP, TIES-Merging, DARE, Task Arithmetic, linear merging, and production deployment strategies.
+description: "合并多个微调的模型，使用合并的kit来合并能力，而无需再培训. 利用混合特定域的专门知识(math + coding + 聊天)来创建专门模型，提高单模型以外的性能，或者快速实验模型变体. overs SLERP, TIES-Merging, DARE, Task Arithmetic, 线性合并，以及生产部署策略。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -39,7 +39,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Model Merging: Combining Pre-trained Models
 
 ## When to Use This Skill

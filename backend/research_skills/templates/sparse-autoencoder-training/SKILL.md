@@ -1,6 +1,6 @@
 ---
 name: sparse-autoencoder-training
-description: Provides guidance for training and analyzing Sparse Autoencoders (SAEs) using SAELens to decompose neural network activations into interpretable features. Use when discovering interpretable features, analyzing superposition, or studying monosemantic representations in language models.
+description: "为使用SAELens将神经网络激活分解为可解释特性的Sparse Autoencodes(SAEs)提供培训和分析指导. 用于发现可解释特性，分析叠加，或研究语言模型中的单语义表达。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -33,7 +33,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # SAELens: Sparse Autoencoders for Mechanistic Interpretability
 
 SAELens is the primary library for training and analyzing Sparse Autoencoders (SAEs) - a technique for decomposing polysemantic neural network activations into sparse, interpretable features. Based on Anthropic's groundbreaking research on monosemanticity.

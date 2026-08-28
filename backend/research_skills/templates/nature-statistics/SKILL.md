@@ -1,6 +1,6 @@
 ---
 name: nature-statistics
-description: Audit, revise, or draft manuscript statistical reporting for Nature / high-impact journal submissions. Use when the user asks to check statistical analysis sections, p values, confidence intervals, sample size, biological versus technical replicates, randomization, blinding, multiple-comparison correction, model assumptions, figure legends, Results statistics wording, reviewer comments about statistics, or Chinese academic drafts needing publication-ready Statistical analysis text. Also trigger on general paper-statistics requests such as 统计审查、统计分析小节、统计方法、p值、样本量、重复数、多重比较、置信区间、效应量、图注统计、审稿人统计意见.
+description: "审核，修改，或起草关于自然/高影响期刊的手稿统计报告。当用户要求检查统计分析章节，p值，置信间隔，样本大小，生物与技术复制，随机化，盲目化，多比校正，模型假设，图例，结果统计措辞，评论员对统计的评论，或需要出版准备的统计分析文本的中国学术草案时使用。"
 metadata:
   github_source: https://github.com/Yuan1z0825/nature-skills
   category: paper_writing
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Nature Statistics Reporting Skill
 
 Use this skill to make manuscript statistics transparent, reproducible, and appropriately bounded. It is a reporting and review skill, not a substitute for a statistician reanalysing raw data unless the user supplies the data and explicitly asks for computation.

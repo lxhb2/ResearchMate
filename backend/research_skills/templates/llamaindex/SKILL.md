@@ -1,6 +1,6 @@
 ---
 name: llamaindex
-description: Data framework for building LLM applications with RAG. Specializes in document ingestion (300+ connectors), indexing, and querying. Features vector indices, query engines, agents, and multi-modal support. Use for document Q&A, chatbots, knowledge retrieval, or building RAG pipelines. Best for data-centric LLM applications.
+description: "使用 RAG 构建 LLM 应用程序的数据框架 。 文档摄入( 300+ 连接器) 、 索引化和查询化 。 特性向量索引、 查询引擎、 代理和多模式支持 。 用于文档 QQA 、 聊天机、 知识检索或构建 RAG 管道 。 最适合以数据为中心的 LLM 应用程序 。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -39,7 +39,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # LlamaIndex - Data Framework for LLM Applications
 
 The leading framework for connecting LLMs with your data.

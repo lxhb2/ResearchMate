@@ -1,6 +1,6 @@
 ---
 name: torchforge-rl-training
-description: Provides guidance for PyTorch-native agentic RL using torchforge, Meta's library separating infra from algorithms. Use when you want clean RL abstractions, easy algorithm experimentation, or scalable training with Monarch and TorchTitan.
+description: "为 PyTorch- native 代理 RL 提供导引，使用火炬forge,Meta 的库将内存和算法区分开来。当您想要干净的 RL 抽象，轻松的算法实验，或者用 Monarch 和 TorchTitan 进行可扩展的训练时使用 。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -36,7 +36,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # torchforge: PyTorch-Native Agentic RL Library
 
 torchforge is Meta's PyTorch-native RL library that separates infrastructure concerns from algorithm concerns. It enables rapid RL research by letting you focus on algorithms while handling distributed training, inference, and weight sync automatically.

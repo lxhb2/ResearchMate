@@ -1,6 +1,6 @@
 ---
 name: latex-setup
-description: Use when the user wants to set up or troubleshoot a LaTeX environment, choose between biber and bibtex, install packages for a specific venue template, or configure compilation. Triggers on phrases like "setup latex", "biber vs bibtex", "latex compilation error", "install latex packages", "venue template", or "texlive setup".
+description: "当用户想要设置或排除LaTeX环境时使用，在biber和bibtex之间选择，为特定会场模板安装软件包，或者配置编译。"
 metadata:
   github_source: https://github.com/fcakyon/phd-skills
   category: paper_writing
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # LaTeX Environment Setup
 
 You are helping a researcher set up or fix their LaTeX compilation environment. Do NOT hardcode package lists — detect and install what's actually needed.

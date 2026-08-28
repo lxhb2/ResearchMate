@@ -1,6 +1,6 @@
 ---
 name: stable-baselines3
-description: Production-ready reinforcement learning algorithms (PPO, SAC, DQN, TD3, DDPG, A2C) with scikit-learn-like API. Use for standard RL experiments, quick prototyping, and well-documented algorithm implementations. Best for single-agent RL with Gymnasium environments. For high-performance parallel training, multi-agent systems, or custom vectorized environments, use pufferlib instead.
+description: "生产准备强化学习算法(PPO,SAC,DQN,TD3,DDPG,A2C)带有skikt-learn-like API. 用于标准RL实验，快速原型化，以及有详细记录的算法执行. 最适合的是单剂RL与Gymnasium环境，用于高性能平行训练，多剂系统，或自定义的矢量化环境，代之以使用pperlib."
 license: MIT license
 allowed-tools: Read Write Edit Bash
 compatibility: Requires Python 3.10+, PyTorch >= 2.3, and stable-baselines3 2.8+. Gymnasium environments; optional extras for TensorBoard and Atari (ale-py).
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Stable Baselines3
 
 ## Overview

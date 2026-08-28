@@ -1,6 +1,6 @@
 ---
 name: pptx
-description: "Use this skill any time a .pptx or .potx file is involved in any way — as input, output, or both. This includes: creating slide decks, pitch decks, or presentations; reading, parsing, or extracting text from any .pptx or .potx file (even if the extracted content will be used elsewhere, like in an email or summary); editing, modifying, or updating existing presentations; combining or splitting slide files; working with templates (.potx), layouts, speaker notes, or comments. Trigger whenever the user mentions \"deck,\" \"slides,\" \"presentation,\" or references a .pptx or .potx filename, regardless of what they plan to do with the content afterward. If a .pptx or .potx file needs to be opened, created, or touched, use this skill."
+description: "任何时候, . pptx 或.potx文件都以任何方式使用此技能——作为输入、 输出或两者兼用。这包括：创建幻灯片甲板、 投球甲板，或演示文稿；读取、 解析或提取任何. pptx 或.potx文件的文本(即使所提取的内容会像电子邮件或摘要中那样用于其他地方); 编辑、 修改或更新现有的演示文稿；合并或分割幻灯片文件；使用模板(.potx), 排版、 扬子笔记或评论 。"
 metadata:
   version: ""
   github_source: "https://github.com/anthropics/skills"
@@ -16,7 +16,6 @@ metadata:
     - output
   enabled: "true"
 ---
-
 ## Trigger Keywords
 pptx, time, potx, file, involved, way, input, output
 

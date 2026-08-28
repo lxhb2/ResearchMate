@@ -1,6 +1,6 @@
 ---
 name: nature-writing
-description: Draft, restructure, or plan Nature-style manuscript sections and initial-submission materials from author-provided claims, results, figures, notes, or Chinese drafts. Use for abstracts, introductions, related work, methods, Results or experiments, discussions, conclusions, titles, full manuscript arguments, and first-submission packages such as cover letters, title pages, highlights, author contributions, availability or declaration text, and reviewer suggestions. Also use to classify Results evidence, decide what belongs in main text, captions, Methods or source data, or Supplementary Information, compress Results to the shortest sufficient evidence chain, prevent revision accretion, and audit paragraph necessity or claim repetition. Trigger on drafting a paper or section, structuring a manuscript, academic writing, first submission, 投稿材料、首次投稿、投稿信、标题页、亮点、作者贡献、数据可用性声明、推荐审稿人.
+description: "起草、调整或规划来自作者提供的索赔、结果、数字、说明或中文本的自然式手稿和初始提交材料。用于摘要、介绍、相关工作、方法、结果或实验、讨论、结论、标题、完整手稿论据，以及首稿包，如封面信、标题页、要闻、作者贡献、可用性或声明文本以及评审员建议。"
 metadata:
   github_source: https://github.com/Yuan1z0825/nature-skills
   category: paper_writing
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Nature-Style Scientific Writing — Router
 
 This skill is split into two layers:

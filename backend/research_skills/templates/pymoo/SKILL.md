@@ -1,6 +1,6 @@
 ---
 name: pymoo
-description: Multi-objective optimization framework. NSGA-II, NSGA-III, MOEA/D, Pareto fronts, constraint handling, benchmarks (ZDT, DTLZ), for engineering design and optimization problems.
+description: "多目标优化框架. NSGA-II, NSGA-III, MOEA/D, 帕雷托战线，约束处理，基准(ZDT, DTLZ) 工程设计和优化问题。"
 license: Apache-2.0 license
 allowed-tools: Read Write Edit Bash
 compatibility: Requires Python 3.10+ and pymoo (uv pip install). Optional matplotlib for visualization plots; optional autograd for gradient-based features; optional joblib for JoblibParallelization.
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Pymoo - Multi-Objective Optimization in Python
 
 ## Overview

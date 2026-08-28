@@ -1,6 +1,6 @@
 ---
 name: docx-sas
-description: 'Use this skill whenever the user wants to create, read, edit, or manipulate Word documents (.docx files) or Word templates (.dotx files). Triggers include: any mention of ''Word doc'', ''word document'', ''.docx'', ''.dotx'', or requests to produce professional documents with formatting like tables of contents, headings, page numbers, or letterheads. Also use when extracting or reorganizing content from .docx or .dotx files, inserting or replacing images in documents, performing find-and-replace in Word files, working with tracked changes or comments, or converting content into a polished Word document. If the user asks for a ''report'', ''memo'', ''letter'', ''template'', or similar deliverable as a Word or .docx file, use this skill. Do NOT use for PDFs, spreadsheets, Google Docs, or general coding tasks unrelated to document generation.'
+description: "当用户想要创建，阅读，编辑，或操纵Word文档(.docx文件)或Word模板(.dotx文件)时，使用此技能。"
 license: Proprietary. LICENSE.txt has complete terms
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # DOCX creation, editing, and analysis
 
 A `.docx` is a ZIP archive of XML files. Choose your approach by task:

@@ -1,6 +1,6 @@
 ---
 name: rowan
-description: Rowan is a cloud-native molecular modeling and medicinal-chemistry workflow platform with a Python API. Use for pKa and macropKa prediction, conformer and tautomer ensembles, docking and analogue docking, protein-ligand cofolding, MSA generation, molecular dynamics, permeability, descriptor workflows, and related small-molecule or protein modeling tasks. Ideal for programmatic batch screening, multi-step chemistry pipelines, and workflows that would otherwise require maintaining local HPC/GPU infrastructure.
+description: "Rowan是一个云内分子模型和药用化学工作流程平台，具有Python API. 用于pKa和macropKa的预测，配位器和tautome 组合，对接和模拟对接，蛋白质-粘合，MSA生成，分子动力学，透析性，描述性工作流程，以及相关的小分子或蛋白质建模任务. 理想是程序批量筛选，多步骤化学管道，以及需要维持当地HPC/GPU基础设施的工作流程。"
 license: Proprietary (API key required)
 compatibility: Python 3.12+, API key required
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Rowan: Cloud-Native Molecular-Modeling and Drug-Design Workflows
 
 ## Overview

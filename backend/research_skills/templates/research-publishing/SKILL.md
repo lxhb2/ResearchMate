@@ -1,6 +1,6 @@
 ---
 name: research-publishing
-description: Use when the user wants to prepare code for open-source release, create reproducible research artifacts, or structure a repository for publication. Triggers on phrases like "publish code", "open source release", "reproducibility", "research repository", "code release", or "prepare for publication".
+description: "当用户想要为开源发布准备代码，创建可复制的研究文物，或者为发布构建一个寄存器时使用。"
 metadata:
   github_source: https://github.com/fcakyon/phd-skills
   category: literature
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Research Publishing Methodology
 
 You are helping a researcher prepare their code and artifacts for public release alongside a paper submission.

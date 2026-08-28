@@ -1,6 +1,6 @@
 ---
 name: rwkv-architecture
-description: RNN+Transformer hybrid with O(n) inference. Linear time, infinite context, no KV cache. Train like GPT (parallel), infer like RNN (sequential). Linux Foundation AI project. Production at Windows, Office, NeMo. RWKV-7 (March 2025). Models up to 14B parameters.
+description: "RNN+Transformermix with O(n) extriction. Linear 时间，无限上下文，无 KV 缓存. Train like GPT (并行), inference like RNN (序列). Linux Foundation AI project. Production at Windows, Office, NeMo. RWKV-7(2025年3月)."
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -37,7 +37,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # RWKV - Receptance Weighted Key Value
 
 ## Quick start

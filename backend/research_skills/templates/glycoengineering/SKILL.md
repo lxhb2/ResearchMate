@@ -1,6 +1,6 @@
 ---
 name: glycoengineering
-description: Analyze and engineer protein glycosylation. Scan sequences for N-glycosylation sequons (N-X-S/T), predict O-glycosylation hotspots, and access curated glycoengineering tools (NetOGlyc, GlycoShield, GlycoWorkbench). For glycoprotein engineering, therapeutic antibody optimization, and vaccine design.
+description: "分析与工程师蛋白质甘油. N-glycosylation subs (N-X-S/T) 扫描序列，预测O-glycosylation 热点，以及访问被调制的甘油工程工具(NetOGlyc,GlycoShield,GlycoWorkbench). 用于甘油蛋白工程，治疗性抗体优化，疫苗设计。"
 license: Unknown
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Glycoengineering
 
 ## Overview

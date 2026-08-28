@@ -1,6 +1,6 @@
 ---
 name: academic-paper-reviewer
-description: 'Multi-perspective academic paper review with dynamic reviewer personas. Runs a 5-seat, role-separated review panel (Journal-Fit Reviewer + 3 peer-review roles + Devil''s Advocate) with field-specific expertise; role separation is not a claim of independent error processes. Supports full review, re-review (verification), quick assessment, methodology focus, Socratic guided, and calibration modes. Triggers on: review paper, peer review, manuscript review, referee report, review my paper, critique paper, simulate review, editorial review, calibrate reviewer, reviewer calibration, measure reviewer accuracy, 審查論文, 論文審查, 模擬審查, 同儕審查, 幫我審這篇, 以審查人角度評估, 審查者校準, 논문 심사, 동료 심사, 모의 심사, 심사자 관점에서 평가, 심사자 보정.'
+description: "多视角的学术论文评论有动态评论员人格. 运行一个5个座位，角色分离的审查小组(Journal-Fit审查员+3同行评审角色+魔鬼代言人),具有特定领域的专门知识；角色分离并不是对独立错误过程的声称. 支持全面审查，重新审查(验证),快速评估，方法聚焦，Socratic指导，校准模式。"
 metadata:
   github_source: https://github.com/Imbad0202/academic-research-skills
   category: paper_writing
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Academic Paper Reviewer v1.11.1 — Multi-Perspective Academic Paper Review Agent Team
 
 Simulates a complete international journal peer review process: automatically identifies the paper's field, dynamically configures 4 card-backed identities (Journal-Fit Reviewer + 3 peer reviewers), and adds the fixed Devil's Advocate as the fifth execution seat. The five role-separated perspectives cover journal fit, methodology, domain expertise, cross-disciplinary viewpoints, and core argument challenges; a separate editorial synthesizer produces the structured Editorial Decision and Revision Roadmap.

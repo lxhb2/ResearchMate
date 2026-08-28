@@ -1,6 +1,6 @@
 ---
 name: bioservices
-description: Unified Python interface to 40+ bioinformatics services. Use when querying multiple databases (UniProt, KEGG, ChEMBL, Reactome) in a single workflow with consistent API. Best for cross-database analysis, ID mapping across services. For quick single-database lookups use gget; for sequence/file manipulation use biopython.
+description: "统一 Python 界面为 40 + 生物信息服务 。 在一个与 API 一致的单一工作流程中查询多个数据库( UniProt, KEGG, ChEMBL, Reactome)时使用。 最佳的跨数据库分析，ID 跨服务映射 。对于快速的单个数据库搜索，使用 gget;对于 sequence/file 操作，使用 biopython 。"
 license: GPLv3 license
 allowed-tools: Read Write Edit Bash
 compatibility: Requires Python 3.9–3.12 and internet access to 40+ bioinformatics web APIs. NCBI BLAST requires a contact email (`NCBI_EMAIL` env var or explicit parameter).
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # BioServices
 
 ## Overview

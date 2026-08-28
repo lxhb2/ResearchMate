@@ -1,6 +1,6 @@
 ---
 name: research-lookup
-description: Compile current scholarly evidence for a scientific manuscript or research brief. Use when the user explicitly asks to gather literature, references, background evidence, competing findings, or a manuscript research packet. Uses Parallel Search by default, Parallel Extract for source verification, Parallel Research for explicitly deep/exhaustive work, optional explicit Parallel Chat, and optional Perplexity only when requested or allowed as a failure fallback.
+description: "将当前学术证据汇编成一份科学手稿或研究简报。当用户明确要求收集文献、参考文献、背景证据、相互竞争的发现或手稿研究包时使用。 默认情况下使用平行搜索、 并行提取用于源码验证、 并行研究用于明确deep/exhaustive 工作、 选择性明确的平行聊天以及可选的复杂之处，仅当请求或允许作为失败倒计时使用 。"
 license: MIT license
 compatibility: Requires network access to api.parallel.ai through parallel-cli 0.7.1+ for Search, Extract, and Research; explicit Chat uses api.parallel.ai with PARALLEL_API_KEY; optional Perplexity requests use openrouter.ai and require OPENROUTER_API_KEY.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Research Lookup
 
 Compile the external evidence needed to plan and write a high-quality scientific

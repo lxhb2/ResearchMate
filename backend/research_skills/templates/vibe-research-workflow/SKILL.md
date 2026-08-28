@@ -1,6 +1,6 @@
 ---
 name: vibe-research-workflow
-description: Guides AI-assisted research across three sub-flows, Vibe Coding, Vibe Figure, and Vibe Writing, with behavioural rules that keep the user in charge of academic judgment while delegating mechanical work to AI. Recommends the right tool (Cursor, Claude Code, Codex, Figma, Gemini) for the current stage. Use when the user asks 'how to use AI for research', 'Vibe Coding tips', 'AI-assisted writing workflow', 'which AI tool for this', or starts an AI-assisted work session.
+description: "指南 AI 辅助研究 跨越 vibe Coding , Vibe Figure 和 Vibe Writing 三个子流，其行为规则让用户在将机械工作委托给 AI 时负责学术判断。建议当前阶段正确的工具( Cursor, Claude Code, Codex, Figma, Gemini) 。当用户询问“ 如何使用 AI 来进行研究 ” , “ vibe Codingtims” , “ AI 辅助编写工作流程 ” , “ 或启动 AI 辅助工作会话 。"
 license: CC-BY-4.0
 metadata:
   github_source: https://github.com/HKUSTDial/Supervisor-Skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Vibe Research Workflow
 
 ## Overview

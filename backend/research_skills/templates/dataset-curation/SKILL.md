@@ -1,6 +1,6 @@
 ---
 name: dataset-curation
-description: Use when the user wants to analyze dataset bias, create stratified samples, evaluate fairness, or plan dataset collection. Triggers on phrases like "dataset bias", "stratified sample", "class imbalance", "data distribution", "fairness analysis", or "ethical review".
+description: "当用户想要分析数据集偏差，创建分层样本，评价公平性，或规划数据集采集时使用。"
 metadata:
   github_source: https://github.com/fcakyon/phd-skills
   category: experiment_review
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Dataset Curation Methodology
 
 You are helping a researcher curate, analyze, or expand a dataset with attention to bias, fairness, and quality.

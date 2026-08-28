@@ -1,6 +1,6 @@
 ---
 name: deepspot-m
-description: Generate transcriptome-wide virtual spatial transcriptomics from H&E histology with DeepSpot-M. Use when you need spatial gene expression in log1p-CPM for 224x224 tiles at about 20x, want to query protein-coding genes by symbol instead of a fixed panel, or want to run prediction across a whole slide after tiling with histolab.
+description: "以 DeepSpot-M 生成来自 H&E 的全文本虚拟空间转录器。当您需要 log1p- CPM对 224x224 块的空间基因表达时，要用符号来查询蛋白质编码基因，而不是用固定的面板，或者想要在与 histolab 拼接后运行整个幻灯片的预测 。"
 license: PolyForm-Noncommercial-1.0.0
 compatibility: Needs deepspotm 1.0.0 from PyPI (Python 3.10 to 3.13) plus PyTorch. Weights at ratschlab/DeepSpotM on Hugging Face are gated and licensed CC-BY-NC-SA-4.0, so request access on the model page and then run huggingface-cli login. A CUDA GPU speeds up batched inference.
 allowed-tools: Read Write Edit Bash
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # DeepSpot-M
 
 ## Overview

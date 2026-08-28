@@ -1,6 +1,6 @@
 ---
 name: pathway-enrichment
-description: Run pathway and gene-set enrichment analysis on gene lists or ranked gene data, then interpret the results. Use whenever the user has a set of genes (differentially expressed genes from PyDESeq2/Scanpy, CRISPR-screen hits, cluster marker genes, proteomics hits) and wants to know which biological pathways, GO terms, or gene sets are over-represented or enriched. Covers over-representation analysis (ORA / Enrichr / Fisher / hypergeometric), ranked Gene Set Enrichment Analysis (GSEA / preranked), single-sample scoring (ssGSEA/GSVA), and functional profiling via gseapy, g:Profiler, Enrichr libraries, MSigDB, GO, KEGG, Reactome, and WikiPathways — plus gene-ID mapping, choosing the right background universe, multiple-testing correction, redundancy reduction, dotplots/enrichment maps, and publication-ready tables. Use this for "pathway analysis", "enrichment analysis", "GO enrichment", "KEGG/Reactome pathways", "GSEA", "over-representation", "functional annotation", or "what pathways are my genes in".
+description: "在基因列表或排序的基因数据上运行路径和基因集浓缩分析，然后解释结果。当用户拥有一组基因(PyDESeq2/Scanpy、CRISPR-屏幕命中的不同表达的基因、集群标记基因、蛋白质组命中)并想知道哪些生物路径、GO术语或基因组代表过多或富集时使用。"
 license: MIT
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Pathway Enrichment
 
 ## Overview

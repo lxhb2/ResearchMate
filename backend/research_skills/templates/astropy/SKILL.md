@@ -1,6 +1,6 @@
 ---
 name: astropy
-description: Core Python library for astronomy and astrophysics workflows that need Astropy APIs, including units/quantities, coordinates, FITS I/O, tables, time systems, WCS, and cosmology. Use when implementing or debugging astronomical data analysis code with Astropy.
+description: "用于天文学和天体物理学工作流程的核心Python库，需要Astropy API,包括units/quantities,坐标，FITS I/O,表格，时间系统，WCS,和宇宙学.在与Astropy执行或调试天文数据分析代码时使用。"
 license: BSD-3-Clause license
 compatibility: Requires Python 3.11+ with astropy installed (uv for package installation). Some features (object name resolution, site lookups, remote FITS reads, IERS updates) need network access.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Astropy
 
 ## Overview

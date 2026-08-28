@@ -1,6 +1,6 @@
 ---
 name: blip-2-vision-language
-description: Vision-language pre-training framework bridging frozen image encoders and LLMs. Use when you need image captioning, visual question answering, image-text retrieval, or multimodal chat with state-of-the-art zero-shot performance.
+description: "视觉语言培训前框架连接冷冻图像编码器和 LLM。当您需要图像标题、视觉问题回答、图像文本检索或与最先进的零镜头性能的多模式聊天时使用 。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -33,7 +33,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # BLIP-2: Vision-Language Pre-training
 
 Comprehensive guide to using Salesforce's BLIP-2 for vision-language tasks with frozen image encoders and large language models.

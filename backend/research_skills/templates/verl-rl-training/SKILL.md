@@ -1,6 +1,6 @@
 ---
 name: verl-rl-training
-description: Provides guidance for training LLMs with reinforcement learning using verl (Volcano Engine RL). Use when implementing RLHF, GRPO, PPO, or other RL algorithms for LLM post-training at scale with flexible infrastructure backends.
+description: "为使用verl(Volcano Engine RL)进行强化学习而培训LLMs提供指导. RLHF, GRPO, PPO, 或其他 RL 算法在使用灵活的基础设施后端时使用。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -36,7 +36,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # verl: Volcano Engine Reinforcement Learning for LLMs
 
 verl is a flexible, efficient, and production-ready RL training library for large language models from ByteDance's Seed team. It implements the HybridFlow framework (EuroSys 2025) and powers models like Doubao-1.5-pro achieving O1-level performance on math benchmarks.

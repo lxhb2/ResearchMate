@@ -1,6 +1,6 @@
 ---
 name: paper-verification
-description: Use when the user wants to verify paper claims against code or data, audit numerical accuracy, check formula-code alignment, or validate citation accuracy. Triggers on phrases like "verify claims", "check numbers", "do the numbers match", "formula vs code", "audit the paper", or "cross-check results".
+description: "用户需要对照代码或数据验证纸质索赔，审计数字准确性，检查公式码校正性，或验证引用准确性时使用。"
 metadata:
   github_source: https://github.com/fcakyon/phd-skills
   category: literature
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Paper Verification Methodology
 
 You are helping a researcher verify that their paper accurately reflects their code and experimental results. This is the most critical quality control step in academic writing.

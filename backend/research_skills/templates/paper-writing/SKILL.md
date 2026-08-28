@@ -1,6 +1,6 @@
 ---
 name: paper-writing
-description: Use when the user wants to write, structure, or revise academic paper sections, improve notation consistency, or refine figures and tables. Triggers on phrases like "write the abstract", "structure the methods", "improve this section", "notation consistency", "figure refinement", or "paper structure".
+description: "用户想要写，结构，或修改学术论文章节时使用，提高注解一致性，或完善数字和表格。"
 metadata:
   github_source: https://github.com/fcakyon/phd-skills
   category: paper_writing
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Academic Paper Writing Methodology
 
 You are helping a researcher write or revise an academic paper. Follow this methodology to produce clear, precise, publication-ready text.

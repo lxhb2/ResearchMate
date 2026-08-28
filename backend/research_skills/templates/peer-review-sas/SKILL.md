@@ -1,6 +1,6 @@
 ---
 name: peer-review-sas
-description: Prepare evidence-bounded, constructive peer-review drafts and structured manuscript assessments. Use for authorized review of scientific manuscripts, protocols, preprints, or research proposals; reporting-guideline selection; claim–evidence checks; methods, statistics, reproducibility, ethics, figure/table, and citation critique; or revision-response planning.
+description: "编写有证据约束的、建设性的同行评审草案和结构化的手稿评估。 用于授权审查科学手稿、协议、预印本或研究提案；报告指南选择；权利要求-证据检查；方法、统计、可复制性、道德、figure/table和引用批评；或修订-回应规划。"
 license: MIT
 compatibility: Python 3.11+ standard library. Bundled CLIs are deterministic and local-only; they accept bounded JSON, CSV, or Markdown and make no network, model, image, or external-service calls.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Peer Review
 
 Support an accountable human reviewer with a rigorous, fair, actionable assessment. Treat every unpublished submission and review as confidential.

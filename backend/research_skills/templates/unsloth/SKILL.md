@@ -1,6 +1,6 @@
 ---
 name: unsloth
-description: Expert guidance for fast fine-tuning with Unsloth - 2-5x faster training, 50-80% less memory, LoRA/QLoRA optimization
+description: "与Unsloth进行快速微调的专家指导 - 2 - 5x快速训练，50 - 80%减量内存，LoRA/QLoRA优化。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -42,7 +42,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Unsloth Skill
 
 Comprehensive assistance with unsloth development, generated from official documentation.

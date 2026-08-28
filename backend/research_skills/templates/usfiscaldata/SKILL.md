@@ -1,6 +1,6 @@
 ---
 name: usfiscaldata
-description: Query the U.S. Treasury Fiscal Data REST API for federal financial data. No API key required. Use for national debt (Debt to the Penny), Daily Treasury Statements, Monthly Treasury Statements, Treasury securities auctions, interest rates, foreign exchange rates, savings bonds, or U.S. government revenue and spending statistics.
+description: "查询美国国库财政数据RESTAPI用于联邦财政数据，不需要API键，用于国债(Debt to the Penny),每日国库报表，月度国库报表，国库证券拍卖，利率，汇率，储蓄债券，或美国政府收支统计。"
 license: MIT
 allowed-tools: Read Write Edit Bash
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # U.S. Treasury Fiscal Data API
 
 Free, open REST API from the U.S. Department of the Treasury for federal financial data. No API key or registration required.

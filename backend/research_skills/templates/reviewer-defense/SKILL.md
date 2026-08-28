@@ -1,6 +1,6 @@
 ---
 name: reviewer-defense
-description: Use when the user wants to anticipate reviewer questions, select the strongest ablations to present, prepare rebuttals, or identify paper weaknesses before submission. Triggers on phrases like "reviewer questions", "anticipate reviewers", "rebuttal", "paper weaknesses", "defend the paper", or "strengthen the paper".
+description: "当用户想要预测审查者的问题时使用，选择最强烈的拼写来呈现，准备反驳，或者在提交前识别纸质弱点。"
 metadata:
   github_source: https://github.com/fcakyon/phd-skills
   category: paper_writing
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Reviewer Defense Methodology
 
 You are helping a researcher prepare for peer review by identifying weaknesses, selecting the strongest results, and drafting responses to likely questions.

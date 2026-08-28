@@ -1,6 +1,6 @@
 ---
 name: gptq
-description: Post-training 4-bit quantization for LLMs with minimal accuracy loss. Use for deploying large models (70B, 405B) on consumer GPUs, when you need 4× memory reduction with <2% perplexity degradation, or for faster inference (3-4× speedup) vs FP16. Integrates with transformers and PEFT for QLoRA fine-tuning.
+description: "训练后对 LLMS 进行4 位量化，精确度最低。当您需要将 4× 内存减少< 2% 的复杂度降解，或更快的推论( 3– 4× 加速)对 FP16 时，使用大型模型( 70B, 405B) , 用于 QLORA 微调 。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -39,7 +39,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # GPTQ (Generative Pre-trained Transformer Quantization)
 
 Post-training quantization method that compresses LLMs to 4-bit with minimal accuracy loss using group-wise quantization.

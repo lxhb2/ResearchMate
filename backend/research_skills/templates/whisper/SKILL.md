@@ -1,6 +1,6 @@
 ---
 name: whisper
-description: OpenAI's general-purpose speech recognition model. Supports 99 languages, transcription, translation to English, and language identification. Six model sizes from tiny (39M params) to large (1550M params). Use for speech-to-text, podcast transcription, or multilingual audio processing. Best for robust, multilingual ASR.
+description: "OpenAI的通用语音识别模式. 支持99种语言，音译，英语翻译，语言识别. 6种模式大小从微小(39Mparams)到大(1550Mparams). 用于语音对文本，播客转录，或多语种音频处理. 最好的是强壮，多语种ASR."
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -38,7 +38,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Whisper - Robust Speech Recognition
 
 OpenAI's multilingual speech recognition model.

@@ -17,10 +17,16 @@ from app.models.paper_chunk import PaperChunk
 from app.models.paper_chat import PaperChatMessage
 from app.models.annotation import Annotation
 from app.schemas.paper import PaperOut, PaperDetail, PaperList, PaperUpdate
+from app.services import doi_related_service
 from app.services import paper_service, llm_service, search_service, settings_service, import_service
 from app.agent.llm_adapter import LLMAdapter
 
 router = APIRouter(prefix="/papers", tags=["papers"])
+
+
+class DoiRelatedRequest(BaseModel):
+    query: str
+    limit: int = 24
 
 
 @router.post("/upload", response_model=PaperOut, status_code=201)
@@ -125,6 +131,18 @@ def list_paper_tags(
     return {
         "tags": [{"name": name, "count": cnt} for name, cnt in sorted(counter.items(), key=lambda x: (-x[1], x[0]))]
     }
+
+
+@router.post("/doi-related")
+def find_doi_related(
+    body: DoiRelatedRequest,
+    user: User = Depends(get_current_user),
+):
+    """Find references, cited-by papers, and recommendations for a DOI."""
+    try:
+        return doi_related_service.find_related_papers(body.query, body.limit)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @router.get("/{paper_id}", response_model=PaperDetail)

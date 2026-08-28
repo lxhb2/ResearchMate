@@ -1,6 +1,6 @@
 ---
 name: clip
-description: OpenAI's model connecting vision and language. Enables zero-shot image classification, image-text matching, and cross-modal retrieval. Trained on 400M image-text pairs. Use for image search, content moderation, or vision-language tasks without fine-tuning. Best for general-purpose image understanding.
+description: "OpenAI 连接视觉和语言的模型。 启用零镜头图像分类、 图像文本匹配和跨模式检索。 已训练了400M 图像文本配对。 用于图像搜索、 内容节制或视觉语言任务而不进行微调。 最佳的图像通用理解 。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -37,7 +37,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # CLIP - Contrastive Language-Image Pre-Training
 
 OpenAI's model that understands images from natural language.

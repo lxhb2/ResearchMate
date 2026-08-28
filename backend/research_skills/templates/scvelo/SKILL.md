@@ -1,6 +1,6 @@
 ---
 name: scvelo
-description: RNA velocity analysis with scVelo. Estimate cell state transitions from unspliced/spliced mRNA dynamics, infer trajectory directions, compute latent time, and identify driver genes in single-cell RNA-seq data. Complements Scanpy/scVI-tools for trajectory inference.
+description: "RNA 速度分析 与 scVelo 。 估计细胞状态从 unspliced/splicedmRNA 动力学转换，推断出轨迹方向，计算潜在时间，并识别单细胞 RNA-seq 数据中的驱动基因 。 补充 Scanpy/scVI-tools 进行轨迹推断 。"
 license: BSD-3-Clause
 compatibility: Requires Python 3.10+ with scvelo, scanpy, and anndata. Verified against scvelo 0.3.4, whose dynamical model and pl.scatter need pandas<3 and whose stochastic estimator needs numpy<2; the deterministic estimator works on current releases.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # scVelo — RNA Velocity Analysis
 
 ## Overview

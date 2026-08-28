@@ -1,6 +1,6 @@
 ---
 name: nature-figure
-description: Create, revise, audit, and export submission-grade scientific figures for Nature-family and other high-impact venues in Python (matplotlib/seaborn) or R (ggplot2/patchwork/ComplexHeatmap), including multi-panel plots, figures4papers-style work, and journal-ready SVG/PDF/TIFF outputs. Use for paper or scientific plots, manuscript data visualization, 论文配图、学术写作配图、科研绘图、科研作图、画图、作图、出图、论文图表、可视化. Define the conclusion, evidence logic, data integrity, template compatibility, export needs, and reviewer risks before plotting; honor or persist the Python/R backend choice. Also use the separate OpenRouter GPT Image 2 route for explicit AI-generated graphical abstracts, mechanism diagrams, concept schematics, 论文示意图、机制示意图、图形摘要; this route skips backend choice and treats outputs as drafts. Do not use for interactive dashboards, statistics-only analysis, data cleaning, literature review, code debugging, pure photo editing, or Illustrator/Figma-first infographics without manuscript-figure intent.
+description: "在Python(matplotlib/seaborn)或R(ggplot2/patchwork/ComplexHeatmap)创建、修订、审计和输出提交级科学数字，包括多块小块地块、图纸式工作以及日记准备的SVG/PDF/TIFF产出。用于纸张或科学图案、手稿数据可视化。"
 metadata:
   github_source: https://github.com/Yuan1z0825/nature-skills
   category: literature
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Nature Figure Making — Router
 
 This skill is split into two layers:

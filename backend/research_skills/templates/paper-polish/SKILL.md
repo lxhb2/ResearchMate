@@ -1,6 +1,6 @@
 ---
 name: paper-polish
-description: 'Polishes existing academic prose while preserving the author''s meaning: grammar and flow repair, tone calibration against evidence strength, AI-tone removal, and Chinese-to-English rewriting at submission quality. Never fabricates data, citations, or claims, and flags any edit that could change scientific meaning. Use when the user asks to polish a draft, fix awkward wording, remove AI flavor, translate a Chinese manuscript into publishable English, or tone down overclaiming.'
+description: "波兰语在保留作者意义的同时，还保留了现有的学术流言：语法和流言修饰，语气校正与证据强度对比，AI-tone删除，以及提交质量上的中英文重写。从不编造数据，引用，或声称，并标注任何可能改变科学意义的编辑。当用户要求抛写草稿，修饰尴尬的措辞，删除AI口味，将中文手稿翻译为可出版的英文，或调低声调。"
 license: CC-BY-NC-SA-4.0
 metadata:
   github_source: https://github.com/HKUSTDial/Supervisor-Skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Paper Polish
 
 ## Overview

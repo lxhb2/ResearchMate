@@ -1,6 +1,6 @@
 ---
 name: ml-training-recipes
-description: Battle-tested PyTorch training recipes for all domains — LLMs, vision, diffusion, medical imaging, protein/drug discovery, spatial omics, genomics. Covers training loops, optimizer selection (AdamW, Muon), LR scheduling, mixed precision, debugging, and systematic experimentation. Use when training or fine-tuning neural networks, debugging loss spikes or OOM, choosing architectures, or optimizing GPU throughput.
+description: "Battle测试的PyTorch训练配方用于所有领域——LLMS,视觉，传播，医学成像，protein/drug发现，空间学，基因组学. 覆盖训练环路，优化选手(AdamW,Muon),LR排程，混合精度，调试，以及系统实验.在训练或微调神经网络时使用，调试损失突起或OOM,选择架构，或优化GPU吞吐量。"
 version: 1.0.0
 author: dailycafi
 license: MIT
@@ -36,7 +36,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # ML Training Recipes
 
 Battle-tested patterns for PyTorch training across domains. Drawn from production codebases

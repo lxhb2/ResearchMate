@@ -1,6 +1,6 @@
 ---
 name: waypoint-bio
-description: Use when working with Outpost Bio's open microbiome foundation models - the Waypoint checkpoints (Waypoint-6m, Waypoint-45m, Waypoint-170m), the Atlas pretraining corpus, the Compass eight-task benchmark, or the `waypoint` CLI from the `waypoint-bio` package. Covers embedding microbiome samples, fine-tuning on taxonomic abundance data, benchmarking a checkpoint on Compass, pretraining a GPT-2 model on taxonomic abundance profiles, and converting MetaPhlAn, Kraken2, QIIME 2, or MGnify abundance tables into waypoint format.
+description: "使用Outpost Bio的开放微生物基础模型——Waypoint检查站(Waypoint-6m,Waypoint-45m,Waypoint-170m),Atlas预训程序，Compass八任务基准，或`waypoint-bio`包的`waypoint`CLI."
 license: MIT
 compatibility: Requires Python 3.10+ with `waypoint-bio` (pulls torch, transformers, datasets, peft, scikit-learn). Needs network access and a Hugging Face token with access granted to the gated outpost-bio repos. A GPU is strongly recommended for pretraining and benchmarking.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Waypoint: Outpost Bio's Open Microbiome Foundation Models
 
 ## Overview

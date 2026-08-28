@@ -1,6 +1,6 @@
 ---
 name: instructor
-description: Extract structured data from LLM responses with Pydantic validation, retry failed extractions automatically, parse complex JSON with type safety, and stream partial results with Instructor - battle-tested structured output library
+description: "用 Pydantic 校验从 LLM 响应中提取结构化数据，自动重试失败的提取，解析带有类型安全的 JSON , 并使用 Ingor- battle 测试的结构化输出库中流出部分结果 。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -40,7 +40,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Instructor: Structured LLM Outputs
 
 ## When to Use This Skill

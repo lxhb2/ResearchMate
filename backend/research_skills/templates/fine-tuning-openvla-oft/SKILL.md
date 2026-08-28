@@ -1,6 +1,6 @@
 ---
 name: fine-tuning-openvla-oft
-description: Fine-tunes and evaluates OpenVLA-OFT and OpenVLA-OFT+ policies for robot action generation with continuous action heads, LoRA adaptation, and FiLM conditioning on LIBERO simulation and ALOHA real-world setups. Use when reproducing OpenVLA-OFT paper results, training custom VLA action heads (L1 or diffusion), deploying server-client inference for ALOHA, or debugging normalization, LoRA merge, and cross-GPU issues.
+description: "Fine-turns and value OpenVLA-OFT 和 OpenVLA-OFT+ 的机器人动作生成政策，连续的动作头，LoRA 适应，和 FiLM 的 LIBERO 模拟和 ALOHA 现实世界设置。在复制 OpenVLA-OFT 纸张结果时使用，训练自定义 VLA 动作头( L1 或 传播) , 或部署服务器- 客户推导 ALOHA , 或调试常态，LoRA 合并，和 交叉 GPU 问题 。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -47,7 +47,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # OpenVLA-OFT
 
 Fine-tuning and evaluation workflows for OpenVLA-OFT and OpenVLA-OFT+ from the official `openvla-oft` codebase. Covers blank-machine setup plus LoRA-based adaptation of OpenVLA for robot action generation with continuous action prediction heads.

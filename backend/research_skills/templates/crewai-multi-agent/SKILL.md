@@ -1,6 +1,6 @@
 ---
 name: crewai-multi-agent
-description: Multi-agent orchestration framework for autonomous AI collaboration. Use when building teams of specialized agents working together on complex tasks, when you need role-based agent collaboration with memory, or for production workflows requiring sequential/hierarchical execution. Built without LangChain dependencies for lean, fast execution.
+description: "自主AI协作的多代理管弦框架。当建立专门代理团队共同执行复杂任务时，当您需要基于角色的代理协作时，或者当生产工作流程需要sequential/hierarchical执行时，使用它。 构建时没有 LangChain 依赖性，用于精益求精，快速执行 。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -37,7 +37,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # CrewAI - Multi-Agent Orchestration Framework
 
 Build teams of autonomous AI agents that collaborate to solve complex tasks.

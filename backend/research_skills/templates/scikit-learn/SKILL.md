@@ -1,6 +1,6 @@
 ---
 name: scikit-learn
-description: Machine learning in Python with scikit-learn. Use when working with supervised learning (classification, regression), unsupervised learning (clustering, dimensionality reduction), model evaluation, hyperparameter tuning, preprocessing, or building ML pipelines. Provides comprehensive reference documentation for algorithms, preprocessing techniques, pipelines, and best practices.
+description: "在 Python 中使用 scikit-learn 。当与 监督 学习( 分类、 回归 ) 、无监督 学习( 分组、 维度 减少 ) 、 模型评价、 超参数调制、 预处理或 构建 ML 管道 工作时使用。为算法、 预处理技术、 管道和最佳做法提供全面的参考文件 。"
 license: BSD-3-Clause license
 allowed-tools: Read Write Edit Bash
 compatibility: Requires Python 3.11+ and scikit-learn 1.7+. NumPy and SciPy are required dependencies. Optional matplotlib/seaborn for bundled example scripts that save plots.
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Scikit-learn
 
 ## Overview

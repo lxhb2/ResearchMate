@@ -1,6 +1,6 @@
 ---
 name: treatment-plans
-description: Format and structurally validate local treatment-plan documentation after clinical decisions have already been supplied and verified by authorized licensed professionals. Use for source traceability, clinician-authored intervention records, goals and checkpoints, shared-decision records, reconciliation handoffs, and release gates—not for clinical decision-making.
+description: "在获得授权的专业人员提供和核实临床决定后，对当地治疗计划文件的格式和结构进行验证。 用于源头可追溯性、临床医生授权的干预记录、目标和检查站、共享决定记录、对账发放和释放门—— 而不是用于临床决策。"
 license: MIT
 compatibility: Python 3.11+ standard library; local JSON files only. Bundled CLIs require no network, external services, models, images, credentials, environment variables, or third-party packages.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Treatment-Plan Documentation
 
 ## Hard safety boundary

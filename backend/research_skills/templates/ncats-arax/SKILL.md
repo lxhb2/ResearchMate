@@ -1,6 +1,6 @@
 ---
 name: ncats-arax
-description: Queries the NCATS Translator ARAX production API for bounded, typed, provenance-rich one-hop and endpoint-pinned two-hop biomedical knowledge-graph relationships. Use for Biolink-constrained RTX-KG2 lookup, explicit selected-provider ARAX federation, separate entity normalization, qualifier-aware graph traversal, and inspection of TRAPI edge bindings, publications, and knowledge-source provenance. Do not use for inference, ranking, open-ended pathfinding, clinical guidance, or sensitive queries.
+description: "查询NCATS 翻译 ARAX 生产 API , 用于限定、 输入、 来源丰富的单跳和端点的双跳生物医学知识图谱关系。 使用 Biolink 约束的 RTX-KG2 检索、 明确的选定提供者 ARAX 联合会、 独立的实体正常化、 限定- 识别图轨、 检查 TRAPI 边缘绑定、 出版物和 知识来源 。不要用于推论、 排名、 开放式路径调查、 临床指导或敏感查询。"
 allowed-tools: Read Bash
 license: MIT
 compatibility: Requires Python 3.10+ and outbound HTTPS access to arax.transltr.io. The client uses only the Python standard library and needs no API key. Queries and caller metadata may be publicly visible; never submit sensitive or patient-specific content.
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # NCATS ARAX
 
 Use ARAX as a constrained knowledge-graph lookup service. Submit reviewed CURIEs and explicit

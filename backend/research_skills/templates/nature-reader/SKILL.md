@@ -1,6 +1,6 @@
 ---
 name: nature-reader
-description: Build full-paper Chinese-English side-by-side, figure/table/equation-aware, source-grounded Markdown readers for journal or conference papers from PDF, DOI, arXiv, publisher HTML, or pasted text. Use whenever the user asks to translate or read a paper, make 中英文对照/原文对照/全文翻译解读, render equations instead of exposing raw LaTeX, extract figures or tables into the right positions, preserve figure/table placement near relevant prose, or keep exact source anchors for every block. This skill must not degrade into a summary-only output unless the user explicitly asks for a summary. Also trigger on general paper-reading and translation requests even without the word "Nature", such as reading/translating an academic paper, literature reading, understanding a paper, and Chinese phrasings like 读论文、精读论文、论文翻译、文献翻译、文献阅读、学术阅读、帮我读这篇文章、翻译这篇paper.
+description: "建立完整的 Chinese-English 并列，figure/table/equation-aware, 以源码为基础的 Markdown 阅读器，用于 PDF 、 DOI 、 arXiv 、 出版商 HTML 或粘贴文本。 每当用户要求翻译或阅读论文、 制作 QQ/ /QX/ , 将方程式转换为 而不是曝光原始 LaTeX , 将数字或表格提取到正确位置，保留 figure/table 放置在相关文本附近，或为每个区保持精确的源主线 。"
 metadata:
   github_source: https://github.com/Yuan1z0825/nature-skills
   category: literature
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Full-Paper Markdown Reader — Router
 
 This skill is split into two layers:

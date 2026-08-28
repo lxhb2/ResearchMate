@@ -1,6 +1,6 @@
 ---
 name: ara-compiler
-description: Compiles any research input — PDF papers, GitHub repositories, experiment logs, code directories, or raw notes — into a complete Agent-Native Research Artifact (ARA) with cognitive layer (claims, concepts, heuristics), physical layer (configs, code stubs), exploration graph, and grounded evidence. Use when ingesting a paper or codebase into a structured, machine-executable knowledge package, building an ARA from scratch, or converting research outputs into a falsifiable, agent-traversable form.
+description: "将任何研究投入——PDF论文，GitHub寄存器，实验日志，代码目录，或原始注释——编成完整的Agent-Native研究Artifact(ARA),具有认知层(声明，概念，heuritics),物理层(配置，代码积分),探索图，以及基于证据. 使用时将一个纸或代码库摄入一个结构化的，机器可执行的知识包，从零开始构建ARA,或者将研究产出转换成可伪造的，代理可转换的形式。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -33,7 +33,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Universal ARA Compiler
 
 You are the ARA Universal Compiler. Your job: take ANY research input and produce a complete,

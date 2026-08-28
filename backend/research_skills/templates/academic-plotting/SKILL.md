@@ -1,6 +1,6 @@
 ---
 name: academic-plotting
-description: Generates publication-quality figures for ML papers from research context. Given a paper section or description, extracts system components and relationships to generate architecture diagrams via Gemini. Given experiment results or data, auto-selects chart type and generates data-driven figures via matplotlib/seaborn. Use when creating any figure for a conference paper.
+description: "从研究背景中生成ML论文的出版质量数字。从纸张部分或描述中提取系统组件和关系，通过双子座生成架构图。根据实验结果或数据，自动选择图表类型，并通过matplotlib/seaborn生成数据驱动的数字。在为会议文件创建任何数字时使用。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -40,7 +40,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Academic Plotting for ML Papers
 
 Generate publication-quality figures for ML/AI conference papers. Two distinct workflows:

@@ -1,6 +1,6 @@
 ---
 name: moe-training
-description: Train Mixture of Experts (MoE) models using DeepSpeed or HuggingFace. Use when training large-scale models with limited compute (5× cost reduction vs dense models), implementing sparse architectures like Mixtral 8x7B or DeepSeek-V3, or scaling model capacity without proportional compute increase. Covers MoE architectures, routing mechanisms, load balancing, expert parallelism, and inference optimization.
+description: "使用 DeepSpeed 或 HuggingFace 的 Train Mixture (MoE) 模型。当训练大型模型时，使用有限的计算(5× 降低成本与密集模型), 执行像 Mixtral 8x7B 或 DeepSeek-V3 这样的稀疏的架构，或者在不按比例计算的情况下缩放模型容量。 覆盖 MoE 架构，路由机制，负载平衡，专家并行性，以及推论优化 。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -40,7 +40,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # MoE Training: Mixture of Experts
 
 ## When to Use This Skill

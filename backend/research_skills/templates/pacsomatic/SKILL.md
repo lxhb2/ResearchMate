@@ -1,6 +1,6 @@
 ---
 name: pacsomatic
-description: Operator toolkit for nf-core/pacsomatic matched tumor-normal workflows from BAM inputs. Use this skill when the user needs to validate run inputs, generate pacsomatic-compliant samplesheets, prepare reproducible Nextflow launch artifacts, run locally or submit to schedulers (LSF/Slurm/PBS/SGE), and triage execution failures. Triggers on requests to run pacsomatic, prepare launch commands/scripts, perform dry-run checks, or troubleshoot pipeline startup and scheduler submission errors.
+description: "nf-core/pacsomatic 匹配BAM输入的肿瘤正常工作流程的操作员工具包。当用户需要验证运行输入，生成符合pacematic的样本表，准备可复制的下一流启动文物，本地运行或提交调度器(LSF/Slurm/PBS/SGE)时，使用此技能，并进行分类执行失败 。"
 license: MIT
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # pacsomatic
 
 ## Overview

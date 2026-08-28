@@ -1,6 +1,6 @@
 ---
 name: anndata
-description: Data structure for annotated matrices in single-cell analysis. Use when working with .h5ad files or integrating with the scverse ecosystem. This is the data format skill—for analysis workflows use scanpy; for probabilistic models use scvi-tools; for population-scale queries use cellxgene-census.
+description: "单细胞分析中附加说明的矩阵的数据结构 。在使用 . h5ad文件或与 scross 生态系统结合时使用。这是数据格式技能 。 用于分析的工作流程使用 scanpy; 用于概率模型使用 scvi 工具；用于人口尺度的查询使用 cellxgene- census 。"
 license: BSD-3-Clause license
 allowed-tools: Read Write Edit Bash
 compatibility: Requires Python 3.11+ and uv. Examples target AnnData 0.12.16, with experimental APIs clearly marked where used.
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # AnnData
 
 ## Overview

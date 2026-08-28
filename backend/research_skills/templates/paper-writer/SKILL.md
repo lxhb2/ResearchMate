@@ -1,6 +1,6 @@
 ---
 name: paper-writer
-description: Drafts publishable paper prose from the author's own materials, from a single paragraph to a full manuscript, across STEM and non-STEM fields. Every factual claim traces to user input, verified retrieval, or field common knowledge; citations pass an independent verification ladder; delivery is clean prose with zero placeholder tags. Use when the user asks to write a section, turn an idea or results into paper text, or draft a full paper.
+description: "从作者自己的材料中，从一个段落到完整的手稿，跨越STEM和非STEM字段，起草可出版的纸质传言. 每一个事实上的声称都追踪到用户的输入，经核实的检索，或字段的常识；引用通过独立的验证阶梯；交付是用零占位符标记的干净的传言. 使用当用户要求写一个段落，将一个想法或结果变成纸质文本，或起草完整的文件时。"
 license: CC-BY-NC-SA-4.0
 metadata:
   github_source: https://github.com/HKUSTDial/Supervisor-Skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Paper Writer
 
 ## Overview

@@ -1,6 +1,6 @@
 ---
 name: academic-paper-ars
-description: '12-agent academic paper writing pipeline. 11 modes (full/plan/outline/revision/revision-coach/abstract/lit-review/format-convert/citation-check/disclosure/rebuttal-audit). 6 paper types, 5 citation formats, bilingual abstracts, LaTeX/DOCX-via-Pandoc/PDF output. Style Calibration + Writing Quality Check + Anti-Patterns with IRON RULE markers. Triggers: write paper, academic paper, guide my paper, parse reviews, audit my rebuttal, check my response draft, AI disclosure, 寫論文, 學術論文, 引導我寫論文, 審查意見, 評估回覆, 논문 작성, 초록 작성, 논문 수정, 논문 계획을 도와줘, 심사 의견 반영, 답변서 점검, AI 사용 고지.'
+description: "12 代理学术纸写管 11 种模式 (full/plan/outline/revision/revision-coach/abstract/lit-review/format-convert/citation-check/disclosure/rebuttal-audit) 6 种纸张类型 5 引用格式 双语摘要 LaTeX/DOCX-via-Pandoc/PDF 输出 样式校准 + 写质量检查 + Anti-Patterns 与 IRON RULE 标记。"
 metadata:
   github_source: https://github.com/Imbad0202/academic-research-skills
   category: literature
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Academic Paper — Academic Paper Writing Agent Team
 
 A general-purpose academic paper writing tool — 12-agent pipeline covering all disciplines, with higher education domain as the default reference.

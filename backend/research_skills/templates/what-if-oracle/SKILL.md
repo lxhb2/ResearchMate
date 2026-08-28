@@ -1,6 +1,6 @@
 ---
 name: what-if-oracle
-description: Run structured What-If scenario analysis with 4–6 branch possibility exploration (best, likely, worst, wild card, contrarian, second-order). Use when the user asks speculative what-if questions about uncertain futures, strategic forks, contingency planning, or stress-testing a decision before committing.
+description: "运行结构化的What-If假想分析，并进行4-6个分支可能性的探索(最佳、可能、最坏、狂野的卡片、逆向、第二顺序 ) 。当用户问起不确定的未来、战略叉子、应急规划或承诺前的压力测试时，使用会有什么问题。"
 license: CC BY-NC-SA 4.0
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # What-If Oracle — Possibility Space Explorer
 
 A structured system for exploring uncertain futures through rigorous multi-branch scenario analysis. Instead of one prediction, the Oracle maps the full **possibility space** — branching timelines where each path has its own logic, probability, and consequences.

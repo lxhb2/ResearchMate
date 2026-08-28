@@ -1,6 +1,6 @@
 ---
 name: paperzilla
-description: Chat with your agent about projects, recommendations, and canonical papers in Paperzilla. Use when users ask for recent project recommendations, canonical paper details, markdown-based summaries, recommendation feedback, feed export, or Atom feed URLs.
+description: "在 Paperzilla 中与您的代理商讨论项目、建议和犬类文件。当用户询问最近的项目建议、犬类文件细节、基于标记的摘要、建议反馈、种子导出或 Atom 种子 URL时使用 。"
 license: MIT
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Paperzilla
 
 Use this skill when you want to chat with your agent about projects, recommendations, and canonical papers in Paperzilla.

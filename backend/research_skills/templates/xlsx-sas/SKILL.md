@@ -1,6 +1,6 @@
 ---
 name: xlsx-sas
-description: Create, edit, analyze, or convert Excel spreadsheets (.xlsx, .xlsm, .xltx) where the workbook file is the primary deliverable. Use for formulas, formatting, financial models, multi-sheet workbooks, and tabular cleanup exported to Excel. Also applies to .csv/.tsv when the user wants spreadsheet output. Do NOT use for Word documents, HTML reports, standalone Python scripts, database pipelines, or Google Sheets API work.
+description: "创建、编辑、分析或转换 Excel 电子表格(.xlsx、.xlsm、.xltx),其中工作簿文件是主要可交付的。用于公式、格式化、财务模型、多表工作簿以及导出到 Excel 的表格清理。当用户想要电子表格输出时，同样适用于 .csv/.tsv。 Do NOT 用于 Word 文档、 HTML 报告、独立的 Python 脚本、 数据库管道或 Google 工作表 API 。"
 allowed-tools: Read Write Edit Bash Grep Glob
 license: Proprietary. LICENSE.txt has complete terms
 metadata:
@@ -23,7 +23,6 @@ metadata:
   enabled: 'true'
 compatibility: Requires Python 3.8+, LibreOffice (soffice on PATH), and gcc only when Unix sockets are restricted
 ---
-
 # XLSX creation, editing, and analysis
 
 | Task | Approach |

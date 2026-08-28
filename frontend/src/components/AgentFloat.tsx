@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, Tag, Typography, Space, Divider } from 'antd'
+import { Button, Tag, Typography, Space, Divider, Switch } from 'antd'
 import {
   RobotOutlined,
   CloseOutlined,
@@ -14,13 +14,18 @@ import {
 } from '@ant-design/icons'
 import ReactMarkdown from 'react-markdown'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { agentApi, type Recommendation, type ModuleInfo, type AgentContext } from '../api/agent'
+import { agentApi, type Recommendation, type ModuleInfo, type AgentContext, type AgentEvent } from '../api/agent'
 import { formatMarkdownContent } from '../utils/format'
 import AtMentionInput from './AtMentionInput'
 
 interface Msg {
   role: 'user' | 'assistant'
   content: string
+}
+
+interface EventLine {
+  type: AgentEvent['type']
+  text: string
 }
 
 const MODULE_ICONS: Record<string, React.ReactNode> = {
@@ -60,6 +65,9 @@ export default function AgentFloat() {
   const [loading, setLoading] = useState(false)
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null)
   const [toolTrace, setToolTrace] = useState<{ tool: string }[]>([])
+  const [useLibrary, setUseLibrary] = useState(false)
+  const [webSearch, setWebSearch] = useState(false)
+  const [events, setEvents] = useState<EventLine[]>([])
   const [modules, setModules] = useState<ModuleInfo[]>([])
   const [visited, setVisited] = useState(false)
 
@@ -97,32 +105,60 @@ export default function AgentFloat() {
     const msg = (input || '').trim()
     if (!msg || loading) return
     const sentContexts = contexts
+    const history = messages
+      .filter((m) => m.content && (m.role === 'user' || m.role === 'assistant'))
+      .slice(-10)
+      .map((m) => ({ role: m.role, content: m.content }))
     setInput('')
     setContexts([])
     setRecommendation(null)
     setToolTrace([])
+    setEvents([{ type: 'route', text: '已开始处理请求' }])
     setMessages((prev) => [...prev, { role: 'user', content: msg }, { role: 'assistant', content: '' }])
     setLoading(true)
     abortRef.current = new AbortController()
     try {
-      await agentApi.chatStream(
+      await agentApi.chatEvents(
         msg,
-        false,
-        false,
-        (rec) => setRecommendation(rec),
-        (trace) => setToolTrace(trace),
-        (delta) => {
-          setMessages((prev) => {
-            const next = [...prev]
-            const last = next[next.length - 1]
-            if (last && last.role === 'assistant') {
-              next[next.length - 1] = { ...last, content: last.content + delta }
-            }
-            return next
-          })
+        useLibrary,
+        webSearch,
+        sentContexts,
+        history,
+        (evt: AgentEvent) => {
+          if (evt.type === 'recommendation') {
+            setRecommendation(evt.recommendation as Recommendation)
+            return
+          }
+          if (evt.type === 'answer') {
+            const answer = evt.answer || ''
+            setMessages((prev) => {
+              const next = [...prev]
+              const last = next[next.length - 1]
+              if (last && last.role === 'assistant') {
+                next[next.length - 1] = { ...last, content: answer || '（助手暂未生成回答）' }
+              }
+              return next
+            })
+            setToolTrace(evt.tool_trace || [])
+            return
+          }
+          const label =
+            evt.type === 'route'
+              ? `路由：${evt.path || 'chat'}`
+              : evt.type === 'thinking'
+                ? '正在推理与选择工具'
+                : evt.type === 'tool_start'
+                  ? `调用工具：${evt.tool}`
+                  : evt.type === 'tool_result'
+                    ? `${evt.tool} 执行完成`
+                    : evt.type === 'error'
+                      ? `执行异常：${evt.error}`
+                      : ''
+          if (label) {
+            setEvents((prev) => [...prev.slice(-8), { type: evt.type, text: label }])
+          }
         },
         abortRef.current.signal,
-        sentContexts,
       )
     } catch (err) {
       setMessages((prev) => {
@@ -336,6 +372,27 @@ export default function AgentFloat() {
               </div>
             )}
 
+            {events.length > 0 && (
+              <div
+                style={{
+                  marginTop: 6,
+                  padding: '6px 8px',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 8,
+                }}
+              >
+                {events.map((event, index) => (
+                  <Typography.Text
+                    key={`${event.type}-${index}`}
+                    style={{ display: 'block', fontSize: 11, color: C.sub }}
+                  >
+                    {event.text}
+                  </Typography.Text>
+                ))}
+              </div>
+            )}
+
             {loading && (
               <div style={{ textAlign: 'center', color: C.sub, fontSize: 12, marginTop: 4 }}>
                 全局助手正在处理…（可联网 / 调用工具 / @ 引用）
@@ -367,10 +424,20 @@ export default function AgentFloat() {
                 style={{ background: C.accent, marginBottom: 2 }}
               />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-              <Typography.Text style={{ fontSize: 11, color: C.sub }}>
-                当前页面：{location.pathname}
-              </Typography.Text>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, alignItems: 'center' }}>
+              <Space size={14}>
+                <Space size={4}>
+                  <Switch size="small" checked={useLibrary} onChange={setUseLibrary} />
+                  <Typography.Text style={{ fontSize: 11, color: C.sub }}>文献库</Typography.Text>
+                </Space>
+                <Space size={4}>
+                  <Switch size="small" checked={webSearch} onChange={setWebSearch} />
+                  <Typography.Text style={{ fontSize: 11, color: C.sub }}>联网</Typography.Text>
+                </Space>
+                <Typography.Text style={{ fontSize: 11, color: C.sub }}>
+                  当前页面：{location.pathname}
+                </Typography.Text>
+              </Space>
               <Typography.Text style={{ fontSize: 11, color: C.sub }}>@ 引用可把内容带入上下文</Typography.Text>
             </div>
           </div>

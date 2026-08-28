@@ -1,6 +1,6 @@
 ---
 name: intro-drafter
-description: 'Drafts the Introduction prose for a technical paper, guided internally by a six-paragraph flowchart: background and running example, existing limitations, problem essence and goal, key challenges, solution overview, contributions. Positions the paper as Technique or New Problem/Setting, aligns contributions with challenges, and weaves verified citations. Outputs flowing prose by default, or an outline on request. Use when the user asks to draft, outline, or restructure an Introduction.'
+description: "以六段流程图为内部指导，起草技术文件的导言：背景和运行实例、现有限制、问题的实质和目标、关键挑战、解决方案概览、贡献。将论文定位为 Technique 或 New Problem/Setting, 将贡献与挑战相匹配，并编织经过核实的引用。 产出默认流出，或根据请求编写大纲。当用户要求起草、 大纲或调整导言时使用。"
 license: CC-BY-NC-SA-4.0
 metadata:
   github_source: https://github.com/HKUSTDial/Supervisor-Skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Introduction Drafter
 
 ## Overview

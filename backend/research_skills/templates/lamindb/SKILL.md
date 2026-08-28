@@ -1,6 +1,6 @@
 ---
 name: lamindb
-description: Use when working with LaminDB, the open-source lineage-native lakehouse for biological datasets and models. Covers setup, artifact registration, query/search, lineage tracking, validation, ontology-backed annotation with Bionty, collections, branches, storage, and workflow integrations.
+description: "与LaminDB合作时使用开源线性湖库，用于生物数据集和模型. 封面设置，文物登记，query/search,线性跟踪，验证，本体学支持的注释与Bionty,收藏，分支，存储，以及工作流程集成。"
 license: Apache-2.0 license
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # LaminDB
 
 ## Overview

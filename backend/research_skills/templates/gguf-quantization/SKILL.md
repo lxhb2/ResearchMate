@@ -1,6 +1,6 @@
 ---
 name: gguf-quantization
-description: GGUF format and llama.cpp quantization for efficient CPU/GPU inference. Use when deploying models on consumer hardware, Apple Silicon, or when needing flexible quantization from 2-8 bit without GPU requirements.
+description: "GGUF 格式和 llama.cpp 定量用于高效的 CPU/GPU 推论。当在消费硬件上部署模型时，苹果硅，或者当需要从 2-8 位进行灵活的定量时，不需要 GPU 要求。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -33,7 +33,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # GGUF - Quantization Format for llama.cpp
 
 The GGUF (GPT-Generated Unified Format) is the standard file format for llama.cpp, enabling efficient inference on CPUs, Apple Silicon, and GPUs with flexible quantization options.

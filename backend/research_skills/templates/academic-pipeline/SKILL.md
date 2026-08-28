@@ -1,6 +1,6 @@
 ---
 name: academic-pipeline
-description: 'Orchestrator for the full academic research pipeline: research -> write -> integrity check -> review -> revise -> re-review -> re-revise -> final integrity check -> finalize. Coordinates deep-research, academic-paper, and academic-paper-reviewer into a seamless 10-stage workflow with mandatory, coverage-bounded integrity checks, two-stage peer review, and auditable quality-assurance artifacts. Triggers on: academic pipeline, research to paper, full paper workflow, paper pipeline, end-to-end paper, research-to-publication, complete paper workflow, 연구부터 논문까지, 연구 주제 설정부터 논문 완성까지, 논문 전체 워크플로.'
+description: "完整的学术研究管道的操作员：研究 → 写 → 完整性检查 → 修订 - → 重新审查 → 最终完整性检查 → 最终确定 协调深度研究、学术论文和学术论文审查员，形成一个无缝的10级工作流程，并强制进行覆盖的诚信检查，两阶段同行评审，以及可审计的质量保证文物。"
 metadata:
   github_source: https://github.com/Imbad0202/academic-research-skills
   category: literature
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Academic Pipeline v3.21.0 — Full Academic Research Workflow Orchestrator
 
 A lightweight orchestrator that manages the complete academic pipeline from research exploration to final manuscript. It does not perform substantive work — it only detects stages, recommends modes, dispatches skills, manages transitions, and tracks state.

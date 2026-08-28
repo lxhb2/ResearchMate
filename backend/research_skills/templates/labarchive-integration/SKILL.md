@@ -1,6 +1,6 @@
 ---
 name: labarchive-integration
-description: Securely integrate with the official LabArchives ELN REST-like API and Inventory API v1. Use for regional endpoint selection, signed-request construction, user authorization and UID flows, local LA container validation, and verified LabArchives integration workflows.
+description: "安全地与官方LabArchives ELN REST 类 API 和 Socket API v1. 用于区域端点选择，签名请求构建，用户授权和UID流量，本地LA容器验证，以及经过验证的LabArchives 集成工作流程。"
 license: MIT
 compatibility: Requires Python 3.11+ and uv for bundled local tools, plus network access for official documentation or remote API calls. LabArchives issues an Access Key ID and Access Password; user-scoped calls also need a UID, and Inventory calls require Inventory API permission and a Lab ID. Bundled scripts read only named LABARCHIVES_* environment variables and never load .env files.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # LabArchives Integration
 
 Use LabArchives APIs only from current, official method pages. The public

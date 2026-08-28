@@ -38,6 +38,10 @@ class MetadataApplyRequest(BaseModel):
     metadata: dict
 
 
+class MetadataImportRequest(BaseModel):
+    papers: list[dict]
+
+
 def _entry_preview(entry: dict) -> dict:
     return {
         "title": entry["title"],
@@ -47,6 +51,62 @@ def _entry_preview(entry: dict) -> dict:
         "journal": entry["journal"],
         "tags": entry["tags"],
         "has_pdf": bool(entry.get("pdf_path")),
+    }
+
+
+@router.post("/metadata/import")
+def import_related_metadata(
+    body: MetadataImportRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Import selected DOI-related metadata papers without any PDF attachment."""
+    imported: list[dict] = []
+    skipped_duplicates = 0
+    for raw in body.papers:
+        title = (raw.get("title") or "").strip()
+        if not title:
+            continue
+        doi = (raw.get("doi") or "").strip().lower()
+        title_key = title.casefold()
+        duplicate = None
+        if doi:
+            duplicate = db.query(Paper).filter(Paper.user_id == user.id, Paper.doi == doi).first()
+        else:
+            duplicate = db.query(Paper).filter(Paper.user_id == user.id, Paper.title == title).first()
+        if duplicate:
+            skipped_duplicates += 1
+            continue
+        abstract = (raw.get("abstract") or "").strip()
+        paper = Paper(
+            user_id=user.id,
+            title=title,
+            authors=[value for value in (raw.get("authors") or []) if str(value).strip()],
+            year=raw.get("year") or None,
+            doi=doi or None,
+            abstract=abstract or None,
+            tags=["DOI 关联"],
+            source="doi_related",
+            status="ready",
+            full_text=abstract,
+            analysis_status="done",
+        )
+        db.add(paper)
+        db.commit()
+        db.refresh(paper)
+        imported.append(
+            {
+                "id": str(paper.id),
+                "title": paper.title,
+                "doi": paper.doi,
+                "year": paper.year,
+            }
+        )
+    return {
+        "ok": True,
+        "imported": imported,
+        "count": len(imported),
+        "skipped_duplicates": skipped_duplicates,
     }
 
 

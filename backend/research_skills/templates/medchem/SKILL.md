@@ -1,6 +1,6 @@
 ---
 name: medchem
-description: Medicinal chemistry filters for compound triage. Apply drug-likeness rules (Lipinski, Veber, CNS), structural alert catalogs (PAINS, NIBR, ChEMBL), complexity metrics, and the medchem query language for library filtering.
+description: "化合物分解的药物化学过滤器. 应用药物类规则(Lipinski, Veber, CNS),结构提醒目录(PAINS, NIBR, ChEMBL),复杂度量衡，以及用于图书馆过滤的medchem查询语言。"
 license: Apache-2.0 license
 allowed-tools: Read Write Edit Bash
 compatibility: Requires Python 3.9+ and datamol (installed with medchem). Optional Lilly demerit filter requires separate `lilly-medchem-rules` conda package.
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Medchem
 
 ## Overview

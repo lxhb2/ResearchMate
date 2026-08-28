@@ -1,6 +1,6 @@
 ---
 name: markitdown
-description: Convert heterogeneous documents and selected URIs to Markdown with Microsoft MarkItDown for text analysis, search, and LLM/RAG ingestion. Covers safe local conversion, streams, Office/PDF/data formats, batch workflows, plugins, vision OCR, Azure extraction, and the official MCP server.
+description: "将各种文档转换为 Markdown , 由 Microsoft MarkItDown 进行文本分析、 搜索和 LLM/RAG 摄入。 覆盖安全的本地转换、 流、 Office/PDF/data 格式、 批量工作流程、 插件、 视觉 OCR 、 Azure 提取以及 官方 MCP 服务器 。"
 license: MIT
 compatibility: Python 3.10+ and uv. Examples target MarkItDown 0.1.6. Core local conversion can run offline; URL, YouTube, audio transcription, LLM, Azure, and MCP workflows may use network or external services.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # MarkItDown
 
 ## Overview

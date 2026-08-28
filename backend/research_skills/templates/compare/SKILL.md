@@ -1,6 +1,6 @@
 ---
 name: compare
-description: Same-epoch comparison of training runs across wandb, neptune, tensorboard, or mlflow. Aligns runs at the student's current step (never current-vs-final-of-baseline) and separates proxy metrics from downstream targets. Use when the user asks to compare runs, check if a run is improving, track lag against a baseline, rank experiments, or evaluate run-vs-run performance.
+description: "同一时代的训练比较贯穿了魔杖、无线板、高压板或mlflow。对齐线运行在学生目前的台阶上(从不为当前-vs-final-of-baseline),并且从下游目标中分离出代理度量。当用户要求比较运行时，请检查运行是否在改进，是否比基线落后，排位实验，或者评价运行-vs-run 性能。"
 metadata:
   github_source: https://github.com/fcakyon/phd-skills
   category: experiment_review
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Compare: same-epoch run comparison across trackers
 
 The most common comparison error is reporting "run A is 4 percentage points behind baseline" when run A is at epoch 11 of 100 and the baseline number is from epoch 100. The student is _still training_; the comparison is meaningless. This skill enforces same-epoch alignment.

@@ -1,6 +1,6 @@
 ---
 name: autoskill
-description: Observe the user's screen via screenpipe, detect repeated research workflows, match them against existing scientific-agent-skills, and draft new skills (or composition recipes that chain existing ones) for the patterns not yet covered. Use when the user asks to analyze their recent work and propose skills based on what they actually do. Requires the screenpipe daemon (https://github.com/screenpipe/screenpipe) running locally on port 3030 — the skill has no other data source and will refuse to run if screenpipe is unreachable. All detection runs locally; only redacted cluster summaries reach the LLM.
+description: "通过屏幕管道观察用户屏幕，检测重复的研究工作流程，使其与现有的科研人员技能相匹配，并为尚未覆盖的模式起草新的技能(或连锁现有模式的成分). 使用时，用户会要求分析他们最近的工作，并根据他们的实际工作提出技能建议。"
 allowed-tools: Read Write Edit Bash
 license: MIT license
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # autoskill
 
 > **Requires a running [screenpipe](https://github.com/screenpipe/screenpipe) daemon.** This skill has no alternate data source — it reads exclusively from the local screenpipe HTTP API (default `http://localhost:3030`). If the daemon isn't running, `run()` raises `ScreenpipeUnreachable` with install instructions.

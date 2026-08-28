@@ -1,6 +1,6 @@
 ---
 name: shap
-description: Explain and audit machine-learning predictions with SHAP. Use for selecting SHAP explainers and maskers, computing and validating feature attributions, handling multi-output explanations, and producing local or global SHAP visualizations.
+description: "用 SHAP 来解释和审计机器学习预测 。 用于选择 SHAP 解释器和掩码、 计算和验证特性属性、 处理多输出解释，并生成本地或全局 SHAP可视化 。"
 license: MIT
 compatibility: Requires Python 3.12+ and uv for SHAP 0.52.0; model-specific libraries are optional.
 allowed-tools: Read Bash
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # SHAP
 
 Use SHAP to describe how a fitted predictive model maps inputs to outputs. Work from the modern `shap.Explanation` API, make the explained output and background distribution explicit, and validate every explanation before interpreting it.

@@ -1,6 +1,6 @@
 ---
 name: esm
-description: Use when working directly with the `esm` Python SDK, ESM3 or ESMC model IDs, Forge/Biohub inference clients, or ESMFold2 folding workflows.
+description: "直接与`esm` Python SDK,ESM3或ESMC模型ID,Forge/Biohub推论客户端，或ESMFold2折叠工作流程合作时使用。"
 license: MIT license
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # ESM: Evolutionary Scale Modeling
 
 ## Overview

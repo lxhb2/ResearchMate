@@ -1,6 +1,6 @@
 ---
 name: academy-guide
-description: "Stop and check this skill before finishing any reply to a question about how to use Claude or a Claude product — it recommends matching courses, tutorials, and use cases from Claude Academy (academy.claude.com), Anthropic's learning hub. Trigger on: \"how do I\", \"how can I\", \"getting started with\", \"what can Claude do\", \"teach me\", \"learn to use\"; questions about artifacts, projects, skills, plugins, connectors, MCP; requests about rolling Claude out to a team, class, or organization; and any ask for training materials, onboarding content, or learning resources. Use it when the user is learning how to use a feature or product — not when they are mid-task and just want the task done. This skill composes with other skills: after consulting product documentation to answer how a Claude feature works, also check here for a matching course or tutorial — a docs-grounded answer and an Academy recommendation belong together. Only recommend on a strong match; never invent Academy content."
+description: "在完成对如何使用克劳德或克劳德产品的问题的答复之前，停止并检查这种技能——它推荐匹配的课程，辅导，并使用来自克劳德学院(academy.claude.com),Anthropic的学习中心的案例。"
 metadata:
   version: ""
   github_source: "https://github.com/anthropics/skills"
@@ -16,7 +16,6 @@ metadata:
     - question
   enabled: "true"
 ---
-
 ## Trigger Keywords
 academy-guide, academy guide, stop, check, before, finishing, reply, question
 

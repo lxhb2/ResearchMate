@@ -1,6 +1,6 @@
 ---
 name: pdf-sas
-description: Use this skill whenever the user wants to do anything with PDF files. This includes reading or extracting text/tables from PDFs, combining or merging multiple PDFs into one, splitting PDFs apart, rotating pages, adding watermarks, creating new PDFs, filling PDF forms, encrypting/decrypting PDFs, extracting images, and OCR on scanned PDFs to make them searchable. If the user mentions a .pdf file or asks to produce one, use this skill.
+description: "当用户想用PDF文件做任何事情时使用此技能。 包括从 PDF 读取或提取 text/tables, 将多个 PDF 合并或合并为一个，将 PDF 分割开来，旋转页面，添加水印，创建新的 PDF , 填充 PDF 表格，encrypting/decrypting PDF , 提取图像，以及扫描的 PDF 上的 OCR , 使其可以搜索 。如果用户提到 .pdf文件或要求生成一个文件，请使用此技能 。"
 license: Proprietary. LICENSE.txt has complete terms
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # PDF Processing Guide
 
 ## Overview

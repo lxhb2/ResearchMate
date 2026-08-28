@@ -1,6 +1,6 @@
 ---
 name: cirq
-description: Google quantum computing framework. Use when targeting Google Quantum AI hardware, designing noise-aware circuits, or running quantum characterization experiments. Best for Google hardware, noise modeling, and low-level circuit design. For IBM hardware use qiskit; for quantum ML with autodiff use pennylane; for physics simulations use qutip.
+description: "Google 量子计算框架。 瞄准 Google 量子 AI 硬件、 设计噪声感知电路或运行量子定性实验时使用。 最适合 Google 硬件、 噪声建模和低电路设计。对于 IBM 硬件，使用 qskit;对于自定义的量子 ML , 使用 Pinline;对于物理模拟，使用 qutip 。"
 license: Apache-2.0 license
 allowed-tools: Read Write Edit Bash
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Cirq - Quantum Computing with Python
 
 Cirq is Google Quantum AI's open-source framework for designing, simulating, and running quantum circuits on quantum computers and simulators.

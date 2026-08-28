@@ -1,6 +1,6 @@
 ---
 name: gtars
-description: Use Gtars for local genomic interval models and set algebra, overlaps and counts, consensus and coverage, tokenization, fragment processing, and refget/BEDbase planning across Python, Rust, and the CLI.
+description: "使用Gtars进行局部基因组间隔模型，并设定代数，重合和计数，共识和覆盖，标注，碎片处理，以及跨越Python,Rust和CLI的refget/BEDbase规划。"
 license: MIT
 compatibility: Python bindings require Python 3.10+ and gtars 0.9.2. The Rust meta-crate and gtars-cli are 0.9.0 and require a Rust toolchain supporting Edition 2024; upstream declares no rust-version. Bundled audit CLIs use only Python 3.10+ standard library and are local/network-free. Remote constructors, pretrained tokenizers, refget, and BEDbase caching require explicit network and storage approval.
 allowed-tools: Read Write Edit Bash Glob
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Gtars
 
 Gtars provides native Rust implementations, Python bindings, and a feature-gated

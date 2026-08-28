@@ -1,6 +1,6 @@
 ---
 name: clinical-reports
-description: Create safety-bounded draft structures and run local deterministic checks for clinical case, diagnostic, trial, safety, and aggregate research reports. Use only with synthetic, de-identified, or aggregate inputs and verified source-fact manifests; every output requires qualified review.
+description: "创建安全结构草案，并对临床病例、诊断、试验、安全和汇总研究报告进行本地确定性检查。 仅使用合成、解识别或汇总输入和经核实的源数据清单；每一份产出都需经过合格的审查。"
 license: MIT
 compatibility: Requires Python 3.11+ only for optional dependency-free local scripts; no network access, credentials, external models, or image services.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Clinical Reports
 
 ## Purpose

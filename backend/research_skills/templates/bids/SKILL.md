@@ -1,6 +1,6 @@
 ---
 name: bids
-description: 'Use this skill when working with Brain Imaging Data Structure (BIDS) datasets: organizing neuroscience and biomedical data (MRI, EEG, MEG, iEEG, PET, microscopy, NIRS, motion capture, EMG, MR spectroscopy, behavioral), querying BIDS layouts, validating compliance, converting DICOM to BIDS, writing metadata sidecars, or creating BIDS derivatives.'
+description: "在与大脑成像数据结构(BIDS)数据集合作时使用这种技能：组织神经科学和生物医学数据(MRI,EEG,MEG,iEEG,PET),显微镜，NIRS,运动捕捉，EMG,MR光谱，行为，查询BIDS布局，验证遵守，将DICOM转换为BIDS,写元数据副车，或创建BIDS衍生物。"
 license: https://creativecommons.org/licenses/by/4.0/
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Brain Imaging Data Structure (BIDS)
 
 ## Overview

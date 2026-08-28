@@ -1,6 +1,6 @@
 ---
 name: neurokit2
-description: Use NeuroKit2 to build or audit reproducible research workflows for physiological time-series preprocessing, event/interval analysis, multimodal alignment, variability, and complexity. Trigger when code imports neurokit2 or needs its current APIs, schemas, and method-aware validation—not for diagnosis or device validation.
+description: "使用NeuroKit2来构建或审计可复制的研究工作流程，用于生理时间序列预处理，event/interval分析，多模式对齐，可变性，以及复杂性。"
 license: MIT
 compatibility: Python 3.10+ and uv; pinned workflows use NeuroKit2 0.2.13. Core processing needs NumPy, SciPy, pandas, scikit-learn, matplotlib, PyWavelets, requests, and setuptools; selected EEG, cvxEDA, plotting, file-format, and RQA features need separately locked optional packages.
 allowed-tools: Read Write Edit Bash Glob
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # NeuroKit2
 
 ## Scope and evidence cutoff

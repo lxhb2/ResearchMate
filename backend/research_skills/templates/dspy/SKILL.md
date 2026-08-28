@@ -1,6 +1,6 @@
 ---
 name: dspy
-description: Build complex AI systems with declarative programming, optimize prompts automatically, create modular RAG systems and agents with DSPy - Stanford NLP's framework for systematic LM programming
+description: "构建复杂的AI系统，并配以宣示式编程，自动优化提示，用DSPy创建模块化RAG系统和代理 - Stanford NLP的系统化LM编程框架"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -38,7 +38,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # DSPy: Declarative Language Model Programming
 
 ## When to Use This Skill

@@ -52,6 +52,15 @@ import { fetchAppVersion } from '../utils/appVersion'
 
 const { Title, Text, Paragraph } = Typography
 
+const ACADEMIC_SOURCE_OPTIONS = [
+  { value: 'openalex', label: 'OpenAlex' },
+  { value: 'crossref', label: 'Crossref' },
+  { value: 'europe_pmc', label: 'Europe PMC' },
+  { value: 'semantic_scholar', label: 'Semantic Scholar' },
+  { value: 'opencitations', label: 'OpenCitations' },
+  { value: 'wikidata', label: 'WikiData' },
+]
+
 /** 插件生态面板：安装 zip 插件、启用/停用、卸载。 */
 function PluginPanel() {
   const [plugins, setPlugins] = useState<PluginInfo[]>([])
@@ -398,6 +407,8 @@ export default function SettingsPage() {
   const [keyConfigured, setKeyConfigured] = useState(false)
   const [searchKeyMasked, setSearchKeyMasked] = useState('')
   const [searchKeyConfigured, setSearchKeyConfigured] = useState(false)
+  const [agentKeyMasked, setAgentKeyMasked] = useState('')
+  const [agentKeyConfigured, setAgentKeyConfigured] = useState(false)
   const [searchTesting, setSearchTesting] = useState(false)
 
   // 尝试从后端拉取模型预设，失败则使用前端兜底列表
@@ -431,6 +442,8 @@ export default function SettingsPage() {
         setKeyConfigured(!!(cfg.llm_api_key && cfg.llm_api_key.trim()))
         setSearchKeyMasked(cfg.anysearch_api_key || '')
         setSearchKeyConfigured(!!(cfg.anysearch_api_key && cfg.anysearch_api_key.trim()))
+        setAgentKeyMasked(cfg.agentsearch_token || '')
+        setAgentKeyConfigured(!!(cfg.agentsearch_token && cfg.agentsearch_token.trim()))
         form.setFieldsValue({
           llm_api_key: '',
           llm_base_url: cfg.llm_base_url,
@@ -441,6 +454,15 @@ export default function SettingsPage() {
           anysearch_api_key: '',
           anysearch_base_url: cfg.anysearch_base_url,
           searxng_url: cfg.searxng_url,
+          agentsearch_url: cfg.agentsearch_url,
+          agentsearch_token: '',
+          agentsearch_mode: cfg.agentsearch_mode || 'general',
+          academic_sources: cfg.academic_sources || [
+            'openalex',
+            'crossref',
+            'europe_pmc',
+            'semantic_scholar',
+          ],
         })
         // 同步主题色
         const color = cfg.theme_color || themeColor
@@ -502,6 +524,12 @@ export default function SettingsPage() {
       } else {
         delete payload.anysearch_api_key
       }
+      const newAgentKey = (values.agentsearch_token || '').trim()
+      if (newAgentKey) {
+        payload.agentsearch_token = newAgentKey
+      } else {
+        delete payload.agentsearch_token
+      }
       const updated = await settingsApi.update(payload)
       setThemeColor(pickedColor)
       // 保存后 Key 输入框清空，占位符换为新脱敏值
@@ -511,6 +539,9 @@ export default function SettingsPage() {
       form.setFieldsValue({ anysearch_api_key: '' })
       setSearchKeyMasked(updated.anysearch_api_key || '')
       setSearchKeyConfigured(!!updated.anysearch_api_key?.trim())
+      form.setFieldsValue({ agentsearch_token: '' })
+      setAgentKeyMasked(updated.agentsearch_token || '')
+      setAgentKeyConfigured(!!updated.agentsearch_token?.trim())
       message.success('设置已保存')
     } catch (err) {
       if ((err as any)?.errorFields) return // form validation error
@@ -561,14 +592,23 @@ export default function SettingsPage() {
 
   const handleTestSearch = async () => {
     try {
-      const values = await form.validateFields(['anysearch_base_url', 'searxng_url'])
+      const values = await form.validateFields([
+        'anysearch_base_url',
+        'searxng_url',
+        'agentsearch_url',
+        'agentsearch_mode',
+      ])
       const newKey = (form.getFieldValue('anysearch_api_key') || '').trim()
+      const newAgentToken = (form.getFieldValue('agentsearch_token') || '').trim()
       setSearchTesting(true)
       const res = await settingsApi.testSearch({
         provider: 'auto',
         anysearch_api_key: newKey || undefined,
         anysearch_base_url: values.anysearch_base_url,
         searxng_url: values.searxng_url,
+        agentsearch_url: values.agentsearch_url,
+        agentsearch_token: newAgentToken || undefined,
+        agentsearch_mode: values.agentsearch_mode,
       })
       message.success(`搜索连接正常：${res.engine}（返回 ${res.count} 条结果）`)
     } catch (err) {
@@ -735,7 +775,7 @@ export default function SettingsPage() {
         style={{ marginBottom: 16 }}
         extra={
           <Tag color="blue" bordered={false}>
-            AnySearch / SearXNG
+            AnySearch / SearXNG / AgentSearch
           </Tag>
         }
       >
@@ -744,7 +784,7 @@ export default function SettingsPage() {
           showIcon
           style={{ marginBottom: 16 }}
           message="搜索默认调用 AnySearch 公开 API"
-          description="AnySearch 匿名可用，无需 Key；搜索关键词会发送到 api.anysearch.com。如需完全本地化，可配置自建 SearXNG 地址，配置后优先使用 SearXNG。敏感数据场景请关闭 AnySearch。"
+          description="AnySearch 匿名可用，无需 Key；搜索关键词会发送到 api.anysearch.com。如需完全本地化，可配置自建 SearXNG 或 AgentSearch 地址，配置后会优先使用自建服务。敏感数据场景请关闭 AnySearch。"
         />
         <Form form={form} layout="vertical" requiredMark={false}>
           <Form.Item
@@ -789,6 +829,61 @@ export default function SettingsPage() {
             tooltip="例如 http://localhost:8888；配置后搜索会优先走自建 SearXNG"
           >
             <Input placeholder="http://localhost:8888" />
+          </Form.Item>
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="AgentSearch 地址（可选，自建搜索+取证）"
+                name="agentsearch_url"
+                tooltip="例如 http://localhost:3939；配置后搜索会优先走自建 AgentSearch"
+              >
+                <Input placeholder="http://localhost:3939" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label={
+                  <Space size={6}>
+                    <span>AgentSearch Token（可选）</span>
+                    {agentKeyConfigured && (
+                      <Tag bordered={false} color="success" style={{ marginInlineEnd: 0 }}>
+                        已配置 {agentKeyMasked}
+                      </Tag>
+                    )}
+                  </Space>
+                }
+                name="agentsearch_token"
+                tooltip="自建 AgentSearch 启用鉴权时填写；留空保存即保持现有 Token 不变"
+              >
+                <Input.Password
+                  placeholder={agentKeyConfigured ? `已保存（${agentKeyMasked}），留空保持不变` : '可选'}
+                  autoComplete="new-password"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item label="AgentSearch 检索模式" name="agentsearch_mode">
+            <Select
+              options={[
+                { value: 'general', label: 'general（通用）' },
+                { value: 'academic', label: 'academic（学术）' },
+                { value: 'code', label: 'code（代码）' },
+                { value: 'news', label: 'news（新闻）' },
+              ]}
+            />
+          </Form.Item>
+          <Form.Item
+            label="学术搜索数据源（可多选）"
+            name="academic_sources"
+            tooltip="学术查询只会并行调用这里选中的源；OpenCitations 适合 DOI 精确查询，WikiData 适合实体与概念溯源"
+            rules={[{ required: true, message: '请至少选择一个学术源' }]}
+          >
+            <Select
+              mode="multiple"
+              placeholder="至少选择一个学术源"
+              maxTagCount="responsive"
+              options={ACADEMIC_SOURCE_OPTIONS}
+            />
           </Form.Item>
           <Space>
             <Button

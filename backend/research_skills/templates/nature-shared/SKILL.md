@@ -1,6 +1,6 @@
 ---
 name: nature-shared
-description: Internal shared-reference support package for installed Nature Skills, including nature-writing, nature-polishing, nature-response, nature-reader, and nature-paper2ppt. Do not invoke it as a standalone user workflow. Load only the specific core or journal-format file requested by another Nature skill.
+description: "对安装的自然技能进行内部共享参考支持包，包括自然写作，自然写作，自然写作，自然读作，自然写作2ppt。不要将它作为独立的用户工作流程。只装入另一个自然技能所要求的特定核心或日记格式文件。"
 metadata:
   github_source: https://github.com/Yuan1z0825/nature-skills
   category: literature
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Nature Shared References
 
 Use this package only as a dependency of another installed Nature skill.

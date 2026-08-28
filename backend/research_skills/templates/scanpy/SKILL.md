@@ -1,6 +1,6 @@
 ---
 name: scanpy
-description: Standard single-cell RNA-seq analysis pipeline. Use for QC, normalization, dimensionality reduction (PCA/UMAP/t-SNE), clustering, differential expression, visualization, and converting R-friendly single-cell formats such as Seurat or SingleCellExperiment RDS files into h5ad for Scanpy. Best for exploratory scRNA-seq analysis with established workflows. For deep learning models use scvi-tools; for data format questions use anndata.
+description: "标准单细胞 RNA-seq 分析管道. 用于QC, 常态化，维度减少(PCA/UMAP/t-SNE), 集群化，差分表达，可视化，以及将 Sourat 或 SingleCell Experiment RDS文件等 R 友好单细胞格式转换为 H5ad 用于 ScRNA-seq 分析，最好使用既定的工作流程 。对于深层学习模型，使用 scvi-tool;对于数据格式问题，使用 anndata 。"
 license: BSD-3-Clause
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Scanpy: Single-Cell Analysis
 
 ## Overview

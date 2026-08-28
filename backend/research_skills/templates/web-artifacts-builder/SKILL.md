@@ -1,6 +1,6 @@
 ---
 name: web-artifacts-builder
-description: "Suite of tools for creating elaborate, multi-component claude.ai HTML artifacts using modern frontend web technologies (React, Tailwind CSS, shadcn/ui). Use for complex artifacts requiring state management, routing, or shadcn/ui components - not for simple single-file HTML/JSX artifacts."
+description: "使用现代前端网络技术(React,Tailwind CSS,shadcn/ui)创建复杂，多组件的claude.ai HTML文物的套件，用于需要国家管理，路由，或shadcn/ui组件的复杂文物——不用于简单的单文件的HTML/JSX文物。"
 metadata:
   version: ""
   github_source: "https://github.com/anthropics/skills"
@@ -16,7 +16,6 @@ metadata:
     - claude
   enabled: "true"
 ---
-
 ## Trigger Keywords
 web-artifacts-builder, web artifacts builder, suite, tools, creating, elaborate, multi-component, claude
 

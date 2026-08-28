@@ -1,6 +1,6 @@
 ---
 name: nature-reviewer
-description: Simulate Nature-style or general pre-submission peer review from the referee perspective, not an author rebuttal. Use for reviewer reports, mock peer review, manuscript critique, novelty/significance/technical-soundness assessment, 审稿人视角评估, 模拟审稿, 预审, 投稿前自审, 审稿意见模拟, or 帮我审一下论文. Produce evidence-grounded Major Concerns, Minor Comments, and blocking flags. For multiple reviewers, keep every reviewer mutually blind in a separate context, freeze all reports before comparison, and create any synthesis only afterward as a separate editor/author-facing artifact.
+description: "从裁判的角度模拟自然型或一般的提交前同行评审，而不是作者的反驳. 用于评审员报告，模拟同行评审，手稿批判，novelty/significance/technical-soundness评估，QQ,QQ,QQ,QQ,或QQ. 生成证据依据的重大关注，次要评论，以及屏蔽标记。"
 metadata:
   github_source: https://github.com/Yuan1z0825/nature-skills
   category: paper_writing
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Nature Reviewer Assessment Skill
 
 Use this skill to simulate a `Nature`-style reviewer assessment package from the referee

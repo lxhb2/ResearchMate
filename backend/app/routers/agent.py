@@ -167,13 +167,16 @@ def agent_contexts(db: Session = Depends(get_db), user: User = Depends(get_curre
 @router.get("/capabilities")
 def agent_capabilities(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """返回内置工具 + 已发现 MCP 工具的完整目录（供 Agent 中心展示）。"""
-    from app.agent import mcp_runtime
+    try:
+        from app.agent import mcp_runtime
 
-    return {
-        "builtin": tools_mod.tool_catalog(),
-        "mcp": mcp_runtime.active_tool_catalog(),
-        "total": len(tools_mod.TOOL_REGISTRY),
-    }
+        return {
+            "builtin": tools_mod.tool_catalog(),
+            "mcp": mcp_runtime.active_tool_catalog(),
+            "total": len(tools_mod.TOOL_REGISTRY),
+        }
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"读取工具目录失败：{e}")
 
 
 # ---- 全局 Agent 对话 ----

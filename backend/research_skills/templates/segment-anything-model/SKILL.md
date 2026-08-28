@@ -1,6 +1,6 @@
 ---
 name: segment-anything-model
-description: Foundation model for image segmentation with zero-shot transfer. Use when you need to segment any object in images using points, boxes, or masks as prompts, or automatically generate all object masks in an image.
+description: "以零镜头传输方式进行图像分割的基础模型。当您需要将图像中的任何对象以点、框或口罩作为提示进行分割时，或者在图像中自动生成所有对象口罩。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -33,7 +33,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Segment Anything Model (SAM)
 
 Comprehensive guide to using Meta AI's Segment Anything Model for zero-shot image segmentation.

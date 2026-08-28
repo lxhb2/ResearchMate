@@ -1,6 +1,6 @@
 ---
 name: latex-posters
-description: Create professional research posters in LaTeX using beamerposter, tikzposter, or baposter. Support for conference presentations, academic posters, and scientific communication. Includes layout design, color schemes, multi-column formats, figure integration, and poster-specific best practices for visual communication.
+description: "在 LaTeX 创建专业研究海报，使用光标、tikzposter 或 baposter 。支持会议演示、学术海报和科学交流，包括布局设计、彩色计划、多栏格式、数字集成和针对海报的视觉交流最佳做法。"
 allowed-tools: Read Write Edit Bash
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # LaTeX Research Posters
 
 ## Overview

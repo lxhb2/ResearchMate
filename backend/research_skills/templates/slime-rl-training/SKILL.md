@@ -1,6 +1,6 @@
 ---
 name: slime-rl-training
-description: Provides guidance for LLM post-training with RL using slime, a Megatron+SGLang framework. Use when training GLM models, implementing custom data generation workflows, or needing tight Megatron-LM integration for RL scaling.
+description: "为使用粘液的RL进行RL后培训提供指导。在培训GLM模型时使用，执行自定义的数据生成工作流程，或需要紧凑的Megatron-LM集成进行RL缩放。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -35,7 +35,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # slime: LLM Post-Training Framework for RL Scaling
 
 slime is an LLM post-training framework from Tsinghua's THUDM team, powering GLM-4.5, GLM-4.6, and GLM-4.7. It connects Megatron-LM for training with SGLang for high-throughput rollout generation.

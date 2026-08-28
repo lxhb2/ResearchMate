@@ -1,6 +1,6 @@
 ---
 name: statistical-analysis
-description: Guided statistical analysis for research data - test selection, assumption checking, effect sizes, power analysis, Bayesian alternatives, and APA-formatted reporting. Use whenever a user wants to compare groups, test a hypothesis, analyze experimental or survey data, check statistical assumptions, compute required sample sizes, or write up results - even if they never name a specific test. Covers t-tests, ANOVA, chi-square, correlation, regression, non-parametric and Bayesian methods. For low-level model APIs, see the statsmodels and pymc skills.
+description: "对研究数据进行统计分析— 测试选择、 假设检查、 效果大小、 动力分析、 贝叶斯替代方法、 APA格式报告。 每当用户想要比较组别、 测试假设、 分析实验或调查数据、 检查统计假设、 计算所需的样本大小，或写出结果—即使它们从未指定具体测试。 覆盖t 测试、 ANOVA 、 chi- square 、 关联性、 回归性、非参数和贝叶斯方法 。"
 license: MIT license
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Statistical Analysis
 
 ## Overview

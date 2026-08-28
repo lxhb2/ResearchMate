@@ -1,6 +1,6 @@
 ---
 name: venue-templates
-description: Prepare journal manuscripts, conference papers, research posters, and grant documents using venue-specific formatting guidance and bundled LaTeX scaffolds. Use when selecting an official template, checking current page or anonymity rules, adapting academic writing to a venue, or inspecting a submission PDF.
+description: "编写期刊手稿、会议论文、研究海报，以及使用特定地点格式的指南和捆绑的LaTeX脚手架。在选择正式模板、检查当前页面或匿名规则、修改学术写作地点或检查提交文件PDF时使用。"
 license: MIT license
 compatibility: Requires Python 3.11+ for helper scripts; LaTeX and Poppler command-line tools are optional for compilation and PDF inspection.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Venue Templates
 
 Prepare publication and funding documents without treating stale formatting details as authoritative. This skill combines:

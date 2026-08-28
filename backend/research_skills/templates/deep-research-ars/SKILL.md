@@ -1,6 +1,6 @@
 ---
 name: deep-research-ars
-description: 'Universal deep research agent team. 13-agent pipeline for rigorous academic research on any topic. 8 modes: full research, quick brief, paper review, lit-review, fact-check, three-way literature scan, Socratic guided research dialogue, and systematic review with optional meta-analysis. Covers research question formulation, Socratic mentoring, methodology design, systematic literature search, source verification, cross-source synthesis, risk of bias assessment, meta-analysis, APA 7.0 report compilation, editorial review, devil''s advocate challenges, ethics review, and post-research literature monitoring. Triggers on: research, deep research, literature review, systematic review, meta-analysis, PRISMA, evidence synthesis, fact-check, WHY HOW WHAT papers, 3W literature scan, guide my research, help me think through, 研究, 深度研究, 文獻回顧, 文獻探討, 系統性回顧, 後設分析, 事實查核, 三段式文獻掃描, 引導我的研究, 幫我釐清, 幫我想想, 我不確定要研究什麼, 研究方向, 研究主題, 심층 연구, 문헌 조사, 체계적 문헌고찰, 메타분석, 사실 확인, 연구 방향을 잡아줘, 연구 주제 정하는 것을 도와줘.'
+description: "通用深度研究代理团队. 13号代理程序对任何主题进行严格的学术研究. 8种模式：全面研究，快速简讯，论文评论，点亮审查，事实检查，三向文献扫描，索克拉底指导研究对话，以及带有可选元分析的系统审查。"
 metadata:
   github_source: https://github.com/Imbad0202/academic-research-skills
   category: literature
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Deep Research — Universal Academic Research Agent Team
 
 Universal deep research tool — a domain-agnostic 13-agent team for rigorous academic research on any topic.

@@ -1,6 +1,6 @@
 ---
 name: onekgpd
-description: 'Query the 1000 Genomes Project dataset (3,202 whole-genome-sequenced individuals, GRCh38) at the level of individual participants. Use when a question is about individuals or variants in the 1000 Genomes Project cohort: which individuals carry variants matching specific criteria in a gene or region, which individuals are homozygous-reference at a position, which variants exist in the dataset or carried by specified individuals in a gene or region, the relatedness between two specified individuals. Variants are returned with 1000 Genomes allele frequencies (AF), gnomAD v4.1 exome and genome AF, AlphaMissense score, and HGVSp annotations.'
+description: "查询1000基因组项目数据集(3,202个全基因组序列个人，GRCh38)在单个参与者的级别上。当一个问题涉及1000基因组中的个人或变体时使用：哪个个人携带的变体与某个基因或地区的具体标准相匹配，哪个个人在一个位置上是同源参照，哪个变体存在于某个基因或地区的特定个人携带的，两个特定个人之间的关联性。"
 license: MIT
 compatibility: Requires Python >=3.11. Variant and sample queries require outbound network access to the public 1000 Genomes query endpoint over TLS; the sample/population metadata commands run fully offline over a data file bundled in the skill. No credentials, API keys, or environment variables are used.
 allowed-tools: Write Bash
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # OneKGPd: Individual-Level Queries over the 1000 Genomes Project
 
 ## Scope

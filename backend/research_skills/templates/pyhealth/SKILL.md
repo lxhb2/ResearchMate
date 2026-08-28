@@ -1,6 +1,6 @@
 ---
 name: pyhealth
-description: Build clinical/healthcare deep-learning pipelines with PyHealth — loading EHR/signal/imaging datasets (MIMIC-III/IV, eICU, OMOP, SleepEDF, ChestXray14, EHRShot), defining tasks (mortality, readmission, length-of-stay, drug recommendation, sleep staging, ICD coding, EEG events), instantiating models (Transformer, RETAIN, GAMENet, SafeDrug, MICRON, StageNet, AdaCare, CNN/RNN/MLP), training with the PyHealth Trainer, computing clinical metrics, and using medical code utilities (ICD/ATC/NDC/RxNorm lookup and cross-mapping). Use this skill whenever the user mentions PyHealth, MIMIC, eICU, OMOP, EHR modeling, clinical prediction, drug recommendation, sleep staging, medical code mapping, ICD/ATC codes, or any healthcare ML pipeline that fits the dataset → task → model → trainer → metrics pattern, even if "PyHealth" isn't named explicitly.
+description: "利用PyHealth(MIMIC-III/IV, eICU, OMOP, SleepEDF, ChestXray14, EHRShot)建立clinical/healthcare深层学习管道，确定任务(死亡率、重新接收、停留时间、药物推荐、睡眠中转、ICD编码、EEG事件)、即时模型(Transformer、RETAIN、Gamenet、SafeDrug、MICRON、StageNet、AdaCare、CNN/RNN/MLP),与PyHealphe训练员一起培训，计算临床计量，并使用医疗码功能(ICD/ATC/NDC/RxNorm检索和交叉映射)。"
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
   category: research_closed_loop
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # PyHealth
 
 PyHealth (https://pyhealth.dev/) is a Python toolkit for clinical deep learning. It provides a unified, modular pipeline across electronic health records (EHR), physiological signals, and medical imaging.

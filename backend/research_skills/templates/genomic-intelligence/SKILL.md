@@ -1,6 +1,6 @@
 ---
 name: genomic-intelligence
-description: 'Predict regulatory features, gene structure, and expression directly from DNA sequence using Genomic Intelligence''s hosted transformer DNA language models — no local GPU or model weights. Six tasks over a REST API and a hosted MCP server (keyless public demo): promoter regions, splice donor/acceptor sites, enhancer activity, chromatin state, sequence-to-expression (log TPM), and de-novo gene annotation, plus a composite find-genes-then-predict-expression workflow. Use when the user has a gene symbol, a genomic region, or a DNA/FASTA sequence and wants any of these predictions, mentions Genomic Intelligence, genomicintelligence.ai, api.genomicintelligence.ai, or mcp.genomicintelligence.ai.'
+description: "预测调控特征，基因结构，以及直接从DNA序列中利用基因组智能主机DNA语言模型——没有本地的GPU或模型权重. Q003和主机MCP服务器(无键公共演示)的六个任务：促进区域，splice donor/acceptor站点，增强活动，chromatin状态，序列到表达(log TPM),以及脱新基因注释，加上一个复合的发现-基因-当时的预测-表达工作流程。"
 license: MIT
 compatibility: Python 3.10+ with the `requests` library for the REST path (no dedicated SDK). Network access required. The REST `/v1` API needs a `GI_API_KEY` (a `gi_` bearer); the hosted MCP server at mcp.genomicintelligence.ai/mcp works keyless against a capped public demo quota, key optional.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Genomic Intelligence — DNA Sequence Models
 
 Genomic Intelligence (GI) serves transformer DNA language models over six

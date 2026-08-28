@@ -1,6 +1,6 @@
 ---
 name: idea-evaluator
-description: Evaluates a preliminary research idea against a five-dimension framework (Higher, Faster, Stronger, Cheaper, Broader) plus idea-lifecycle and student-capability matching, paradigm-shift probing, and a fatal-flaws audit. Returns a reviewer-style verdict; non-STEM ideas route to substitute frameworks. Use when the user has a draft research idea and asks whether it is worth pursuing, asks to 'evaluate this idea', 'score this idea', 'assess feasibility', 'novelty check', 'is this a good research direction', or before committing to a paper scope.
+description: "以五分框架(更高、更快、更强、更便宜、更宽)为基础评估初步研究设想，加上思想寿命周期和学生能力匹配、范式转换验证和致命法则审计。返回一个审查者式的判决；非STEM想法替代框架的路径。"
 license: CC-BY-4.0
 metadata:
   github_source: https://github.com/HKUSTDial/Supervisor-Skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Idea Evaluator
 
 ## Overview

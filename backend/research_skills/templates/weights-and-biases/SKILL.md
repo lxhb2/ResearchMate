@@ -1,6 +1,6 @@
 ---
 name: weights-and-biases
-description: Track ML experiments with automatic logging, visualize training in real-time, optimize hyperparameters with sweeps, and manage model registry with W&B - collaborative MLOps platform
+description: "跟踪 ML 的自动记录实验，可视化实时培训，优化扫描的超参数，并管理与 W&B - 协作的 MLOPS 平台的模型注册。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -37,7 +37,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Weights & Biases: ML Experiment Tracking & MLOps
 
 ## When to Use This Skill

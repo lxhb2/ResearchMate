@@ -1,6 +1,6 @@
 ---
 name: deepspeed
-description: Expert guidance for distributed training with DeepSpeed - ZeRO optimization stages, pipeline parallelism, FP16/BF16/FP8, 1-bit Adam, sparse attention
+description: "与DeepSpeed(英语：DeepSpeed)-ZeRO(英语：ZeRO)优化阶段，管道平行主义，FP16/BF16/FP8,1位亚当(英语："
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -39,7 +39,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Deepspeed Skill
 
 Comprehensive assistance with deepspeed development, generated from official documentation.

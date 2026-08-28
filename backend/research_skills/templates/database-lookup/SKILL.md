@@ -1,6 +1,6 @@
 ---
 name: database-lookup
-description: Query documented public database APIs with explicit endpoints, filters, pagination, and provenance. Use when a scientific, regulatory, financial, or other database-backed fact must be retrieved reproducibly from a named source rather than inferred from general knowledge.
+description: "查询有明确终点、过滤器、页码和出处的公共数据库 API。当科学、监管、金融或其他数据库支持的事实必须从一个指定来源重取时使用，而不是从一般知识中推断出来。"
 allowed-tools: Read Bash
 license: MIT
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Database Lookup
 
 This skill catalogs 78 public databases with documented API access patterns. Your job is to turn the user's intent into a reproducible retrieval: select the authoritative database(s), make bounded and rate-limited API calls, verify counts when completeness matters, and return results with enough provenance that another agent or human can repeat the lookup.

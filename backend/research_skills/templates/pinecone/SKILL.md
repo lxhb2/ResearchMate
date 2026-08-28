@@ -1,6 +1,6 @@
 ---
 name: pinecone
-description: Managed vector database for production AI applications. Fully managed, auto-scaling, with hybrid search (dense + sparse), metadata filtering, and namespaces. Low latency (<100ms p95). Use for production RAG, recommendation systems, or semantic search at scale. Best for serverless, managed infrastructure.
+description: "管理用于生产 AI 应用程序的矢量数据库。 完全管理、 自动扩展、 混合搜索( ense + short) 、 元数据过滤和命名空间。 低延迟(< 100ms p95) 。 用于生产 RAG 、 推荐系统或语义搜索。 最好的是无服务器、 管理基础设施 。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -36,7 +36,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Pinecone - Managed Vector Database
 
 The vector database for production AI applications.

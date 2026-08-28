@@ -1,6 +1,6 @@
 ---
 name: nature-citation
-description: Add strict Nature/CNS citations to manuscript text by splitting long passages into citable segments, searching only accepted flagship and subjournal titles from Nature Portfolio, the AAAS Science family, and Cell Press, filtering by publication time range, and exporting one reference-manager-ready output by default. Use this skill whenever the user asks to input text and automatically get references, add citations to a paragraph/manuscript, find Nature-series or CNS support for statements, create text-to-reference correspondence, "分段引用", "自动给出引用", "Nature系列引用", "CNS及子刊", "支撑文献", "补引用", "找引用", or export EndNote/RIS/ENW/Zotero RDF. Also trigger on general academic-writing citation needs even without the word "Nature", such as adding references while writing a paper, finding sources/literature for a claim, building a reference list, citation/referencing for academic writing, and Chinese phrasings like 学术写作引用、写论文加引用、写paper找文献、加参考文献、配文献、引用文献、文献支撑.
+description: "在手稿文本中加入严格的Nature/CNS引用，方法是将长段分解为可读部分，只搜索来自Nature Portfolio,AAAS Sciences家族和Cell Press的已接受旗舰和子期刊标题，通过出版时间范围过滤，并默认输出一个可供参考的管理员输出。"
 metadata:
   github_source: https://github.com/Yuan1z0825/nature-skills
   category: literature
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Nature Citation — Router
 
 This skill is split into two layers:

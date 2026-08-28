@@ -1,6 +1,6 @@
 ---
 name: timesfm-forecasting
-description: Zero-shot time series forecasting with Google's TimesFM foundation model. Use for any univariate time series (sales, sensors, energy, vitals, weather) without training a custom model. Supports CSV/DataFrame/array inputs with point forecasts and prediction intervals. Includes a preflight system checker script to verify RAM/GPU before first use.
+description: "使用 Google 的 TimesFM 基础模型进行零射时序列预测。 使用任何单射时序列( 销售、 传感器、 能量、 生命力、 天气) , 无需训练自定义模型。 支持 CSV/DataFrame/array 输入，并带有点数预测和预测间隔 。 包括飞行前系统检查脚本，在首次使用前验证 RAM/GPU 。"
 allowed-tools: Read Write Edit Bash
 license: Apache-2.0 license
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # TimesFM Forecasting
 
 ## Overview

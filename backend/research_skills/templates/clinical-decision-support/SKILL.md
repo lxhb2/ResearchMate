@@ -1,6 +1,6 @@
 ---
 name: clinical-decision-support
-description: Prepare and validate research-only clinical decision-support evaluation, evidence-profile, cohort, survival, biomarker/model, privacy, and governance artifacts. Use for aggregate or synthetic research documentation and traceability—not patient care or live clinical operation.
+description: "编写并验证仅研究的临床决策支持评价、证据简介、群体、生存、biomarker/model、隐私和治理文物。 用于综合或合成研究文献和可追溯性，而不是病人护理或现场临床操作。"
 license: MIT
 compatibility: Python 3.11+; local files only; bundled scripts use the standard library and require no network, credentials, API keys, LLMs, or image services.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Clinical Decision-Support Research and Evaluation
 
 ## Hard Safety Boundary

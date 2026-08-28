@@ -1,6 +1,6 @@
 ---
 name: pytorch-lightning
-description: Deep learning framework (PyTorch Lightning / lightning package). Organize PyTorch code into LightningModules, configure Trainers for multi-GPU/TPU, implement data pipelines, callbacks, logging (W&B, TensorBoard, MLflow), distributed training (DDP, FSDP, DeepSpeed), for scalable neural network training.
+description: "深层学习框架(PyTorch Lightning /闪电包). 组织PyTorch代码为闪电摩托，配置多GPU/TPU的训练员，执行数据管道，调回，记录(W&B,TensorBoard,MLflow),分布式训练(DDP,FSDP,DeepSpeed),用于可伸缩神经网络训练。"
 allowed-tools: Read Write Edit Bash
 license: Apache-2.0 license
 compatibility: Requires Python 3.10+ and lightning 2.6+ (or pytorch-lightning 2.6+). GPU training needs CUDA-capable PyTorch. Optional loggers (wandb, mlflow, comet-ml) and DeepSpeed require separate installs.
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # PyTorch Lightning
 
 ## Overview

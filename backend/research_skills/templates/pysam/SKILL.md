@@ -1,6 +1,6 @@
 ---
 name: pysam
-description: Python/HTSlib workflows for genomic files. Use when reading, querying, filtering, or writing SAM/BAM/CRAM, VCF/BCF, FASTA/FASTQ, or tabix data with pysam, including pileup, coverage, indexing, and CRAM references.
+description: "Python/HTSlib 工作流程用于基因组文件。在读取、查询、过滤或写入SAM/BAM/CRAM、VCF/BCF、FASTA/FASTQ或带有 pysam 的 Tabix 数据时使用，包括堆积、覆盖、索引和CRAM 引用。"
 license: MIT
 allowed-tools: Read Write Edit Bash
 compatibility: Requires Python 3.8–3.14 and pysam 0.24.0. Bundled scripts use local files. CRAM decoding may require the matching reference FASTA or an explicitly configured REF_PATH/REF_CACHE.
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # pysam
 
 ## Overview

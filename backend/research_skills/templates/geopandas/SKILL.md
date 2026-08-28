@@ -1,6 +1,6 @@
 ---
 name: geopandas
-description: Guidance and local audit tools for Python workflows that directly use GeoPandas GeoSeries, GeoDataFrame, spatial operations, or vector-data I/O.
+description: "直接使用GeoPandas GeoSeries,GeoDataFrame,空间操作，或矢量数据I/O的Python工作流程的指导和当地审计工具。"
 license: MIT
 compatibility: Requires Python 3.10+ and uv. Bundled CLIs are local-only; runtime analysis requires the pinned GeoPandas stack below.
 allowed-tools: Read Write Bash Glob Grep
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # GeoPandas
 
 Use GeoPandas for planar vector data represented as pandas-like `GeoSeries` and

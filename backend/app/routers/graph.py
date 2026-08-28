@@ -2,7 +2,7 @@
 import json
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -12,7 +12,7 @@ from app.dependencies import get_current_user
 from app.models.paper import Paper
 from app.models.paper_chunk import PaperChunk
 from app.models.user import User
-from app.services import graph_service, settings_service
+from app.services import bibliometric_service, graph_service, settings_service
 from app.services.search_service import DIMENSION_LABELS
 
 router = APIRouter(prefix="/graph", tags=["graph"])
@@ -29,6 +29,67 @@ def smart_graph(
     结果带缓存（片段数/向量数变化自动失效），个人文献库规模下秒级返回。
     """
     return graph_service.build_smart_graph(db, user.id, limit=limit)
+
+
+@router.get("/bibliometric")
+def bibliometric_graph(
+    network_type: str = "co_authorship",
+    source: str = "library",
+    query: str = "",
+    external_source: str = "openalex",
+    limit: int = 50,
+    cluster_resolution: float = 1.0,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """VOSviewer 简易版：合著/关键词共现/引文/文献耦合网络。"""
+    try:
+        return bibliometric_service.build_bibliometric_graph(
+            db,
+            user.id,
+            network_type=network_type,
+            source=source,
+            query=query,
+            external_source=external_source,
+            limit=limit,
+            cluster_resolution=cluster_resolution,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/bibliometric/export")
+def export_bibliometric_graph(
+    network_type: str = "co_authorship",
+    source: str = "library",
+    query: str = "",
+    external_source: str = "openalex",
+    limit: int = 50,
+    cluster_resolution: float = 1.0,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """导出可在 VOSviewer 中直接打开的 map + network ZIP 文件。"""
+    try:
+        graph = bibliometric_service.build_bibliometric_graph(
+            db,
+            user.id,
+            network_type=network_type,
+            source=source,
+            query=query,
+            external_source=external_source,
+            limit=limit,
+            cluster_resolution=cluster_resolution,
+        )
+        content = bibliometric_service.build_vosviewer_bundle(graph)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    filename = f"researchmate-{network_type.replace('_', '-')}-vosviewer.zip"
+    return Response(
+        content=content,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 class GraphAnalyzeRequest(BaseModel):

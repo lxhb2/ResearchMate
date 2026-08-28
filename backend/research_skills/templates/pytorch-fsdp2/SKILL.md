@@ -1,6 +1,6 @@
 ---
 name: pytorch-fsdp2
-description: Adds PyTorch FSDP2 (fully_shard) to training scripts with correct init, sharding, mixed precision/offload config, and distributed checkpointing. Use when models exceed single-GPU memory or when you need DTensor-based sharding with DeviceMesh.
+description: "添加 PyTorch FSDP2( 完全)到训练脚本时，使用正确的内置、 硬化、 混合 precision/offload 配置和分布式检查。当模型超过单Q001 内存或需要基于 DTensor 的硬化设备时使用 。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -36,7 +36,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Skill: Use PyTorch FSDP2 (`fully_shard`) correctly in a training script
 
 This skill teaches a coding agent how to **add PyTorch FSDP2** to a training loop with correct initialization, sharding, mixed precision/offload configuration, and checkpointing.

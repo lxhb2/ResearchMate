@@ -1,6 +1,6 @@
 ---
 name: systems-paper-writing
-description: Comprehensive guide for writing systems papers targeting OSDI, SOSP, ASPLOS, NSDI, and EuroSys. Provides paragraph-level structural blueprints, writing patterns, venue-specific checklists, reviewer guidelines, LaTeX templates, and conference deadlines. Use this skill for all systems conference paper writing.
+description: "针对OSDI, SOSP, ASPLOS, NSDI 和 EuroSys 的系统文件编写综合指南，提供段落级的结构蓝图，写作模式，特定地点的核对表，审查者准则，LaTeX 模板，以及会议截止日期 。 将这一技能用于所有系统的会议文件编写 。"
 version: 1.1.0
 author: Orchestra Research
 license: MIT
@@ -33,7 +33,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Systems Paper Writing: Paragraph-Level Structural Blueprint
 
 Fine-grained structural guidance for writing **10–12 page systems papers** targeting top systems venues: OSDI, SOSP, ASPLOS, NSDI, and EuroSys. This skill provides page allocation per section, paragraph-level blueprints, and writing patterns distilled from authoritative guides and best-paper analysis.

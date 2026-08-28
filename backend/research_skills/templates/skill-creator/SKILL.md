@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: "Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy."
+description: "创建新技能，修改和改进现有技能，并衡量技能性能。当用户想要从头创建技能，编辑或优化现有技能，运行evals以测试技能，以差异分析为基准技能性能，或优化技能的描述以更好地触发准确性时，使用。"
 metadata:
   version: ""
   github_source: "https://github.com/anthropics/skills"
@@ -16,7 +16,6 @@ metadata:
     - measure
   enabled: "true"
 ---
-
 ## Trigger Keywords
 skill-creator, skill creator, create, new, modify, improve, existing, measure
 

@@ -1,6 +1,6 @@
 ---
 name: scientific-slides
-description: Build slide decks and presentations for research talks. Use this for making PowerPoint slides, conference presentations, seminar talks, research presentations, thesis defense slides, or any scientific talk. Provides slide structure, design templates, timing guidance, and visual validation. Works with PowerPoint and LaTeX Beamer.
+description: "构建幻灯片甲板和演示文稿用于研究演讲。 使用这些演示文稿制作PowerPoint幻灯片、会议演示文稿、研讨会演讲、研究演示文稿、论文防御幻灯片或任何科学演讲。 提供幻灯片结构、 设计模板、 计时指导和视觉验证。 与 PowerPoint 和 LaTeX Beamer 一起工作 。"
 allowed-tools: Read Write Edit Bash
 license: MIT license
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Scientific Slides
 
 ## Overview

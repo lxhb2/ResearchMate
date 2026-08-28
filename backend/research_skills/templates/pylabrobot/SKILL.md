@@ -1,6 +1,6 @@
 ---
 name: pylabrobot
-description: Develop and review PyLabRobot lab-automation resources, liquid-handling plans, offline simulations, and supported-device integrations. Use for PyLabRobot protocols or API questions; keep physical execution behind an explicit operator safety gate.
+description: "开发并审查 PyLabRobot 实验室自定义资源、 液态处理计划、 离线模拟以及辅助设备集成。 使用 PyLabRobot 协议或 API 问题；将物理执行置于明确的操作员安全门后 。"
 license: MIT
 compatibility: Verified against PyLabRobot 0.2.1 on Python 3.9+. Bundled planning CLIs require only Python 3.11+ and make no serial, USB, or network connections. Physical devices need model-specific extras, configuration, calibration, and trained operator approval.
 allowed-tools: Read Write Edit Bash
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # PyLabRobot
 
 Use PyLabRobot's hardware-agnostic frontends, resource tree, trackers, and

@@ -1,6 +1,6 @@
 ---
 name: tamarind
-description: Access a collection of open-source molecular design and structural biology tools on the Tamarind Bio platform, via its REST API or MCP server — no local GPUs required. Tamarind bundles popular open-source models for structure prediction (AlphaFold, Boltz, Chai, ESMFold), protein, binder, and de novo design (RFdiffusion, ProteinMPNN, BoltzGen), antibody and nanobody design and developability, protein-ligand docking (DiffDock, Autodock Vina), binding-affinity prediction, MSA generation, and molecular dynamics. Use when the user mentions Tamarind or tamarind.bio, wants to run any of these open-source tools in the cloud, references app.tamarind.bio/api or the x-api-key header, or needs to submit batches of sequences for structural or biophysical characterization.
+description: "在Tamarind Bio平台上获取一个开源分子设计和结构生物学工具集，通过它的RESTAPI或MCP服务器——不需要本地GPU. Tamarind捆绑了用于结构预测的流行开源模型(AlphaFold,Boltz,Chai,ESMFold),蛋白质，捆绑剂，以及脱新设计(RFdiffusion,ProteinMPN,BoltzGen),抗体和纳米体的设计和开发，蛋白质-粘接(DiffDock,Autodock Vina),捆绑-富力预测，MSA生成，分子动力学。"
 license: MIT
 compatibility: Requires Python 3.10+, a Tamarind Bio account, and an API key from app.tamarind.bio. Uses the `requests` library against the public REST API (no dedicated Python SDK exists). Network access required. Optional MCP server at mcp.tamarind.bio/mcp for agent hosts.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Tamarind Bio
 
 Tamarind Bio is a cloud platform that runs computational biology tools — structure prediction, protein and antibody design, docking, binding-affinity, MSA generation, and molecular dynamics — on managed GPUs. Users submit sequences or structures and get back predicted structures, designs, and biophysical scores, without provisioning their own hardware. It exposes hundreds of tools (AlphaFold, Boltz-2, Chai-1, RFdiffusion, ProteinMPNN, BoltzGen, ESMFold2, DiffDock, Autodock Vina, and many more) through one uniform job API.

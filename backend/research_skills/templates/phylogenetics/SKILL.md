@@ -1,6 +1,6 @@
 ---
 name: phylogenetics
-description: Build and analyze phylogenetic trees using MAFFT (multiple alignment), IQ-TREE 2 (maximum likelihood), and FastTree (fast NJ/ML). Visualize with ETE3 or FigTree. For evolutionary analysis, microbial genomics, viral phylodynamics, protein family analysis, and molecular clock studies.
+description: "使用MAFFT(多对齐),IQ-TREE 2(最大可能性)和FastTree(快速NJ/ML)构建并分析血缘树，可视化为ETE3或FigTree,用于进化分析，微生物基因组学，病毒性生理学，蛋白质家族分析，以及分子时钟研究。"
 license: Unknown
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Phylogenetics
 
 ## Overview

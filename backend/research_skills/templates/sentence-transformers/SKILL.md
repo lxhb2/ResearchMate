@@ -1,6 +1,6 @@
 ---
 name: sentence-transformers
-description: Framework for state-of-the-art sentence, text, and image embeddings. Provides 5000+ pre-trained models for semantic similarity, clustering, and retrieval. Supports multilingual, domain-specific, and multimodal models. Use for generating embeddings for RAG, semantic search, or similarity tasks. Best for production embedding generation.
+description: "用于最先进的句子、文本和图像嵌入的框架 。为语义相似性、 集群和检索提供 5000+ 预先训练的模型。 支持多语种、 域名和多模式模式 。 用于生成 RAG 、 语义搜索或类似的嵌入任务 。 用于生产嵌入生成的最佳模式 。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -38,7 +38,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Sentence Transformers - State-of-the-Art Embeddings
 
 Python framework for sentence and text embeddings using transformers.

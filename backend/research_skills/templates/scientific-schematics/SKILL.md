@@ -1,6 +1,6 @@
 ---
 name: scientific-schematics
-description: Create publication-quality scientific diagrams using Nano Banana 2 AI with smart iterative refinement. Uses Gemini 3.6 Flash for quality review. Only regenerates if quality is below threshold for your document type. Specialized in neural network architectures, system diagrams, flowcharts, biological pathways, and complex scientific visualizations.
+description: "使用 Nano Banana 2 AI 创建出版质量科学图，并进行智能迭代修改。 使用双子座 3. 6 Flash 进行质量审查。 只有在文档类型的质量低于阈值时才会重新生成。 专门用于神经网络架构、 系统图、 流程图、 生物路径和复杂的科学可视化 。"
 allowed-tools: Read Write Edit Bash
 license: MIT license
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Scientific Schematics and Diagrams
 
 ## Overview

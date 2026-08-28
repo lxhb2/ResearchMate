@@ -1,6 +1,6 @@
 ---
 name: axolotl
-description: Expert guidance for fine-tuning LLMs with Axolotl - YAML configs, 100+ models, LoRA/QLoRA, DPO/KTO/ORPO/GRPO, multimodal support
+description: "用Axolotl - YAML配置、100+模型、LoRA/QLoRA、DPO/KTO/ORPO/GRPO、多式联运支持对LLMs进行微调的专家指南"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -45,7 +45,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Axolotl Skill
 
 Comprehensive assistance with axolotl development, generated from official documentation.

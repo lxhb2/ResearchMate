@@ -16,7 +16,7 @@ import json
 from typing import Any, Optional
 
 from app.agent.llm_adapter import LLMAdapter
-from app.agent.specialized import build_agent, intents_for
+from app.agent.specialized import build_agent, intents_for, is_academic_research
 from app.agent.tools import ToolContext, get_tool, tool_descriptions
 from app.agent import memory as memory_mod
 from app.agent import modules as modules_mod
@@ -46,6 +46,10 @@ class TopAgent:
         """
         # 0. 用户显式要求联网 → 直接进全局 Agent（保证 web_search 工具被执行）
         if web_search:
+            # 但明确的文献综述 / 研究进展类任务需要本地 RAG + 多源学术 API 联动，
+            # 单次 web_search 会丢掉本地证据，因此这里仍进入学术研究 Agent。
+            if is_academic_research(text):
+                return {"path": "academic_research"}
             return {"path": "chat"}
         # 1. 科研 skill 强命中
         skill = self._match_skill(text)
@@ -305,6 +309,8 @@ class TopAgent:
             "可以调用工具协助用户完成科研任务。回答用中文，简洁、准确、可执行。",
             "你可以调用以下工具（当任务需要时主动调用，不需要则直接回答）：",
             tool_descriptions(),
+            "工具决策只输出 JSON 对象：需要调用工具时返回 "
+            '{"tool": "工具名", "args": {参数}}；可以直接回答时返回 {"answer": "最终回答"}。',
             "",
             "模块导航（用户想用某功能时，用 module_navigate 返回跳转建议）：",
             _modules_text(),
@@ -352,6 +358,13 @@ class TopAgent:
                 "只能使用 web_search 返回的链接，不得编造 URL；"
                 "正文中的关键结论使用 [编号] 引用对应搜索证据；"
                 "回答末尾列出「来源链接」，逐条给出标题与可点击 URL。"
+            )
+
+        if is_academic_research(text):
+            parts.append(
+                "学术任务准则：优先用 rag_search 获取本地证据，用 web_search(mode='academic') "
+                "获取外部论文证据；关键结论必须标注编号或 DOI，不编造文献、数据、结果和 URL；"
+                "证据冲突时呈现差异，而不是强行合并结论。"
             )
 
         return "\n\n".join(parts)
@@ -701,6 +714,8 @@ def _format_search_context(result: dict) -> str:
             excerpt = str(evidence[url].get("text") or "")
         if not excerpt:
             excerpt = str(item.get("snippet") or "")
+        if not excerpt:
+            excerpt = str(item.get("content") or "")
         excerpt = " ".join(excerpt.split())[:700]
         block = f'[{i}] {item.get("title") or "未命名"}\nURL: {url}\n摘录: {excerpt or "无可用摘要"}'
         if total_chars + len(block) > 8000:

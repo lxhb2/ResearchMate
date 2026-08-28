@@ -1,8 +1,6 @@
 ---
 name: nature-literature-pipeline
-description: 'Complete automated literature discovery pipeline: multi-source search → six-dimension scoring → fine reading → formatted delivery → archival.
-
-  Combines a configurable engine with daily cron-driven application layer. Works with Feishu, Telegram, or any messaging platform.'
+description: "完整的自动化文献发现管道：多源搜索 –六端分数 – 精细读取 – 格式化交付 – 存档 – 将可配置的引擎与日冕驱动的应用层组合起来，与 Feishu, Telegram 或任何消息平台一起工作 。"
 license: MIT
 metadata:
   github_source: https://github.com/Yuan1z0825/nature-skills
@@ -23,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Nature Literature Pipeline
 
 A complete, production-tested automated literature pipeline. Not just "search for papers" — it's a structured engine that scores, classifies, reads, delivers, and archives research papers daily.

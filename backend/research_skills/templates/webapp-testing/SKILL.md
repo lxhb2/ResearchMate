@@ -1,6 +1,6 @@
 ---
 name: webapp-testing
-description: "Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing browser screenshots, and viewing browser logs."
+description: "用于使用 Playwright 进行本地网络应用程序交互和测试的工具包。支持校验前端功能，调试UI行为，抓取浏览器截图，并查看浏览器日志 。"
 metadata:
   version: ""
   github_source: "https://github.com/anthropics/skills"
@@ -16,7 +16,6 @@ metadata:
     - applications
   enabled: "true"
 ---
-
 ## Trigger Keywords
 webapp-testing, webapp testing, toolkit, interacting, testing, local, web, applications
 

@@ -1,6 +1,6 @@
 ---
 name: parallel-web
-description: Use Parallel CLI for web search, URL extraction, deep research, structured data enrichment, entity discovery, and recurring web monitoring. Best for requests that explicitly need current web evidence, academic-source discovery, repeated entity lookups, exhaustive reports, or ongoing change tracking.
+description: "使用并行CLI进行网络搜索、URL提取、深入研究、结构化数据浓缩、实体发现和经常性的网络监测。对于明确需要当前网络证据、学术来源发现、重复实体搜索、详尽报告或持续变化跟踪的请求来说，最为合适。"
 license: MIT
 compatibility: Requires parallel-cli and internet access.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Parallel Web Toolkit
 
 A unified skill for Parallel's web-intelligence workflows. For scientific topics, prefer primary literature and authoritative institutional sources.

@@ -1,6 +1,6 @@
 ---
 name: primekg
-description: Query the Precision Medicine Knowledge Graph (PrimeKG) for multiscale biological data including genes, drugs, diseases, phenotypes, and more.
+description: "查询精密医学知识图(PrimeKG),用于包括基因，药物，疾病，苯基等多种规模的生物数据。"
 license: Unknown
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # PrimeKG Knowledge Graph Skill
 
 ## Overview

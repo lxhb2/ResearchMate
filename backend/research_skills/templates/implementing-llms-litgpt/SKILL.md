@@ -1,6 +1,6 @@
 ---
 name: implementing-llms-litgpt
-description: Implements and trains LLMs using Lightning AI's LitGPT with 20+ pretrained architectures (Llama, Gemma, Phi, Qwen, Mistral). Use when need clean model implementations, educational understanding of architectures, or production fine-tuning with LoRA/QLoRA. Single-file implementations, no abstraction layers.
+description: "使用 Lightning AI 的 LitGPT 执行和列车，其中包含 20+ 的预训架构(Llama, Gemma, Phi, Quen, Mistral). 需要时使用干净的模型执行，对架构的教育理解，或使用 LoRA/QLoRA. 单文件执行，没有抽象层。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -40,7 +40,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # LitGPT - Clean LLM Implementations
 
 ## Quick start

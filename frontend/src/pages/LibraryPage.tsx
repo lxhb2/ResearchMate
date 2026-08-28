@@ -31,12 +31,20 @@ import {
   DownloadOutlined,
   FileSearchOutlined,
   ReadOutlined,
+  LinkOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import type { Paper } from '../types'
 import { papersApi } from '../api/papers'
 import { searchApi } from '../api/search'
-import { importsApi, type ImportPreview, type ImportResult } from '../api/imports'
+import {
+  importsApi,
+  type DoiRelatedResult,
+  type ImportPreview,
+  type ImportResult,
+  type RelatedPaper,
+  type RelatedPaperRelation,
+} from '../api/imports'
 import { getErrorMessage } from '../api/client'
 import { useUiStateStore } from '../store/uiStateStore'
 
@@ -51,6 +59,12 @@ export default function LibraryPage() {
   const [search, setSearch] = useState('')
   const [semanticQuery, setSemanticQuery] = useState('')
   const [semanticResults, setSemanticResults] = useState<Paper[] | null>(null)
+  const [doiModal, setDoiModal] = useState(false)
+  const [doiQuery, setDoiQuery] = useState('')
+  const [doiLoading, setDoiLoading] = useState(false)
+  const [doiResult, setDoiResult] = useState<DoiRelatedResult | null>(null)
+  const [doiSelected, setDoiSelected] = useState<Set<string>>(new Set())
+  const [doiImporting, setDoiImporting] = useState(false)
   const [uploading, setUploading] = useState(false)
   // 标签筛选（Zotero 式：按标签过滤文献库）
   const [tagFilter, setTagFilter] = useState<string | undefined>(undefined)
@@ -193,6 +207,131 @@ export default function LibraryPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const lookupDoiRelated = async () => {
+    if (!doiQuery.trim()) {
+      message.warning('请输入 DOI 或 DOI 链接')
+      return
+    }
+    setDoiLoading(true)
+    setDoiSelected(new Set())
+    try {
+      const result = await importsApi.doiRelated(doiQuery.trim())
+      setDoiResult(result)
+      if (!result.papers.length) message.info('未找到关联论文')
+    } catch (err) {
+      message.error(getErrorMessage(err))
+    } finally {
+      setDoiLoading(false)
+    }
+  }
+
+  const importDoiRelated = async () => {
+    if (!doiResult) return
+    const selected = doiResult.papers.filter((paper) => doiSelected.has(paper.id))
+    if (!selected.length) {
+      message.warning('请先选择要导入的论文')
+      return
+    }
+    setDoiImporting(true)
+    try {
+      const result = await importsApi.importRelated(selected)
+      message.success(
+        `已导入 ${result.count} 篇论文${result.skipped_duplicates ? `，跳过重复 ${result.skipped_duplicates} 篇` : ''}`,
+      )
+      setDoiSelected(new Set())
+      setDoiModal(false)
+      setDoiResult(null)
+      setDoiQuery('')
+      load()
+      loadTags()
+    } catch (err) {
+      message.error(getErrorMessage(err))
+    } finally {
+      setDoiImporting(false)
+    }
+  }
+
+  const relationPapers = (relation: RelatedPaperRelation): RelatedPaper[] =>
+    doiResult?.papers.filter((paper) => paper.relations.includes(relation)) ?? []
+
+  const toggleDoiPaper = (id: string) => {
+    setDoiSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const relatedPaperList = (relation: RelatedPaperRelation) => {
+    const items = relationPapers(relation)
+    const ids = items.map((paper) => paper.id)
+    const allSelected = items.length > 0 && ids.every((id) => doiSelected.has(id))
+    return (
+      <List
+        size="small"
+        itemLayout="vertical"
+        dataSource={items}
+        locale={{ emptyText: '暂无数据' }}
+        header={
+          items.length > 0 ? (
+            <Checkbox
+              checked={allSelected}
+              onChange={() => {
+                setDoiSelected((prev) => {
+                  const next = new Set(prev)
+                  if (allSelected) ids.forEach((id) => next.delete(id))
+                  else ids.forEach((id) => next.add(id))
+                  return next
+                })
+              }}
+            >
+              全选当前分组（{items.length} 篇）
+            </Checkbox>
+          ) : undefined
+        }
+        pagination={items.length > 6 ? { pageSize: 6, size: 'small' } : false}
+        renderItem={(paper) => (
+          <List.Item
+            actions={[
+              <Checkbox
+                key="select"
+                checked={doiSelected.has(paper.id)}
+                onChange={() => toggleDoiPaper(paper.id)}
+              />,
+              paper.url ? (
+                <a key="link" href={paper.url} target="_blank" rel="noreferrer">
+                  原文
+                </a>
+              ) : null,
+            ]}
+          >
+            <List.Item.Meta
+              title={
+                <Typography.Text strong style={{ fontSize: 13 }}>
+                  {paper.title}
+                </Typography.Text>
+              }
+              description={
+                <Space size={4} wrap>
+                  {paper.year ? <Tag>{paper.year}</Tag> : null}
+                  {paper.journal ? <Tag>{paper.journal}</Tag> : null}
+                  {paper.doi ? <Tag color="blue">{paper.doi}</Tag> : null}
+                  {paper.citation_count > 0 ? <Tag>{paper.citation_count} 被引</Tag> : null}
+                  {paper.sources.map((source) => (
+                    <Tag key={source} color="default">
+                      {source}
+                    </Tag>
+                  ))}
+                </Space>
+              }
+            />
+          </List.Item>
+        )}
+      />
+    )
   }
 
   const displayed = semanticResults ?? papers
@@ -377,6 +516,11 @@ export default function LibraryPage() {
           </Button>
         </Col>
         <Col>
+          <Button icon={<LinkOutlined />} onClick={() => setDoiModal(true)}>
+            DOI 关联
+          </Button>
+        </Col>
+        <Col>
           <Dropdown
             menu={{
               items: [
@@ -406,6 +550,81 @@ export default function LibraryPage() {
           </Dropdown>
         </Col>
       </Row>
+
+      <Modal
+        title="DOI 关联论文"
+        open={doiModal}
+        onCancel={() => setDoiModal(false)}
+        width={860}
+        footer={
+          <>
+            <Button onClick={() => setDoiModal(false)}>取消</Button>
+            <Button
+              type="primary"
+              icon={<ImportOutlined />}
+              loading={doiImporting}
+              disabled={!doiSelected.size}
+              onClick={importDoiRelated}
+            >
+              导入选中（{doiSelected.size}）
+            </Button>
+          </>
+        }
+      >
+        <Row gutter={8} style={{ marginBottom: 12 }}>
+          <Col flex="auto">
+            <Input
+              placeholder="输入 DOI、doi.org 链接或包含 DOI 的文本"
+              prefix={<LinkOutlined />}
+              value={doiQuery}
+              onChange={(event) => setDoiQuery(event.target.value)}
+              onPressEnter={lookupDoiRelated}
+              allowClear
+            />
+          </Col>
+          <Col>
+            <Button type="primary" loading={doiLoading} onClick={lookupDoiRelated}>
+              查询
+            </Button>
+          </Col>
+        </Row>
+
+        {doiResult?.anchor && (
+          <div style={{ padding: '10px 12px', marginBottom: 12, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6 }}>
+            <Typography.Text strong>{doiResult.anchor.title || '未命名论文'}</Typography.Text>
+            <div style={{ marginTop: 4 }}>
+              <Space size={4} wrap>
+                {doiResult.anchor.year ? <Tag>{doiResult.anchor.year}</Tag> : null}
+                {doiResult.anchor.journal ? <Tag>{doiResult.anchor.journal}</Tag> : null}
+                {doiResult.anchor.doi ? <Tag color="blue">{doiResult.anchor.doi}</Tag> : null}
+                {doiResult.anchor.citation_count > 0 ? <Tag>{doiResult.anchor.citation_count} 被引</Tag> : null}
+              </Space>
+            </div>
+          </div>
+        )}
+
+        {doiResult && doiResult.errors.length > 0 && (
+          <Alert
+            type="warning"
+            showIcon
+            style={{ marginBottom: 12 }}
+            message="部分数据源暂时不可用"
+            description={doiResult.errors.join('；')}
+          />
+        )}
+
+        {doiResult ? (
+          <Tabs
+            items={[
+              { key: 'similar', label: `相关推荐（${relationPapers('similar').length}）`, children: relatedPaperList('similar') },
+              { key: 'citation', label: `被引论文（${relationPapers('citation').length}）`, children: relatedPaperList('citation') },
+              { key: 'reference', label: `参考文献（${relationPapers('reference').length}）`, children: relatedPaperList('reference') },
+            ]}
+          />
+        ) : (
+          <Empty description="输入 DOI 后查询参考文献、被引论文和相关推荐" />
+        )}
+      </Modal>
 
       {reader && (
         <Alert

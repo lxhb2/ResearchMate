@@ -1,6 +1,6 @@
 ---
 name: launch
-description: Pre-flight checklist for long-running ML training jobs covering config diff, run naming, path verification, monitoring setup, and restart-cleanup. Use when the user asks to launch, kick off, start, restart, or kill a training run, or mentions launching a multi-hour or multi-day GPU job (python train, accelerate launch, torchrun, deepspeed, sbatch, tmux training).
+description: "用于远程 ML 训练任务，包括配置 diff, 运行命名，路径验证，监控设置，以及重新开始清理 。当用户请求启动、 启动、 启动、 重新启动、 或杀死训练运行，或提及启动多小时或多天的 GPU 任务( Python 列车，加速启动、 火炬运行、 深速、 sbatch、tmux 训练) 时使用 。"
 metadata:
   github_source: https://github.com/fcakyon/phd-skills
   category: experiment_review
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Launch: pre-flight checklist for long ML training jobs
 
 Long training jobs are expensive to fail. A 12-hour run that crashes on epoch 3 from a missing dataset path or a default `workers=8` against an NFS mount is a full day lost. This skill walks five quick checks before you commit the GPUs.

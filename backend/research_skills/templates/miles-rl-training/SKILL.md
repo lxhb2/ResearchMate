@@ -1,6 +1,6 @@
 ---
 name: miles-rl-training
-description: Provides guidance for enterprise-grade RL training using miles, a production-ready fork of slime. Use when training large MoE models with FP8/INT4, needing train-inference alignment, or requiring speculative RL for maximum throughput.
+description: "为企业级RL培训提供指导，使用英里，即一种生产准备的粘液。在使用FP8/INT4进行大型MOE模型培训时，需要调整列车推算，或需要推测性RL才能达到最大吞吐量。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -36,7 +36,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # miles: Enterprise-Grade RL for Large-Scale Model Training
 
 miles is a high-performance, enterprise-ready RL framework optimized for large-scale model post-training. Built as a production fork of slime, it addresses critical challenges in MoE training stability, low-precision training, and train-inference alignment.

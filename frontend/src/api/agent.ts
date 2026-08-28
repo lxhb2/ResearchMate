@@ -113,6 +113,7 @@ export interface AgentEvent {
   answer?: string
   error?: string
   tool_trace?: { tool: string; args: Record<string, unknown>; result: string }[]
+  recommendation?: Recommendation
 }
 
 // @ 引用上下文对象

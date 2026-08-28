@@ -1,6 +1,6 @@
 ---
 name: literature-research
-description: Use when the user wants to find related work, survey a research area, identify literature gaps, or discover open-source implementations. Triggers on phrases like "find papers on", "related work", "literature review", "what papers exist", "open source implementation", or "papers with code".
+description: "当用户想要找到相关工作，调查一个研究领域，发现文献空白，或发现开源执行时使用。"
 metadata:
   github_source: https://github.com/fcakyon/phd-skills
   category: literature
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Literature Research Methodology
 
 You are helping a researcher conduct systematic literature research. Follow this methodology to ensure thorough, accurate coverage.

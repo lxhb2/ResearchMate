@@ -52,7 +52,7 @@ def _load_or_create_secret_key(storage_dir: str) -> str:
 class Settings(BaseSettings):
     # App
     APP_NAME: str = "ResearchMate"
-    APP_VERSION: str = "0.3.4"
+    APP_VERSION: str = "0.3.8"
     GITHUB_REPO: str = "lxhb2/ResearchMate"
     API_V1_PREFIX: str = "/api/v1"
     SECRET_KEY: str = DEFAULT_SECRET_KEY
@@ -90,6 +90,9 @@ class Settings(BaseSettings):
     ANYSEARCH_API_KEY: str = ""
     ANYSEARCH_BASE_URL: str = "https://api.anysearch.com"
     SEARXNG_URL: str = ""
+    AGENTSEARCH_URL: str = ""
+    AGENTSEARCH_TOKEN: str = ""
+    AGENTSEARCH_MODE: str = "general"
 
     # CORS
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"

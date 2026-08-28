@@ -1,6 +1,6 @@
 ---
 name: hugging-science
-description: Use when the user is doing AI/ML work in a scientific domain such as biology, chemistry, physics, astronomy, climate, genomics, materials, medicine, ecology, energy, engineering, math, drug discovery, protein design, weather modeling, theorem proving, single-cell, or PDE solving. Hugging Science is a curated catalog of scientific datasets, models, blog posts, and interactive Spaces. This skill helps discover and use resources via `datasets`, `transformers`, the HF Inference API, `gradio_client`, and methodology citations.
+description: "当用户在生物学，化学，物理，天文学，气候，基因组学，材料，医学，生态学，能源，工程学，数学，药物发现，蛋白质设计，天气模型学，定理证明，单细胞，或PDE解析等科学领域进行AI/ML工作时使用. Hugging Science是科学数据集，模型，博客帖子和交互式空间的目录。"
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
   category: literature
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Hugging Science
 
 Hugging Science is a curated, LLM-friendly index of scientific datasets, models, blog posts, and interactive demos for ML researchers. Use it when a scientific ML question lands in front of you — it's much higher signal than generic search and the entries are pre-filtered for quality and openness.

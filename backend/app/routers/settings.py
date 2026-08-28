@@ -32,6 +32,10 @@ class SettingsOut(BaseModel):
     anysearch_api_key: str
     anysearch_base_url: str
     searxng_url: str
+    agentsearch_url: str
+    agentsearch_token: str
+    agentsearch_mode: str
+    academic_sources: list[str]
 
 
 class SettingsUpdate(BaseModel):
@@ -45,6 +49,10 @@ class SettingsUpdate(BaseModel):
     anysearch_api_key: str | None = None
     anysearch_base_url: str | None = None
     searxng_url: str | None = None
+    agentsearch_url: str | None = None
+    agentsearch_token: str | None = None
+    agentsearch_mode: str | None = None
+    academic_sources: list[str] | None = None
 
 
 class TestConnectionRequest(BaseModel):
@@ -54,10 +62,13 @@ class TestConnectionRequest(BaseModel):
 
 
 class SearchTestRequest(BaseModel):
-    provider: str = "auto"  # auto | anysearch | searxng
+    provider: str = "auto"  # auto | anysearch | searxng | agentsearch
     anysearch_api_key: str = ""
     anysearch_base_url: str = ""
     searxng_url: str = ""
+    agentsearch_url: str = ""
+    agentsearch_token: str = ""
+    agentsearch_mode: str = ""
 
 
 class ModelPresetOut(BaseModel):
@@ -98,6 +109,10 @@ def update_settings(
         k = payload["anysearch_api_key"] or ""
         if "*" in k or not k.strip():
             payload.pop("anysearch_api_key", None)
+    if "agentsearch_token" in payload:
+        k = payload["agentsearch_token"] or ""
+        if "*" in k or not k.strip():
+            payload.pop("agentsearch_token", None)
     cfg = settings_service.update_many(db, str(user.id), payload)
     # 清空 LLM 熔断状态：让新配置立即生效。
     # 否则旧的熔断记录会让「保存后立刻重试」的请求继续降级，
@@ -127,6 +142,10 @@ def _masked_out(cfg: dict) -> SettingsOut:
         anysearch_api_key=_mask_key(cfg.get("anysearch_api_key") or ""),
         anysearch_base_url=cfg.get("anysearch_base_url", "https://api.anysearch.com"),
         searxng_url=cfg.get("searxng_url", ""),
+        agentsearch_url=cfg.get("agentsearch_url", ""),
+        agentsearch_token=_mask_key(cfg.get("agentsearch_token") or ""),
+        agentsearch_mode=cfg.get("agentsearch_mode", "general"),
+        academic_sources=settings_service.normalize_academic_sources(cfg.get("academic_sources")),
     )
 
 
@@ -145,7 +164,7 @@ def test_search(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """测试联网搜索提供方（AnySearch / SearXNG）。"""
+    """测试联网搜索提供方（AnySearch / SearXNG / AgentSearch）。"""
     from app.services import web_search_providers
 
     cfg = settings_service.get_search_config(db, str(user.id))
@@ -155,6 +174,12 @@ def test_search(
         cfg["base_url"] = body.anysearch_base_url
     if body.searxng_url:
         cfg["searxng_url"] = body.searxng_url
+    if body.agentsearch_url:
+        cfg["agentsearch_url"] = body.agentsearch_url
+    if body.agentsearch_token:
+        cfg["agentsearch_token"] = body.agentsearch_token
+    if body.agentsearch_mode:
+        cfg["agentsearch_mode"] = body.agentsearch_mode
 
     provider = (body.provider or "auto").strip().lower()
     if provider == "anysearch":
@@ -167,6 +192,16 @@ def test_search(
             return {"ok": True, "engine": "searxng", "count": result.get("count", 0)}
         except Exception as e:  # noqa: BLE001
             errors.append(f"SearXNG：{e}")
+
+    if provider in ("auto", "agentsearch") and web_search_providers.agentsearch_configured(cfg):
+        try:
+            result = web_search_providers.agentsearch_search(
+                "ResearchMate", 1, timeout=20, config=cfg,
+                mode=cfg.get("agentsearch_mode") or "general",
+            )
+            return {"ok": True, "engine": "agentsearch", "count": result.get("count", 0)}
+        except Exception as e:  # noqa: BLE001
+            errors.append(f"AgentSearch：{e}")
 
     if provider in ("auto", "anysearch") and web_search_providers.anysearch_enabled(cfg):
         try:
@@ -181,6 +216,8 @@ def test_search(
         errors.append("未配置 SearXNG URL")
     if provider == "anysearch" and not web_search_providers.anysearch_enabled(cfg):
         errors.append("AnySearch 未启用")
+    if provider == "agentsearch" and not web_search_providers.agentsearch_configured(cfg):
+        errors.append("未配置 AgentSearch URL")
     raise HTTPException(status_code=400, detail="；".join(errors) or "没有可测试的搜索提供方")
 
 

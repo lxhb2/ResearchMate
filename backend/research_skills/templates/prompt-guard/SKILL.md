@@ -1,6 +1,6 @@
 ---
 name: prompt-guard
-description: Meta's 86M prompt injection and jailbreak detector. Filters malicious prompts and third-party data for LLM apps. 99%+ TPR, <1% FPR. Fast (<2ms GPU). Multilingual (8 languages). Deploy with HuggingFace or batch processing for RAG security.
+description: "Meta的86M快速注射和越狱探测器. Filters恶意提示和LLM apps的第三方数据. 99QQ001,<1%FPR. fast (<2ms GPU).多语种(8种语言). 部署与HuggingFace或批量处理的RAG安全。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -35,7 +35,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Prompt Guard - Prompt Injection & Jailbreak Detection
 
 Prompt Guard is an 86M parameter classifier that detects prompt injections and jailbreak attempts in LLM applications.

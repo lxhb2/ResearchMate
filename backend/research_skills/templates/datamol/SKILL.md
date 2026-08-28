@@ -1,6 +1,6 @@
 ---
 name: datamol
-description: Pythonic wrapper around RDKit with simplified interface and sensible defaults. Preferred for standard drug discovery including SMILES parsing, standardization, descriptors, fingerprints, clustering, 3D conformers, parallel processing. Returns native rdkit.Chem.Mol objects. For advanced control or custom parameters, use rdkit directly.
+description: "Pythonic 包装器在 RDKit 周围有简化接口和合理默认。 首选标准药物发现，包括 SMILES 解析、 标准化、 描述符、 指纹、 集群、 3D 匹配符、 并行处理。 返回本地 rdkit.Chem.Mol 对象。对于高级控制或自定义参数，请直接使用 rdkit 。"
 license: Apache-2.0 license
 allowed-tools: Read Write Edit Bash
 compatibility: Requires Python 3.8+ and datamol (uv pip install). RDKit is installed automatically as a datamol dependency (since 0.12.2). Optional s3fs/gcsfs for cloud I/O via fsspec.
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Datamol Cheminformatics Skill
 
 ## Overview

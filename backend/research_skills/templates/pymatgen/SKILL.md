@@ -1,6 +1,6 @@
 ---
 name: pymatgen
-description: Analyze, validate, convert, and transform materials structures and computed materials data with current pymatgen APIs, including local phase diagrams, symmetry sensitivity, electronic-structure I/O, and explicitly bounded Materials Project queries.
+description: "分析、验证、转换和转换材料结构，并用目前的烟火素API计算材料数据，包括局部相位图、对称敏感度、电子结构I/O,以及明确界限的材料项目查询。"
 license: MIT
 compatibility: Python 3.11+ with uv. The verified snapshot uses pymatgen 2026.5.4, pymatgen-core 2026.7.16, and mp-api 0.46.4. Bundled help and planning CLIs use only the standard library; local scientific execution lazily requires the pinned pymatgen packages. Materials Project access additionally requires explicit network approval and the single named secret MP_API_KEY.
 allowed-tools: Read Write Bash Glob Python
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # pymatgen
 
 Use pymatgen for explicit, provenance-preserving work with compositions,

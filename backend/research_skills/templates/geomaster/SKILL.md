@@ -1,6 +1,6 @@
 ---
 name: geomaster
-description: Comprehensive geospatial science skill covering remote sensing, GIS, spatial analysis, machine learning for earth observation, and 30+ scientific domains. Supports satellite imagery processing (Sentinel, Landsat, MODIS, SAR, hyperspectral), vector and raster data operations, spatial statistics, point cloud processing, network analysis, cloud-native workflows (STAC, COG, Planetary Computer), and 8 programming languages (Python, R, Julia, JavaScript, C++, Java, Go, Rust) with 500+ code examples. Use for remote sensing workflows, GIS analysis, spatial ML, Earth observation data processing, terrain analysis, hydrological modeling, marine spatial analysis, atmospheric science, and any geospatial computation task.
+description: "涵盖遥感，GIS,空间分析，地球观测的机器学习，以及30+科学领域. 支持卫星图像处理(Sentinel,Landsat,MODIS,SAR,超光谱),矢量和光栅数据操作，空间统计，点云处理，网络分析，云-内源工作流程(STAC,COG,行星计算机),以及8种编程语言(Python,R,Julia,JavaScript,C++,Java,Go,Rust),有500+代码实例。"
 license: MIT License
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # GeoMaster
 
 Comprehensive geospatial science skill covering GIS, remote sensing, spatial analysis, and ML for Earth observation across 70+ topics with 500+ code examples in 8 programming languages.

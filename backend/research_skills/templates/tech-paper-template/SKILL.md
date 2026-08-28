@@ -1,6 +1,6 @@
 ---
 name: tech-paper-template
-description: Structures a technical paper's full logical skeleton using a thinking-template table (research background, limitations, key idea or goal, challenges, methodology modules, contributions), positions the paper as Technique or New Problem/Setting, and runs a four-point self-consistency check. Use when the user is brainstorming a paper, discussing progress with an advisor, or planning the paper before drafting. Also use for 'paper skeleton', 'paper logic chain', 'thinking template', 'paper-structure planning'.
+description: "使用思维模式表(研究背景、限制、关键想法或目标、挑战、方法模块、贡献)构建技术论文的全部逻辑骨架，将论文定位为Technique或New Problem/Setting,并进行四点自我一致性检查。当用户集思广益、与顾问讨论进度或起草前规划论文时使用。还使用“纸张骨架”、“纸张逻辑链”、“思维模板”和“纸张结构规划 ” 。"
 license: CC-BY-4.0
 metadata:
   github_source: https://github.com/HKUSTDial/Supervisor-Skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Tech Paper Template
 
 ## Overview

@@ -1,6 +1,6 @@
 ---
 name: diffdock
-description: DiffDock and DiffDock-L molecular docking. Use for protein-small-molecule pose prediction from PDB or sequence plus SMILES/SDF/MOL2, batch docking, virtual screening, and pose-confidence interpretation. Not for binding affinity prediction.
+description: "DiffDock 和 DiffDock-L 分子对接。 使用 PDB 或 序列加 SMILES/SDF/MOL2 的预测、 批量对接、 虚拟筛选 和 假象 解析。不用于绑定的亲和性预测 。"
 allowed-tools: Read Write Edit Bash Glob Grep
 compatibility: Requires the DiffDock repository, Python 3.9 environment from upstream environment.yml or the official Docker image, RDKit, PyTorch/PyG, and optional CUDA GPU acceleration. Current guidance targets DiffDock v1.1.3 / DiffDock-L.
 license: MIT license
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # DiffDock: Molecular Docking with Diffusion Models
 
 ## Overview

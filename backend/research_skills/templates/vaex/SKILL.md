@@ -1,6 +1,6 @@
 ---
 name: vaex
-description: Use this skill for processing and analyzing large tabular datasets (billions of rows) that exceed available RAM. Vaex excels at out-of-core DataFrame operations, lazy evaluation, fast aggregations, efficient visualization of big data, and machine learning on large datasets. Apply when users need to work with large CSV/HDF5/Arrow/Parquet files, perform fast statistics on massive datasets, create visualizations of big data, or build ML pipelines that do not fit in memory.
+description: "使用这种技能来处理和分析超过可用RAM的大型表格数据集(十亿行). Vaex在非核心DataFrame操作，懒惰评价，快速聚合，大数据高效可视化，以及大数据集的机器学习方面表现突出. 应用当用户需要与大型CSV/HDF5/Arrow/Parquet文件合作时，对大型数据集进行快速统计，创建大数据的可视化，或构建不适合内存的ML管道。"
 allowed-tools: Read Write Edit Bash Grep Glob
 license: MIT license
 metadata:
@@ -23,7 +23,6 @@ metadata:
   enabled: 'true'
 compatibility: Requires Python 3.10+ (3.12+ recommended with vaex 4.19.0). Install with uv pip install vaex. Optional s3fs/gcsfs/adlfs for cloud I/O.
 ---
-
 # Vaex
 
 ## Overview

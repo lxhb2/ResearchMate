@@ -1,6 +1,6 @@
 ---
 name: serving-llms-vllm
-description: Serves LLMs with high throughput using vLLM's PagedAttention and continuous batching. Use when deploying production LLM APIs, optimizing inference latency/throughput, or serving models with limited GPU memory. Supports OpenAI-compatible endpoints, quantization (GPTQ/AWQ/FP8), and tensor parallelism.
+description: "使用 vLLM 的 PagedAtting 和连续批量服务 LLMs 。当部署 LLM API 时，优化推断 latency/throughput , 或服务 GPU 内存有限的模型时，支持 OpenAI 兼容的端点、quantization( GPTQ/AWQ/FP8) 和 lamor 并行化 。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -37,7 +37,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # vLLM - High-Performance LLM Serving
 
 ## Quick start

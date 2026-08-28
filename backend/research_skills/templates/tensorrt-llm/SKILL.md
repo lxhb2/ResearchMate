@@ -1,6 +1,6 @@
 ---
 name: tensorrt-llm
-description: Optimizes LLM inference with NVIDIA TensorRT for maximum throughput and lowest latency. Use for production deployment on NVIDIA GPUs (A100/H100), when you need 10-100x faster inference than PyTorch, or for serving models with quantization (FP8/INT4), in-flight batching, and multi-GPU scaling.
+description: "优化LLM推论与NVIDIA TensorRT,用于最大吞吐量和最低潜伏度. 用于NVIDIA GPU(A100/H100)上的生产部署，当您需要10-100x比PyTorch更快推论，或者用于服务型号的量子化(FP8/INT4),飞行中批量，以及多GPU缩放。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -38,7 +38,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # TensorRT-LLM
 
 NVIDIA's open-source library for optimizing LLM inference with state-of-the-art performance on NVIDIA GPUs.

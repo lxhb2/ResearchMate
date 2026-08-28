@@ -1,6 +1,6 @@
 ---
 name: pufferlib
-description: Version-aware guidance for PufferLib reinforcement-learning environments, vectorization, policies, PuffeRL training, evaluation, and safe checkpoint review. Use when adapting Gymnasium/PettingZoo environments to published PufferLib 3.0.0 or working with the redesigned native 4.0 source line.
+description: "PufferLib 强化学习环境、矢量化、政策、PuffeRL培训、评价和安全检查站审查的版本认识指南。在调整Gymnasium/PettingZoo环境以发布PufferLib 3.0.0或与重新设计的4.0源线合作时使用。"
 license: MIT
 compatibility: Bundled CLIs require Python 3.10+ and use only the standard library. Published pufferlib 3.0.0 supports Python >=3.9 but ships as a native-code source archive; current 4.0 source requires Python >=3.10, Torch >=2.9, and an audited CPU/CUDA toolchain. Network, GPU, native builds, environment plug-ins, assets, checkpoints, and external logging are never required by the bundled CLIs.
 allowed-tools: Read Bash Grep Python
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # PufferLib
 
 Use PufferLib with an explicit version profile. Upstream currently has two

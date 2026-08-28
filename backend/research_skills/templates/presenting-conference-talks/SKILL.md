@@ -1,6 +1,6 @@
 ---
 name: presenting-conference-talks
-description: Generates conference presentation slides (Beamer LaTeX PDF and editable PPTX) from a compiled paper with speaker notes and talk script. Use when preparing oral talks, spotlight presentations, or invited talks for ML and systems conferences.
+description: "生成会议演示幻灯片( Beamer LaTeX PDF 和可编辑的PPTX ) , 内容是演讲人笔记和演讲脚本。在为ML 和系统会议准备口头会谈、聚光灯演示或邀请谈话时使用。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -36,7 +36,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Presenting Conference Talks: From Paper to Slides
 
 Generate conference presentation slides from a compiled research paper. Produces both **Beamer LaTeX PDF** (for polished typesetting) and **editable PPTX** (for last-minute adjustments), with speaker notes and an optional talk script.

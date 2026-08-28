@@ -1,6 +1,6 @@
 ---
 name: networkx
-description: Create, analyze, and visualize complex networks and graphs in Python with NetworkX. Use when working with network/graph data structures, computing graph algorithms (shortest paths, centrality, clustering), detecting communities, generating synthetic networks (random, scale-free, small-world), reading/writing graph file formats, or drawing network topologies. Common applications include social, biological, transportation, and citation networks.
+description: "用 NetworkX在 Python 中创建、分析和可视化复杂的网络和图表。在与 network/graph 数据结构、计算 图表算法(最短路径、中心、集群) 、 检测社区、 生成合成网络( 随机、无规模、小世界) 、 reading/writing 图表文件格式或绘制网络地形时使用。 常见的应用包括社会、 生物、 交通和引用网络。"
 license: 3-clause BSD license
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # NetworkX
 
 ## Overview

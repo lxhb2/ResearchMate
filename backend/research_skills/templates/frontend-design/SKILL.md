@@ -1,6 +1,6 @@
 ---
 name: frontend-design
-description: "Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one. Helps with aesthetic direction, typography, and making choices that don't read as templated defaults."
+description: "在新建 UI 或 重塑 现有 UI 时，指导有特色的、 有意的外观设计。 有助于 美学方向 、 排版 、 以及 选择不 读作模板 的 默认 。"
 metadata:
   version: ""
   github_source: "https://github.com/anthropics/skills"
@@ -16,7 +16,6 @@ metadata:
     - building
   enabled: "true"
 ---
-
 ## Trigger Keywords
 frontend-design, frontend design, guidance, distinctive, intentional, visual, design, building
 

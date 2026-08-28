@@ -1,6 +1,6 @@
 ---
 name: nature-paper-card
-description: Build a source-grounded deep-reading Paper Card for one scientific paper, preprint, PDF, DOI, arXiv page, publisher article, or pasted paper text. Use when the user asks for a Paper Card, deep-reading literature card, single-paper deep analysis, module-by-module analysis, experiment-to-claim evidence chain, conclusion-boundary audit, critical analysis, knowledge connections, or candidate research ideas. Produce the fixed Sections 01-16 covering bibliographic position, research question, background route, pain point, core insight, method and module logic, essential formulas, experiment-to-claim evidence, conclusion boundaries, author-stated limitations, critical analysis, learned knowledge, knowledge connections, and testable research ideas. Do not use for full-paper bilingual translation, formal peer-review reports, batch literature monitoring, academic-English collection, comprehension quizzes, or public-article writing.
+description: "为一份科学论文，预印，PDF,DOI,arXiv页，出版商文章，或粘贴的纸质文本构建一个基于源的深读纸卡，当用户要求一张纸卡，深读文献卡，单纸深度分析，模块逐单元分析，实验到诉求证据链，结论边界审计，批判分析，知识关联，或候选研究想法时使用。"
 metadata:
   github_source: https://github.com/Yuan1z0825/nature-skills
   category: literature
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Nature Paper Card - Router
 
 Use this skill to turn one paper into an evidence-grounded research card, not a translated abstract, generic summary, reviewer report, or publication article.

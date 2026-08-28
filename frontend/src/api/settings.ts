@@ -11,6 +11,10 @@ export interface AppSettings {
   anysearch_api_key: string
   anysearch_base_url: string
   searxng_url: string
+  agentsearch_url: string
+  agentsearch_token: string
+  agentsearch_mode: string
+  academic_sources: string[]
 }
 
 export interface SettingsUpdate {
@@ -24,6 +28,10 @@ export interface SettingsUpdate {
   anysearch_api_key?: string
   anysearch_base_url?: string
   searxng_url?: string
+  agentsearch_url?: string
+  agentsearch_token?: string
+  agentsearch_mode?: string
+  academic_sources?: string[]
 }
 
 export interface TestConnectionPayload {
@@ -33,10 +41,13 @@ export interface TestConnectionPayload {
 }
 
 export interface SearchTestPayload {
-  provider?: 'auto' | 'anysearch' | 'searxng'
+  provider?: 'auto' | 'anysearch' | 'searxng' | 'agentsearch'
   anysearch_api_key?: string
   anysearch_base_url?: string
   searxng_url?: string
+  agentsearch_url?: string
+  agentsearch_token?: string
+  agentsearch_mode?: string
 }
 
 export const settingsApi = {

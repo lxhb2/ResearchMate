@@ -1,6 +1,6 @@
 ---
 name: nature-paper-to-patent
-description: Convert scientific papers, theses, technical reports, source code, figures, inventor notes, or research manuscripts into evidence-grounded Chinese invention patent drafts and attorney-facing technical disclosure materials. Use when an AI agent must mine patent points, draft or revise a Chinese technical disclosure (技术交底书), run prior-art comparison, convert Office project materials, map every claimed feature to source evidence, preserve core formulas as editable Office Math, generate claim-aligned flowcharts and methodology figures, compare a paper with an existing patent, audit support and consistency, or deliver Chinese DOCX patent/disclosure files.
+description: "将科学论文，论文，技术报告，源代码，数字，发明人笔记，或研究手稿等，转化成证据化的中国发明专利草案和律师化技术公开材料。"
 metadata:
   github_source: https://github.com/Yuan1z0825/nature-skills
   category: literature
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Paper to Chinese Patent
 
 Use this file as the router for the patent-drafting workflow. Do not draft the

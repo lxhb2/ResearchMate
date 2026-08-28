@@ -1,6 +1,6 @@
 ---
 name: aeon
-description: This skill should be used for time series machine learning tasks including classification, regression, clustering, forecasting, anomaly detection, segmentation, and similarity search. Use when working with temporal data, sequential patterns, or time-indexed observations requiring specialized algorithms beyond standard ML approaches. Particularly suited for univariate and multivariate time series analysis with scikit-learn compatible APIs.
+description: "这种技能应用于时间序列机器的学习任务，包括分类，回归，集群，预测，异常检测，分割，以及相似性搜索。在与时间数据，顺序模式，或需要超过标准ML方法的专门算法的时序观测一起工作时使用。特别适合与sikit-learn兼容的API进行单变量和多变量的时间序列分析。"
 license: BSD-3-Clause license
 allowed-tools: Read Write Edit Bash
 compatibility: Requires Python 3.10+ and the aeon package (uv pip install). Optional aeon[all_extras] for deep learning and extended dependencies.
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Aeon Time Series Machine Learning
 
 ## Overview

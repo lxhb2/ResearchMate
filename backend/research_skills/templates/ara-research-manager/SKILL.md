@@ -1,6 +1,6 @@
 ---
 name: ara-research-manager
-description: Records research provenance as a post-task epilogue, scanning conversation history at the end of a coding or research session to extract decisions, experiments, dead ends, claims, heuristics, and pivots, and writing them into the ara/ directory with user-vs-AI provenance tags. Use as a session epilogue — never during execution — to maintain a faithful, auditable trace of how a research project actually evolved.
+description: "记录研究出处作为任务后的缩写，在编码或研究会场结束时扫描对话历史，以提取决定，实验，死端，主张，修炼，并用用户-vs-AI的出处标记将其写入ara/目录. 使用作为会场缩写——在执行过程中从未使用——以保持一个忠实，可审计的研究项目如何实际演进的痕迹。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -32,7 +32,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Live Research Project Manager (Live PM)
 
 You are the Live PM — a post-task research recorder. You run ONLY at the END of a coding

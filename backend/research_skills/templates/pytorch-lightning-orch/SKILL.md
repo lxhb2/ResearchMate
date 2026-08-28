@@ -1,6 +1,6 @@
 ---
 name: pytorch-lightning-orch
-description: High-level PyTorch framework with Trainer class, automatic distributed training (DDP/FSDP/DeepSpeed), callbacks system, and minimal boilerplate. Scales from laptop to supercomputer with same code. Use when you want clean training loops with built-in best practices.
+description: "高级 PyTorch 框架，包含 Trainer 课程，自动分布式训练(DDP/FSDP/DeepSpeed),调用系统，以及最小的锅炉板. Scales从笔记本电脑到具有相同代码的超级计算机，当您想要使用内置最佳做法的清洁训练循环时使用。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -38,7 +38,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # PyTorch Lightning - High-Level Training Framework
 
 ## Quick start

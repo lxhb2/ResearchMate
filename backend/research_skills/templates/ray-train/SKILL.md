@@ -1,6 +1,6 @@
 ---
 name: ray-train
-description: Distributed training orchestration across clusters. Scales PyTorch/TensorFlow/HuggingFace from laptop to 1000s of nodes. Built-in hyperparameter tuning with Ray Tune, fault tolerance, elastic scaling. Use when training massive models across multiple machines or running distributed hyperparameter sweeps.
+description: "分布在集群之间的训练管弦. Scales PyTorch/TensorFlow/HuggingFace从笔记本电脑到1000s的节点. 内建的超参数调试与Ray Tune, 断层耐力，弹性缩放.当训练大规模模型跨越多个机器或运行分布超参数扫描时使用。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -38,7 +38,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Ray Train - Distributed Training Orchestration
 
 ## Quick start

@@ -1,6 +1,6 @@
 ---
 name: deep-research-sup
-description: 'Runs a deep, survey-grade literature investigation on a research topic: freezes research questions, searches from multiple adversarial perspectives, verifies every citation, synthesizes evidence into a MECE taxonomy with in-sentence cross-comparison, and answers the research questions in an evidence-first report. Use when the user asks for a literature review, a survey of a field, research landscape mapping, or a deep dive into what is known about a topic.'
+description: "对研究课题进行深入的，调查级的文献调查：冻结研究问题，从多个对抗角度进行搜索，验证每一个引用，将证据综合到MECE分类学中，与不服判决的交叉比较，并在证据第一报告中解答研究问题. 使用当用户要求文献审查，实地调查，研究地貌绘图，或深度潜入已知的关于一个课题的内容时。"
 license: CC-BY-NC-SA-4.0
 metadata:
   github_source: https://github.com/HKUSTDial/Supervisor-Skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Deep Research
 
 ## Overview

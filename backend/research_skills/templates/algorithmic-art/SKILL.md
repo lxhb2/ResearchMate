@@ -1,6 +1,6 @@
 ---
 name: algorithmic-art
-description: "Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration. Use this when users request creating art using code, generative art, algorithmic art, flow fields, or particle systems. Create original algorithmic art rather than copying existing artists' work to avoid copyright violations."
+description: "使用 p5.js 创建算法艺术，并带有种子随机性和交互式参数探索。当用户请求使用代码、 基因艺术、 算法艺术、 流场或粒子系统创建艺术时，使用此技术。 创建原始算法艺术，而不是复制现有艺术家的作品，以避免侵犯版权 。"
 metadata:
   version: ""
   github_source: "https://github.com/anthropics/skills"
@@ -16,7 +16,6 @@ metadata:
     - interactive
   enabled: "true"
 ---
-
 ## Trigger Keywords
 algorithmic-art, algorithmic art, creating, algorithmic, art, seeded, randomness, interactive
 

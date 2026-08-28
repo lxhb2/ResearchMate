@@ -1,6 +1,6 @@
 ---
 name: pydicom
-description: Use pydicom to read, inspect, write, transform, and safely preflight local DICOM datasets and pixel data. Applies to DICOM metadata, transfer syntaxes, compression plugins, frames, private elements, JSON, and bounded de-identification review.
+description: "使用 pydicom 读取，检查，写入，转换，并安全地进行飞行前本地的DICOM数据集和像素数据. 应用到DICOM元数据，传输语法，压缩插件，帧，私用元素，JSON,并进行定界解识别审查。"
 license: MIT
 compatibility: Python 3.10+ with pydicom 3.0.2; optional pinned NumPy, Pillow, and pixel plugins. Helper CLIs are local-only and require authorized data.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # pydicom
 
 Use pydicom for DICOM dataset I/O and pixel processing. Version 3.0.2 is the

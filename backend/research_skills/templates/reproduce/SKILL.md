@@ -1,6 +1,6 @@
 ---
 name: reproduce
-description: End-to-end paper reproduction from arxiv URL through smoke runs to replication experiments. Handles missing or partial official code, missing training scripts, missing hyperparameters, and private datasets via similar-public-dataset substitution. Use when the user asks to reproduce, implement, replicate, or re-run a paper from scratch, or pastes an arxiv URL with reproduction intent.
+description: "从arxiv URL到端的纸质复制通过烟雾运行到复制实验. 处理缺失或部分的官方代码，缺失的训练脚本，缺失的超参数，以及通过类似公共数据集替换的私有数据集.当用户请求复制，执行，复制，或从零开始重运行纸张时使用，或刻意粘贴一个arxiv URL."
 metadata:
   github_source: https://github.com/fcakyon/phd-skills
   category: literature
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Reproduce: paper reproduction from scratch
 
 Reproducing an ML paper often means filling gaps the authors didn't ship, training scripts, hyperparameter tables, augmentation specifics, exact dataset splits. This skill walks seven stages from "I have an arxiv link" to "I have a replication run with measurable delta vs the paper's number."

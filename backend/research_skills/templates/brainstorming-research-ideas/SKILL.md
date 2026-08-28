@@ -1,6 +1,6 @@
 ---
 name: brainstorming-research-ideas
-description: Guides researchers through structured ideation frameworks to discover high-impact research directions. Use when exploring new problem spaces, pivoting between projects, or seeking novel angles on existing work.
+description: "引导研究人员通过结构化的构思框架来发现高影响研究方向。在探索新的问题空间时，在项目间进行引导，或寻找对现有工作的新角度。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -30,7 +30,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Research Idea Brainstorming
 
 Structured frameworks for discovering the next research idea. This skill provides ten complementary ideation lenses that help researchers move from vague curiosity to concrete, defensible research proposals. Each framework targets a different cognitive mode—use them individually or combine them for comprehensive exploration.

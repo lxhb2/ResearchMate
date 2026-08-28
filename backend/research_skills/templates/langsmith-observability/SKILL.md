@@ -1,6 +1,6 @@
 ---
 name: langsmith-observability
-description: LLM observability platform for tracing, evaluation, and monitoring. Use when debugging LLM applications, evaluating model outputs against datasets, monitoring production systems, or building systematic testing pipelines for AI applications.
+description: "LLM可观察性平台用于跟踪，评价和监测. 调试LLM应用程序时，对照数据集评价模型输出，监测生产系统，或为AI应用程序建立系统测试管道。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -35,7 +35,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # LangSmith - LLM Observability Platform
 
 Development platform for debugging, evaluating, and monitoring language models and AI applications.

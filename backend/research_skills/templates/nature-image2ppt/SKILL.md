@@ -1,6 +1,6 @@
 ---
 name: nature-image2ppt
-description: Convert slide images, screenshots, scanned PDFs, and image-only PPT/PPTX files into high-fidelity object-level editable PowerPoint, including semantic-region mixed reconstruction, measured flowcharts and knowledge graphs, native circle nodes and connectors, single-object thin and filled arrows, speaker-note preservation, and rendered QA. Use for 图片转可编辑PPT、截图还原PPT、扫描PDF恢复、图片型PPTX转换、流程图/知识图谱/复合图形/箭头重建; not for authoring a new deck from notes.
+description: "将幻灯片图像、截图、扫描的 PDF 和图像专用的 PPT/PPTX文件转换为高纯度对象可编辑的 PowerPoint , 包括语义- 区域混合重建、 测量流图和知识图、 本地圆形节点和连接器、 单对象稀疏和填充箭头、 扬声器保存 和 QA 。 用于 QPTQPTTQPTQQQPTQQQQ/QQX/QQQ ; 用于从注释中写入新的甲板 。"
 metadata:
   github_source: https://github.com/Yuan1z0825/nature-skills
   category: paper_writing
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Nature Image2PPT
 
 Use this directory as the complete runtime. Run deterministic actions only through:

@@ -142,6 +142,9 @@ CI 已配置：每次 push/PR 自动运行后端 pytest 与前端构建（`.gith
 | `ANYSEARCH_ENABLED` | 启用 AnySearch 匿名联网搜索（Apache-2.0 开源项目，公开 API） | `true` |
 | `ANYSEARCH_API_KEY` | AnySearch 免费 API Key，提高限流（可选） | 空 |
 | `SEARXNG_URL` | 自建 SearXNG 地址，配置后优先使用（开源免费、本地化） | 空 |
+| `AGENTSEARCH_URL` | 自建 AgentSearch 地址；一次返回搜索结果和正文证据 | 空 |
+| `AGENTSEARCH_TOKEN` | AgentSearch Bearer Token（服务启用鉴权时填写） | 空 |
+| `AGENTSEARCH_MODE` | AgentSearch 检索模式：`general` / `academic` / `code` / `news` | `general` |
 
 ### 7. 可选：整篇 PDF 翻译（pdf2zh-next / BabelDOC）
 

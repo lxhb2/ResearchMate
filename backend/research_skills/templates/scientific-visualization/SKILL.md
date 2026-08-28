@@ -1,6 +1,6 @@
 ---
 name: scientific-visualization
-description: Create and audit truthful, accessible, publication-ready scientific figures with Matplotlib, Seaborn, or Plotly. Use for figure design, multi-panel layouts, uncertainty and missing-data displays, color/contrast review, image metadata validation, and journal export planning.
+description: "用 Matplotlib 、 Seaborn 或 Plotly 创建并审核真实、可访问、可出版的科学人物。 用于数字设计、多板块布局、不确定性和缺失数据显示、 color/contrast 评论、 图像元数据验证和期刊导出规划 。"
 license: MIT
 compatibility: Requires Python 3.11+ and uv for pinned examples. Bundled CLIs are network-free and load Matplotlib, Pillow, or pypdf only when needed. Plotly static export with Kaleido v1 requires a compatible Chrome/Chromium installation.
 allowed-tools: Read Write Edit Bash Glob Grep
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Scientific Visualization
 
 Build figures that preserve scientific meaning before optimizing appearance. Separate universal principles from dated publisher rules, preserve raw data and transformations, use color redundantly, and inspect delivered files rather than trusting plotting defaults.

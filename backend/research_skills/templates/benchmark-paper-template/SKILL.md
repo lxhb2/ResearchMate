@@ -1,6 +1,6 @@
 ---
 name: benchmark-paper-template
-description: Structures Benchmark and Evaluation papers using the five-pillar framework (Research Gap, Construction Pipeline, Evaluation Framework, Empirical Findings, optional Companion Method). Returns a completeness audit, a six-part Introduction logic chain, a Section 2-7 skeleton, and a pre-submission checklist. Use when writing a benchmark paper, structuring a benchmark paper, checking whether a benchmark idea is substantive, drafting a benchmark Introduction, or planning the data-construction pipeline or experiments.
+description: "采用五大支柱框架(研究差距、建设管道、评价框架、经验性结论、可选协作方法)编制基准和评价文件。返回完整性审计、六部分的导言逻辑链、第2-7节骨架和提交前核对表。在撰写基准文件、构建基准文件、检查基准构想是否具有实质性、起草基准导言或规划数据建设管道或试验时使用。"
 license: CC-BY-4.0
 metadata:
   github_source: https://github.com/HKUSTDial/Supervisor-Skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Benchmark Paper Template
 
 ## Overview

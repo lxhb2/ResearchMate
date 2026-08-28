@@ -1,6 +1,6 @@
 ---
 name: umap-learn
-description: Use UMAP-learn for nonlinear dimensionality reduction, 2D/3D embeddings, clustering preprocessing, supervised or semi-supervised UMAP, DensMAP, AlignedUMAP, and Parametric UMAP workflows.
+description: "使用UMAP-learn进行非线性维度减小，2D/3D嵌入，集成预处理，受监督或半监督的UMAP,DensMAP,AregnUMAP,以及参数的UMAP工作流程。"
 license: BSD-3-Clause license
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # UMAP-Learn
 
 ## Overview

@@ -1,6 +1,6 @@
 ---
 name: scientific-writing-sas
-description: Draft, revise, and audit scientific manuscripts or reports with explicit evidence provenance, reporting-guideline coverage, authorship accountability, confidentiality controls, and local consistency checks. Use for manuscript sections, references, declarations, tables, figures, or submission preparation when scientific accuracy and traceability matter.
+description: "起草、修订和审计具有明确证据来源、报告准则范围、作者责任、保密控制以及地方一致性检查的科学手稿或报告，在科学准确性和可追溯性方面，用于编写手稿、参考材料、声明、表格、数字或提交材料。"
 license: MIT
 compatibility: Requires Python 3.11+ only for optional dependency-free local CLIs; core guidance is platform-neutral. Bundled tools are offline and require no API keys.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Scientific Writing
 
 ## Purpose

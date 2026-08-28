@@ -1,6 +1,6 @@
 ---
 name: xlsx
-description: "Use this skill any time a spreadsheet file is the primary input or output. This means any task where the user wants to: open, read, edit, or fix an existing .xlsx, .xlsm, .xltx, .csv, or .tsv file (e.g., adding columns, computing formulas, formatting, charting, cleaning messy data); create a new spreadsheet from scratch or from other data sources; or convert between tabular file formats. Trigger especially when the user references a spreadsheet file by name or path — even casually (like \"the xlsx in my downloads\") — and wants something done to it or produced from it. Also trigger for cleaning or restructuring messy tabular data files (malformed rows, misplaced headers, junk data) into proper spreadsheets. The deliverable must be a spreadsheet file. Do NOT trigger when the primary deliverable is a Word document, HTML report, standalone Python script, database pipeline, or Google Sheets API integration, even if tabular data is involved."
+description: "使用此技能时，电子表格文件是主输入或输出。这意味着用户想要打开、 读取、 编辑、 或修正一个已有的 . xlsx、 . xlsm、 . xltx、 . csv, 或.tsv文件(例如，添加列、 计算公式、 格式化、 图表化、 清理杂乱数据) 的任何任务；或从抓取或从其他数据来源创建新的电子表格 。"
 metadata:
   version: ""
   github_source: "https://github.com/anthropics/skills"
@@ -16,7 +16,6 @@ metadata:
     - means
   enabled: "true"
 ---
-
 ## Trigger Keywords
 xlsx, time, spreadsheet, file, primary, input, output, means
 

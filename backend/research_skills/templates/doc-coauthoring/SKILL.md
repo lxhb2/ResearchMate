@@ -1,6 +1,6 @@
 ---
 name: doc-coauthoring
-description: "Guide users through a structured workflow for co-authoring documentation. Use when user wants to write documentation, proposals, technical specs, decision docs, or similar structured content. This workflow helps users efficiently transfer context, refine content through iteration, and verify the doc works for readers. Trigger when user mentions writing docs, creating proposals, drafting specs, or similar documentation tasks."
+description: "引导用户通过一个结构化的工作流程来共同编写文档。当用户想要编写文档、提案、技术规格、决定文件或类似结构化的内容时，使用该工作流程帮助用户高效传输上下文，通过迭代来完善内容，并为读者验证文档作品 。"
 metadata:
   version: ""
   github_source: "https://github.com/anthropics/skills"
@@ -16,7 +16,6 @@ metadata:
     - documentation
   enabled: "true"
 ---
-
 ## Trigger Keywords
 doc-coauthoring, doc coauthoring, guide, through, structured, workflow, co-authoring, documentation
 

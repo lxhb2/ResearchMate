@@ -1,6 +1,6 @@
 ---
 name: consciousness-council
-description: Run a multi-perspective Mind Council deliberation on any question, decision, or creative challenge. Use this skill whenever the user wants diverse viewpoints, needs help making a tough decision, asks for a council/panel/board discussion, wants to explore a problem from multiple angles, requests devil's advocate analysis, or says things like "what would different experts think about this", "help me think through this from all sides", "council mode", "mind council", or "deliberate on this". Also trigger when the user faces a dilemma, trade-off, or complex choice with no obvious answer.
+description: "运行一个多视角的思维理事会对任何问题，决定或创造性挑战的审议. 每当用户想要不同观点，需要帮助做出一个艰难的决定，要求council/panel/board讨论，想要从多个角度探索一个问题，要求魔鬼的倡导分析，或者说\"不同的专家会对此怎么想\",\"帮助我通过这个从各方面思考\",\"理事会模式\",\"mind Council\",或者\"Deliberate on this\"等。"
 allowed-tools: Read Write
 license: MIT license
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Consciousness Council
 
 A structured multi-perspective deliberation system that generates genuine cognitive diversity on any question. Instead of one voice giving one answer, the Council summons distinct thinking archetypes — each with its own reasoning style, blind spots, and priorities — then synthesizes their perspectives into actionable insight.

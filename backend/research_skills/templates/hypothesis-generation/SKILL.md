@@ -1,6 +1,6 @@
 ---
 name: hypothesis-generation
-description: Formulate evidence-bounded scientific questions, candidate hypotheses, rival explanations, causal or associational claims, discriminating predictions, measurements, and preregistration-ready analysis plans. Use when turning observations or preliminary findings into transparent, testable research plans without treating hypotheses as facts.
+description: "制定有证据约束的科学问题、候选假设、对立的解释、因果关系或关联性主张、歧视性预测、测量和预先登记准备的分析计划。在将观察或初步结论转化为透明、可检验的研究计划时，不将假设视为事实。"
 license: MIT
 compatibility: Python 3.11+ standard library. Bundled CLIs are deterministic and local-only; they accept bounded JSON, CSV, or Markdown and require no network, credentials, models, image services, or external packages.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Scientific Hypothesis Generation
 
 Turn an observation into a transparent set of candidate explanations and tests. A hypothesis is a proposal to be challenged, not a finding, fact, diagnosis, or recommendation.

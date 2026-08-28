@@ -1,6 +1,6 @@
 ---
 name: bulk-rnaseq
-description: End-to-end bulk RNA-seq orchestrator — takes raw FASTQ reads through QC and trimming (FastQC, fastp/Trim Galore), alignment and quantification (STAR, Salmon, featureCounts), assembles a gene-level counts matrix, then hands off to differential expression (pydeseq2), pathway/GSEA enrichment (pathway-enrichment), and publication figures (scientific-visualization). Use whenever the user has bulk RNA-seq reads or quant output and wants a complete, reproducible differential-expression workflow — e.g. "analyze my RNA-seq", "FASTQ to DESeq2", "run nf-core/rnaseq", "STAR/Salmon quantification", "build a counts matrix for DESeq2", or "go from reads to differentially expressed genes and enriched pathways". Routes between an nf-core/rnaseq (Nextflow) path and a standalone STAR/Salmon path, and covers experimental design, strandedness, and QC gates. For single-cell RNA-seq use the scanpy skill instead.
+description: "端对端的RNA-seq管弦乐器——通过QC和trimming(快速QC,fastp/Trim Galore)读取原始FASTQ,对齐和量化(STAR,Salmon, 特征Counts),组装基因级计数矩阵，然后切换到差分表达(pydeseq2),pathway/GSEA浓缩(路径-浓缩),以及出版数字(科学-可视化). 每当用户有批量RNA-seq读取或夸大输出，并想要一个完整，可复制的差分表达工作流程——例如。"
 license: MIT
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Bulk RNA-seq
 
 ## Overview

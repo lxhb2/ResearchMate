@@ -1,6 +1,6 @@
 ---
 name: experiment-tracking-swanlab
-description: Provides guidance for experiment tracking with SwanLab. Use when you need open-source run tracking, local or self-hosted dashboards, and lightweight media logging for ML workflows.
+description: "为 SwanLab 的实验跟踪提供指南。当您需要开源运行跟踪、 本地或自动托管的仪表板，以及 ML 工作流程的轻量级媒体记录时使用 。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -38,7 +38,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # SwanLab: Open-Source Experiment Tracking
 
 ## When to Use This Skill

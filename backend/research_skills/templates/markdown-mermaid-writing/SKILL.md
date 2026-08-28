@@ -1,6 +1,6 @@
 ---
 name: markdown-mermaid-writing
-description: Comprehensive markdown and Mermaid diagram writing skill. Use when creating any scientific document, report, analysis, or visualization. Establishes text-based diagrams as the default documentation standard with full style guides (markdown + mermaid), 24 diagram type references, and 9 document templates.
+description: "综合标记图和美人鱼图的写法。在创建任何科学文档、 报告、 分析或可视化时使用。 将基于文本的图表设定为默认的文档标准，并附有完整的样式指南( markdown + 美人鱼) , 24 个图表类型的参考文献，以及 9 个文档模板 。"
 allowed-tools: Read Write Edit Bash
 license: Apache-2.0
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Markdown and Mermaid Writing
 
 ## Overview

@@ -1,6 +1,6 @@
 ---
 name: arbor
-description: Autonomously improve a real artifact (code, training recipe, agent harness, data pipeline, prompt) against an objective and an evaluator, using Hypothesis Tree Refinement (HTR) from the Arbor paper. Use this whenever someone wants to iteratively optimize something over many experiments without overfitting — e.g. "get my model's eval score up", "improve this agent/harness", "tune this pipeline", "beat the baseline on this benchmark", "run a search over approaches and keep the best", "do an MLE-bench / Kaggle-style optimization", or any long-horizon "make this artifact better and don't just memorize the dev set" task. Trigger it even when the user doesn't say "Arbor" or "hypothesis tree" but describes repeated experiment-and-evaluate loops, branching exploration of competing ideas, or worries about a dev/test gap. Runs Claude itself as the coordinator with subagent executors in isolated git worktrees; for the standalone `arbor` CLI tool see references/arbor-upstream.md.
+description: "使用Arbor纸上的假树精华(HTR),自动改进一个真正的文物(代码，训练食谱，剂用，数据管道，即时)来对抗一个目标和评价者。每当有人想在很多实验上迭代优化一些东西而不过度配齐时，就使用这个方法。"
 allowed-tools: Read Write Edit Bash Agent
 license: MIT license
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Arbor — Autonomous Optimization via Hypothesis Tree Refinement
 
 ## Overview

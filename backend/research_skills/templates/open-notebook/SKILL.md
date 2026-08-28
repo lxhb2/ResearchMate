@@ -1,6 +1,6 @@
 ---
 name: open-notebook
-description: Self-hosted, open-source alternative to Google NotebookLM for AI-powered research and document analysis. Use when organizing research materials into notebooks, ingesting diverse content sources (PDFs, videos, audio, web pages, Office documents), generating AI-powered notes and summaries, creating multi-speaker podcasts from research, chatting with documents using context-aware AI, searching across materials with full-text and vector search, or running custom content transformations. Supports 16+ AI providers including OpenAI, Anthropic, Google, Ollama, Groq, and Mistral with complete data privacy through self-hosting.
+description: "自行托管，开源的替代 Google NotebookLM 用于AI 功率研究和文档分析.在将研究材料组织成笔记本时，使用多种内容源(PDF,视频，音频，网页，Office文档),生成AI 功率笔记和摘要，创建来自研究的多语种播客，使用上下文感知的AI与文档聊天，通过全文和矢量搜索搜索搜索跨材料，或运行自定义的内容转换。"
 license: MIT
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Open Notebook
 
 ## Overview

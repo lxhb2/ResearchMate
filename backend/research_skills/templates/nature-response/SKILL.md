@@ -1,6 +1,6 @@
 ---
 name: nature-response
-description: 'Draft, audit, or revise Nature-style revision correspondence packages: point-by-point reviewer-separated response letters, rebuttal letters, revision cover letters, LaTeX cover/response templates, and red-marked revised-manuscript excerpts. Keep mutually blind reviewers isolated so no reviewer-facing response reveals another reviewer''s comments, numbering, recommendation, or author response. Prevent reviewer-driven manuscript accretion by preferring replacement, compression, or SI relocation over appending non-central defense prose. Use for reviewer comments, editor decision letters, pasted editorial emails, response drafts, cover letters, response to reviewers, rebuttal, 修回信, 返修邮件, 编辑邮件, 返修 cover letter, 审稿意见回复, 逐点回复, 大修回复, 小修回复, 回复审稿人, 修改稿回复, 写rebuttal, 回应审稿意见, 标红修改, or LaTeX 模板.'
+description: "草稿，审计，或修改自然风格的修改函包：逐点审查者分开的回复函，反驳函，修订封面信，LaTeX cover/response模板，以及红色标记的修订手稿节录. 保持相互盲目审查者隔离，因此没有审查者与提交答复会揭示另一个审查者的评论，编号，建议，或作者的回应。"
 metadata:
   github_source: https://github.com/Yuan1z0825/nature-skills
   category: paper_writing
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Nature Reviewer Response — Router
 
 This skill is split into two layers:

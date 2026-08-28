@@ -1,6 +1,6 @@
 ---
 name: omero-integration
-description: Securely inspect and automate microscopy data workflows against OMERO.server with omero-py, BlitzGateway, OMERO CLI, tables, annotations, ROIs, rendering, and documented OMERO.web APIs. Use for scoped OMERO inventory, metadata export, import/export planning, or reviewed write workflows.
+description: "安全地检查和自动化OMERO.server的显微镜数据工作流程，并使用 omero-py, BlitzGateway, OMERO CLI, 表格，说明，ROI, 渲染，并记录 OMERO.web API. 用于范围为 OMERO 的库存，元数据导出，import/export 规划，或审查写入工作流程 。"
 license: MIT
 compatibility: Requires network access to a user-selected OMERO.server for remote operations. The 2026-07-23 snapshot uses OMERO.py 5.22.1 with ZeroC IcePy 3.6.5; OMERO supports Python 3.10-3.12 (3.12 recommended) while 3.13-3.14 remain upcoming in its support matrix. Bundled local planners require Python 3.10+ and read only named OMERO_* variables; they never load .env files.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # OMERO Integration
 
 Use current OME documentation and the smallest explicit data scope. OMERO data

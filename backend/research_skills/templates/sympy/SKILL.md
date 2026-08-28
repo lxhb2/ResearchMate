@@ -1,6 +1,6 @@
 ---
 name: sympy
-description: Use when you need exact symbolic math in Python — algebra, calculus, equation solving, symbolic linear algebra, or code generation via lambdify/LaTeX. Prefer NumPy or SciPy when floating-point approximations are sufficient.
+description: "在 Python 中需要精确的符号数学——代数，微积分，方程解析，符号线性代数，或者通过lambdify/LaTeX生成代码时使用. Prefer NumPy 或 SciPy当浮点近似值足够时使用。"
 license: https://github.com/sympy/sympy/blob/master/LICENSE
 allowed-tools: Read Write Edit Bash
 compatibility: Requires Python 3.9+ and SymPy 1.14+. Optional NumPy/SciPy/Matplotlib for lambdify examples; C/Fortran compiler for autowrap/codegen.
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # SymPy - Symbolic Mathematics in Python
 
 ## Overview

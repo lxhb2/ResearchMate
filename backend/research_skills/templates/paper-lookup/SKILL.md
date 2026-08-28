@@ -1,6 +1,6 @@
 ---
 name: paper-lookup
-description: Search 11 academic literature APIs for papers, preprints, citations, and open-access full text, and return results with reproducible provenance. Covers PubMed, PMC (full text), Europe PMC (full-text and preprint search), bioRxiv, medRxiv, arXiv, OpenAlex, Crossref, Semantic Scholar, CORE, Unpaywall. Use when searching for papers, citations, DOI/PMID/arXiv lookups, abstracts, full text, open-access PDFs, preprints, citation graphs, author publications, or any scholarly literature query. Triggers on mentions of any supported database or requests like "find papers on X", "look up this DOI", "who cites this paper", or "get me the PDF".
+description: "搜索 11 个学术文献 API 搜索论文、 预印、 引用、 开放文本，以及可复制文本的返回结果 。 覆盖 PubMed、 PMC( 全文)、欧洲 PMC( 全文和预印搜索)、 bioRxiv、 medRxiv、 arXiv、 OpenAlex、 Crossref、 Semantic Scholar、 CORE、 Unpaywall 。在搜索论文、 引用、 DOI/PMID/arXiv 检索、 摘要、 全文、 开放访问 PDF、 预印、 引用图表、 作者出版物或任何学术文献查询时使用 。"
 allowed-tools: Read Bash
 license: MIT
 compatibility: Needs network access and curl. The bundled scripts require Python 3.11+ and use only the standard library. No credentials are required; NCBI_API_KEY, S2_API_KEY, CORE_API_KEY, and OPENALEX_API_KEY raise rate limits or unlock full text where noted.
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Paper Lookup
 
 This skill gives you 11 academic literature APIs with documented endpoints. Your job is to turn the user's intent into a reproducible retrieval: pick the authoritative database(s), make bounded and rate-limited calls, and return an answer with enough provenance (endpoints, parameters, identifiers, access date) that a human or another agent can repeat it.

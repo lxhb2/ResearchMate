@@ -1,6 +1,6 @@
 ---
 name: pyzotero
-description: Interact with Zotero reference management libraries using the pyzotero Python client. Retrieve, create, update, and delete items, collections, tags, and attachments via the Zotero Web API v3. Use this skill when working with Zotero libraries programmatically, managing bibliographic references, exporting citations, searching library contents, uploading PDF attachments, or building research automation workflows that integrate with Zotero.
+description: "使用 pyzotero Python 客户端与 Zotero 参考管理库进行交互. Retrive,通过 Zotero Web API v3.在程序上与 Zotero 图书馆合作，管理书目参考，导出引用，搜索图书馆内容，上传 PDF 附件，或构建与 Zotero 整合的研究自动化工作流程时，使用此技能。"
 allowed-tools: Read Write Edit Bash
 license: MIT License
 compatibility: Requires Python 3.10+ and pyzotero 1.13+. Web API access needs a Zotero API key. Optional CLI and MCP extras require Zotero 7 with local API access enabled.
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Pyzotero
 
 Pyzotero is a Python wrapper for the [Zotero API v3](https://www.zotero.org/support/dev/web_api/v3/start). Use it to programmatically manage Zotero libraries: read items and collections, create and update references, upload attachments, manage tags, and export citations.

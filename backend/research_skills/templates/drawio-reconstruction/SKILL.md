@@ -1,6 +1,6 @@
 ---
 name: drawio-reconstruction
-description: 'Reconstructs reference images into high-fidelity, editable Draw.io files with rendered previews: native Draw.io elements carry text and structure, SVG covers simple icons that match the reference, and cropped or transparent PNGs preserve complex visuals. Use when the user wants a diagram image, research figure, architecture diagram, slide, UI screenshot, or image folder turned into `.drawio` XML; batch requests use a manifest with bounded parallelism when available and a full-fidelity serial fallback otherwise.'
+description: "将参考图像重构为高真实度，可编辑的Draw.io文件并带有渲染的预览：原生的Draw.io元素带有文本和结构，SVG包含与参考物相匹配的简单图标，裁剪或透明的PNG保存复杂的视觉.当用户需要图像，研究图，架构图，幻灯片，UI截图，或图像文件夹变成`.drawio` XML时使用带有边框平行的表单，否则则使用完全真实的串行倒置。"
 metadata:
   github_source: https://github.com/HKUSTDial/Supervisor-Skills
   category: literature
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Draw.io Reconstruction
 
 Use this skill for high-quality reconstruction of diagram images into `.drawio` files.

@@ -1,6 +1,6 @@
 ---
 name: theme-factory
-description: "Toolkit for styling artifacts with a theme. These artifacts can be slides, docs, reportings, HTML landing pages, etc. There are 10 pre-set themes with colors/fonts that you can apply to any artifact that has been creating, or can generate a new theme on-the-fly."
+description: "用于以主题为样式的文物的工具包，这些文物可以是幻灯片，文件，报告，HTML登陆页等. Q001预设主题有10个，可以适用于任何已经创建的文物，也可以生成新的飞行主题。"
 metadata:
   version: ""
   github_source: "https://github.com/anthropics/skills"
@@ -16,7 +16,6 @@ metadata:
     - docs
   enabled: "true"
 ---
-
 ## Trigger Keywords
 theme-factory, theme factory, toolkit, styling, artifacts, theme, slides, docs
 

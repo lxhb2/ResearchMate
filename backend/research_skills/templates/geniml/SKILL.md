@@ -1,6 +1,6 @@
 ---
 name: geniml
-description: 'Use Geniml for audited local genomic-interval workflows: validate BED and universe contracts, plan Region2Vec or scEmbed runs, inspect model/tokenizer compatibility, and assess consensus universes.'
+description: "将Geniml用于经审计的本地基因组间工作流程：验证BED和宇宙合同，计划Region2Vec或scEmbed运行，检查model/tokenizer兼容性，并评估共识宇宙。"
 license: MIT
 compatibility: Requires Python 3.10+ and uv. Guidance targets geniml 0.8.4 with gtars 0.9.2; ML workflows need the pinned ml extra and compatible native wheels. Bundled planners and inspectors are dependency-free, local-only, and make no network requests.
 allowed-tools: Read Write Edit Bash Glob
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Geniml
 
 Use Geniml for machine learning and statistical workflows over genomic interval

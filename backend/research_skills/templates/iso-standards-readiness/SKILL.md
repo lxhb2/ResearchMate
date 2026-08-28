@@ -1,6 +1,6 @@
 ---
 name: iso-standards-readiness
-description: Prepares and structurally reviews readiness evidence for ISO management-system and laboratory-competence standards - ISO 13485 medical device QMS, ISO 14971 device risk management, ISO/IEC 17025 testing and calibration laboratories, and ISO 15189 medical laboratories. Use when organizing declared scope, controlled documents, risk-management files, scope of accreditation, traceability, CAPA, external-provider controls, or bounded local evidence manifests, and when separating ISO certification from laboratory accreditation, FDA QMSR inspection, CLIA certification, MDSAP, and EU MDR/IVDR evidence boundaries. Not for legal applicability, compliance, certification, or accreditation decisions; contains no clause text.
+description: "编制和从结构上审查ISO管理系统和实验室能力标准的准备情况证据 -- -- ISO 13485医疗设备QMS、ISO 14971设备风险管理、ISO/IEC 17025测试和校准实验室以及ISO 15189医疗实验室。"
 license: MIT
 compatibility: Python 3.11+; bundled CLIs use only the standard library and bounded local JSON/Markdown files, with no network access or credentials.
 allowed-tools: Read Write Bash Glob
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # ISO Standards Readiness Evidence Preparation
 
 ## Purpose

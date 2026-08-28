@@ -1,6 +1,6 @@
 ---
 name: sglang
-description: Fast structured generation and serving for LLMs with RadixAttention prefix caching. Use for JSON/regex outputs, constrained decoding, agentic workflows with tool calls, or when you need 5× faster inference than vLLM with prefix sharing. Powers 300,000+ GPUs at xAI, AMD, NVIDIA, and LinkedIn.
+description: "用 RadixAttenting前缀缓存为 LLMS 快速结构生成并服务 。 使用 JSON/regex 输出、 受限制的解码、 代理工作流程和工具调用，或当您需要比 vLLM 更快的推论和前缀共享时 。 Powers 300 000 + GPU at xAI、 AMD、 NVIDIA 和 LinkedIn 。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -38,7 +38,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # SGLang
 
 High-performance serving framework for LLMs and VLMs with RadixAttention for automatic prefix caching.

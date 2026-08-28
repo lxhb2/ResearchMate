@@ -1,6 +1,6 @@
 ---
 name: chroma
-description: Open-source embedding database for AI applications. Store embeddings and metadata, perform vector and full-text search, filter by metadata. Simple 4-function API. Scales from notebooks to production clusters. Use for semantic search, RAG applications, or document retrieval. Best for local development and open-source projects.
+description: "AI 应用程序的开源嵌入数据库。 存储嵌入和元数据，执行矢量和全文搜索，通过元数据过滤。 简单 4- 函数 API. 缩放从笔记本到生产集群。 用于语义搜索、 RAG 应用程序或文档检索。 最适合本地开发和开源项目 。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -36,7 +36,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Chroma - Open-Source Embedding Database
 
 The AI-native database for building LLM applications with memory.

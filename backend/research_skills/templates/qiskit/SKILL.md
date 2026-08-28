@@ -1,6 +1,6 @@
 ---
 name: qiskit
-description: Build, simulate, transpile, and execute quantum circuits with Qiskit and IBM Quantum Runtime. Use for Qiskit 2.x circuits and operators, V2 Sampler or Estimator primitives, target-aware transpilation, local or noisy simulation, IBM QPU execution, Runtime sessions or batches, error mitigation, and Qiskit ecosystem packages.
+description: "与 Qiskit 和 IBM Quantum 运行时构建、 模拟、 转录和执行量子电路。 用于 Qiskit 2. x 电路和操作器、 V2 采样器或估计器原始、 目标感知转录、 局部或吵闹的模拟、 IBM QPU 执行、 运行时会话或批次、 减误、 和 Qiskit 生态系统软件包。"
 license: Apache-2.0
 compatibility: Python 3.10+ on a supported 64-bit platform. Local SDK workflows need qiskit; noisy simulation needs qiskit-aer; IBM QPU access needs qiskit-ibm-runtime, network access, an IBM Quantum Platform account, and an API key.
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Qiskit
 
 Use current Qiskit 2.x APIs to build circuits, prepare hardware-compatible instruction set architecture (ISA) circuits, and execute them through V2 primitives.

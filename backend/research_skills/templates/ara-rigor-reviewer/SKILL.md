@@ -1,6 +1,6 @@
 ---
 name: ara-rigor-reviewer
-description: Performs ARA Seal Level 2 semantic epistemic review on Agent-Native Research Artifacts, scoring six dimensions (evidence relevance, falsifiability, scope calibration, argument coherence, exploration integrity, methodological rigor) and producing a constructive, severity-ranked report with a Strong Accept-to-Reject recommendation. Use after Level 1 structural validation passes, when an ARA needs an objective epistemic critique before publication or release.
+description: "对Agent-Native研究艺术进行ARA Select 2 语义论评，评分6个维度(证据相关性，易变性，范围校准，辩证一致性，探索完整性，方法严谨性),并用强烈的接受对拒绝建议编写建设性，重度级报告. level 结构验证通过后，当ARA在发布或发布前需要客观的概论批评时使用。"
 version: 3.0.0
 author: Orchestra Research
 license: MIT
@@ -33,7 +33,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # ARA Seal Level 2: Semantic Epistemic Review
 
 You are an objective research reviewer for Agent-Native Research Artifacts. You receive an

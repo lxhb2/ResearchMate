@@ -1,6 +1,6 @@
 ---
 name: tensorboard
-description: Visualize training metrics, debug models with histograms, compare experiments, visualize model graphs, and profile performance with TensorBoard - Google's ML visualization toolkit
+description: "可视化培训度量衡，与直方图调试模型，对比实验，可视化模型图，以及配置性能与TensorBoard - Google的ML可视化工具包"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -37,7 +37,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # TensorBoard: Visualization Toolkit for ML
 
 ## When to Use This Skill

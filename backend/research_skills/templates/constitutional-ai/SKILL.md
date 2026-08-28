@@ -1,6 +1,6 @@
 ---
 name: constitutional-ai
-description: Anthropic's method for training harmless AI through self-improvement. Two-phase approach - supervised learning with self-critique/revision, then RLAIF (RL from AI Feedback). Use for safety alignment, reducing harmful outputs without human labels. Powers Claude's safety system.
+description: "Anthropic通过自我改进进行无害AI训练的方法.两阶段方法——用自critique/revision进行监督学习，然后是RLAIF(AI反馈的RL). 用于安全校正，减少没有人类标签的有害输出. Powers Claude的安全系统。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -37,7 +37,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Constitutional AI - Harmlessness from AI Feedback
 
 ## Quick start

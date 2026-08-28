@@ -1,6 +1,6 @@
 ---
 name: literature-review-sas
-description: Conduct comprehensive, systematic literature reviews using multiple academic databases (PubMed, arXiv, bioRxiv, Semantic Scholar, etc.). This skill should be used when conducting systematic literature reviews, meta-analyses, research synthesis, or comprehensive literature searches across biomedical, scientific, and technical domains. Creates professionally formatted markdown documents and PDFs with verified citations in multiple citation styles (APA, Nature, Vancouver, etc.).
+description: "利用多种学术数据库(PubMed、arXiv、BiroRxiv、语义学者等)进行全面、系统的文献审查。在进行系统文献审查、元分析、研究综合或跨越生物医学、科学和技术领域的综合文献搜索时，应当使用这种技能。 创建专业格式化的标注式文件和PDF,并用多种引用方式加以核实(APA、Nature、温哥华等)。"
 allowed-tools: Read Write Edit Bash
 license: MIT license
 metadata:
@@ -22,7 +22,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Literature Review
 
 ## Overview

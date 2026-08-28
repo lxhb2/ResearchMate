@@ -1,6 +1,6 @@
 ---
 name: matplotlib
-description: Low-level plotting library for full customization. Use when you need fine-grained control over every plot element, creating novel plot types, or integrating with specific scientific workflows. Export to PNG/PDF/SVG for publication. For quick statistical plots use seaborn; for interactive plots use plotly; for publication-ready multi-panel figures with journal styling, use scientific-visualization.
+description: "用于完全定制的低层图案库。当您需要精细控制每个图案元素时使用，创建新的图案类型，或者与特定的科学工作流程结合。导出到 PNG/PDF/SVG 用于出版。 用于快速统计图案使用海生；用于交互式图案使用；用于出版准备的多层图案，并使用科学-可视化。"
 allowed-tools: Read Write Bash
 license: https://github.com/matplotlib/matplotlib/tree/main/LICENSE
 compatibility: Requires Python 3.10+ and Matplotlib 3.10.x. Use `uv add matplotlib` in projects; interactive Jupyter widgets require `ipympl`.
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Matplotlib
 
 ## Overview

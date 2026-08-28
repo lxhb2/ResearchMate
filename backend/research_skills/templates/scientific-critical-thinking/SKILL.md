@@ -1,6 +1,6 @@
 ---
 name: scientific-critical-thinking
-description: Evaluate scientific claims and evidence quality. Use for assessing experimental design validity, identifying biases and confounders, applying evidence grading frameworks (GRADE, Cochrane Risk of Bias), or teaching critical analysis. Best for understanding evidence quality, identifying flaws. For formal peer review writing use peer-review.
+description: "评估科学主张和证据质量。 用于评估实验设计的有效性、 识别偏差和混淆者、 应用证据评级框架(GRADE, Cochrane Risk of Bias) 或教学批判性分析。 用于理解证据质量、 识别缺陷的最佳方法。 用于正式的同行评审书写。"
 allowed-tools: Read Write Edit
 license: MIT license
 compatibility: Analytical guidance needs no network. Optional figures via the scientific-schematics skill require OPENROUTER_API_KEY and outbound API access to OpenRouter.
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Scientific Critical Thinking
 
 ## Overview

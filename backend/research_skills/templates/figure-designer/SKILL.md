@@ -1,6 +1,6 @@
 ---
 name: figure-designer
-description: 'Advises on the design of the three core figures in a technical paper: the Motivated Example (Figure 1), the Solution Overview (Methodology), and the Experimental Results figures. Recommends the right design paradigm, layout, labelling, and tool for each figure type, then runs a quality-control audit. Use when the user asks to ''design a figure'', ''draw Figure 1'', ''plot experiment results'', ''choose the right chart type'', ''which figure tool to use'', or ''figure looks unprofessional''.'
+description: "在技术论文中就三个核心数字的设计提出建议：动机示例(图1)、解决方案概览(方法)和实验结果数字。建议每个图类型的正确的设计范式、布局、标签和工具，然后进行质量控制审计。当用户要求“设计一个图”、“绘制图1”、“绘图实验结果”、“选择正确的图表类型”、“使用哪个图工具”或“图看起来不专业”时使用。"
 license: CC-BY-4.0
 metadata:
   github_source: https://github.com/HKUSTDial/Supervisor-Skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Figure Designer
 
 ## Overview

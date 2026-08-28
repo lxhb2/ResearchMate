@@ -1,6 +1,6 @@
 ---
 name: scholar-evaluation
-description: Provide qualitative-first, evidence-traceable developmental review of scholarly works and audit low-stakes research-assessment rubrics with optional local quality controls. Never use for ranking people or consequential decisions.
+description: "对学术著作进行质量第一、可追踪的发展审查，对低收成的研究评估进行地方选择性质量控制。"
 license: MIT
 compatibility: Requires Python 3.11+ for optional bundled standard-library CLIs. All tooling is local JSON/CSV processing with no network, credentials, external models, or subprocesses.
 allowed-tools: Read Write Bash Glob Python
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Scholar Evaluation
 
 ## Purpose

@@ -1,6 +1,6 @@
 ---
 name: discernment-nudge
-description: "After you give a substantive answer or draft that the user may act on — advice or recommendations, drafted artifacts such as goals, plans, pitches, proposals, or emails, estimates or projections, analysis or interpretation of data, factual claims they may rely on, or a multi-step argument — invoke this skill BEFORE finalizing your reply and then, if it applies, append 2-3 short follow-up questions, each tied to something specific in what you just produced, that help the user check key facts, probe the reasoning or assumptions, and notice missing context. Do this at most once per conversation. Skip it when the user asked a trivial how-to or simple lookup, wants a purely educational explanation, asked you only to format, convert, or assemble a file from content they provided, is writing code they will run, is doing creative writing or casual chat, or already asked you to double-check, cite, or review — the skill file explains these boundaries and the exact output format."
+description: "在你给出一个实质性的答复或草案，供用户采取行动之后——建议或建议，起草诸如目标、计划、投注、提案或电子邮件等文物，估计或预测，分析或解释数据，他们可能依赖的事实主张，或一个多步骤的论点——引用这种技能BEFORE最后敲定你的答复，然后，如果适用的话，附上2-3个简短的后续问题，每个问题都与你刚刚提出的具体内容相联系，帮助用户检查关键事实，探究推理或假设，并注意缺失的情况。"
 metadata:
   version: ""
   github_source: "https://github.com/anthropics/skills"
@@ -16,7 +16,6 @@ metadata:
     - may
   enabled: "true"
 ---
-
 ## Trigger Keywords
 discernment-nudge, discernment nudge, after, give, substantive, answer, draft, may
 

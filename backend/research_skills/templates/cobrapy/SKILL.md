@@ -1,6 +1,6 @@
 ---
 name: cobrapy
-description: Constraint-based metabolic modeling (COBRA). FBA, FVA, gene knockouts, flux sampling, SBML models, for systems biology and metabolic engineering analysis.
+description: "基于约束的代谢模型(COBRA). FBA,FVA,基因敲击，通量采样，SBML模型，用于系统生物学和代谢工程分析。"
 license: GPL-2.0 license
 allowed-tools: Read Write Edit Bash
 compatibility: Requires Python 3.9+ (cobra 0.30+ dropped 3.8). Install with uv pip install. GLPK (swiglpk) is the default solver; CPLEX/Gurobi optional. load_model fetches from bundled data, BiGG, or BioModels (network required for remote models).
@@ -23,7 +23,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # COBRApy - Constraint-Based Reconstruction and Analysis
 
 ## Overview

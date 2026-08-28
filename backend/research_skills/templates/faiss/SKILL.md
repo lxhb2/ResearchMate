@@ -1,6 +1,6 @@
 ---
 name: faiss
-description: Facebook's library for efficient similarity search and clustering of dense vectors. Supports billions of vectors, GPU acceleration, and various index types (Flat, IVF, HNSW). Use for fast k-NN search, large-scale vector retrieval, or when you need pure similarity search without metadata. Best for high-performance applications.
+description: "Facebook 库用于高效的相似性搜索和集成稠密矢量. 支持数十亿矢量，GPU加速度，以及各种索引类型(Flat, IVF, HNSW). 用于快速的 k-NN 搜索，大规模矢量检索，或当您需要纯相似性搜索而无需元数据时. 最佳的用于高性能应用程序 。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -39,7 +39,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # FAISS - Efficient Similarity Search
 
 Facebook AI's library for billion-scale vector similarity search.

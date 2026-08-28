@@ -1,6 +1,6 @@
 ---
 name: evolving-ai-agents
-description: Provides guidance for automatically evolving and optimizing AI agents across any domain using LLM-driven evolution algorithms. Use when building self-improving agents, optimizing agent prompts and skills against benchmarks, or implementing automated agent evaluation loops.
+description: "为使用LLM驱动的演化算法在任何领域自动演化和优化AI代理提供指导。在构建自我改进代理时，根据基准优化代理提示和技能，或实施自动代理评价循环时使用。"
 version: 1.0.0
 author: A-EVO Lab
 license: MIT
@@ -34,7 +34,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Evolving AI Agents with A-Evolve
 
 ## Overview

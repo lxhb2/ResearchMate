@@ -1,6 +1,6 @@
 ---
 name: internal-comms
-description: "A set of resources to help me write all kinds of internal communications, using the formats that my company likes to use. Claude should use this skill whenever asked to write some sort of internal communications (status reports, leadership updates, 3P updates, company newsletters, FAQs, incident reports, project updates, etc.)."
+description: "一套资源来帮助我使用我公司喜欢使用的格式来撰写各种内部通信。 克劳德每当被要求撰写某种内部通信(状况报告、领导层更新、3P更新、公司通讯、FAQs、事件报告、项目更新等)时，都应该使用这种技能。"
 metadata:
   version: ""
   github_source: "https://github.com/anthropics/skills"
@@ -16,7 +16,6 @@ metadata:
     - internal
   enabled: "true"
 ---
-
 ## Trigger Keywords
 internal-comms, internal comms, set, resources, write, all, kinds, internal
 

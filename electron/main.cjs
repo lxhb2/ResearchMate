@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog, Notification, Tray, Menu, nativeImage, session, shell } = require('electron')
-const { spawn } = require('child_process')
+const { spawn, execFile } = require('child_process')
+const { promisify } = require('util')
 const path = require('path')
 const fs = require('fs')
 const http = require('http')
@@ -9,6 +10,7 @@ autoUpdater.autoDownload = false
 autoUpdater.autoInstallOnAppQuit = true
 
 const APP_PORT = Number(process.env.RESEARCHMATE_PORT || 18080)
+const execFileAsync = promisify(execFile)
 let mainWindow = null
 let backendProc = null
 let quitting = false
@@ -83,6 +85,25 @@ function startBackend() {
       mainWindow.webContents.send('backend:exited', code)
     }
   })
+}
+
+async function stopStaleBackend(exe) {
+  // An installer can leave the previous backend alive. It would keep the app
+  // port busy, so a fresh UI would silently talk to the old backend version.
+  if (process.platform !== 'win32') return
+  const safeExe = exe.replace(/'/g, "''")
+  const script = [
+    "Get-CimInstance Win32_Process -Filter \"Name='ResearchMate.exe'\"",
+    `| Where-Object { $_.ExecutablePath -eq '${safeExe}' }`,
+    '| Invoke-CimMethod -MethodName Terminate | Out-Null',
+  ].join(' ')
+  try {
+    await execFileAsync('powershell.exe', [
+      '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script,
+    ], { timeout: 5000, windowsHide: true })
+  } catch {
+    // No stale process, or PowerShell is unavailable. The spawn below remains safe.
+  }
 }
 
 function stopBackend() {
@@ -244,6 +265,7 @@ app.whenReady().then(async () => {
     callback({ responseHeaders: headers })
   })
   registerIpc()
+  await stopStaleBackend(resolveBackendExe())
   startBackend()
   autoUpdater.on('update-available', () => {
     if (Notification.isSupported()) {

@@ -1,6 +1,6 @@
 ---
 name: imaging-data-commons
-description: Query and download public cancer imaging data from NCI Imaging Data Commons. Invoke for any question about IDC collections, cancer imaging datasets, DICOM data access, radiology (CT, MR, PET) or pathology AI training sets, metadata queries, visualization, or license checks — even when the user doesn't explicitly mention "IDC". No authentication required.
+description: "从NCI成像数据常识中查询并下载公众癌症成像数据. Invoke用于任何关于IDC收藏，癌症成像数据集，DICOM数据访问，放射学(CT,MR,PET)或病理学的AI训练集，元数据查询，可视化，或许可证检查的问题——即使用户没有明确提到\"IDC\",也不需要认证。"
 license: This skill is provided under the MIT License. IDC data itself has individual licensing (mostly CC-BY, some CC-NC) that must be respected when using the data.
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Imaging Data Commons
 
 ## Overview

@@ -1,6 +1,6 @@
 ---
 name: molecular-dynamics
-description: Run and analyze molecular dynamics simulations with OpenMM and MDAnalysis. Set up protein/small molecule systems, define force fields, run energy minimization and production MD, analyze trajectories (RMSD, RMSF, contact maps, free energy surfaces). For structural biology, drug binding, and biophysics.
+description: "与 OpenMM 和 MDAnalysis 一起运行并分析分子动力学模拟。设置protein/small分子系统，定义力场，运行能量最小化和生产MD,分析轨迹(RMSD,RMSF,联系图，自由能量表面),用于结构生物学，药物绑定，以及生物物理学。"
 license: MIT
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Molecular Dynamics
 
 ## Overview

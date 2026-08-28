@@ -1,6 +1,6 @@
 ---
 name: slack-gif-creator
-description: "Knowledge and utilities for creating animated GIFs optimized for Slack. Provides constraints, validation tools, and animation concepts. Use when users request animated GIFs for Slack like \"make me a GIF of X doing Y for Slack.\""
+description: "创建动画GIFs的知识和公用事业优化了Slack。提供了限制、验证工具和动画概念。当用户为Slack请求动画GIFs时使用，如“让我为Slack做一个GIF的X doing Y ” 。"
 metadata:
   version: ""
   github_source: "https://github.com/anthropics/skills"
@@ -16,7 +16,6 @@ metadata:
     - optimized
   enabled: "true"
 ---
-
 ## Trigger Keywords
 slack-gif-creator, slack gif creator, knowledge, utilities, creating, animated, gifs, optimized
 

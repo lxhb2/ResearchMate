@@ -1,6 +1,6 @@
 ---
 name: debug
-description: Evidence-before-action diagnosis of failing ML experiments. Probes the system before guessing causes, process list, dmesg, GPU stats, log scrollback, checkpoint state, then states a hypothesis as a hypothesis and runs a smoke before claiming a root cause. Use when the user asks why a run is failing, diverging, OOMing, hanging, slow, producing weird metrics, has crashed, or asks to debug, diagnose, troubleshoot, or investigate a training issue.
+description: "对失败的ML实验在行动前的诊断。在猜测原因、 过程列表、 dmesg、 GPU 数据、 日志回滚、 检查状态之前，测试系统，然后将假设作为假设，在声称根源之前运行一阵烟雾。当用户问为什么运行失败、 分歧、 OOMing、 绞刑、 缓慢、 产生怪异的度量、 崩溃、 或要求调试、 诊断、 排除故障或调查一个培训问题时使用 。"
 metadata:
   github_source: https://github.com/fcakyon/phd-skills
   category: experiment_review
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Debug: evidence-before-action investigation
 
 The most expensive class of mistake in ML debugging is asserting a cause based on plausibility, then attempting a "fix" that masks the real problem. This skill enforces the discipline of probe → hypothesis → smoke → controls → claim, in that order.

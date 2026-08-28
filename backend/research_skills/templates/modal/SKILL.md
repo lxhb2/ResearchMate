@@ -1,6 +1,6 @@
 ---
 name: modal
-description: Modal is a serverless cloud platform for running Python on demand, including on-demand GPUs. Use when deploying or serving AI/ML models, running GPU-accelerated workloads (training, fine-tuning, inference), serving web endpoints, scheduling batch jobs, or scaling Python code to cloud containers with the Modal SDK.
+description: "Modal是用于按需运行Python的无服务器云平台，包括按需运行的GPU.在部署或服务AI/ML模型时使用，运行GPU加速工作量(训练，微调，推论),服务网络端点，调度批量任务，或用Modal SDK将Python代码缩放到云容器。"
 license: Apache-2.0
 metadata:
   github_source: https://github.com/K-Dense-AI/scientific-agent-skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Modal
 
 ## Overview

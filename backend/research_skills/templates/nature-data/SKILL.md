@@ -1,6 +1,6 @@
 ---
 name: nature-data
-description: Prepare, audit, or revise Nature-ready Data Availability statements, data repository plans, dataset citations, and FAIR metadata checklists for manuscripts. Use when the user asks about Nature data availability, research data sharing, repository selection, accession numbers, restricted or sensitive data, source data, supplementary datasets, DataCite-style dataset references, FAIR metadata for academic publication, or Chinese-to-English data availability wording for Chinese-speaking authors preparing Nature-family submissions. Also trigger on general academic-writing data needs even without the word "Nature", such as writing a data availability statement for any journal, code/data sharing sections, repository selection while writing a paper, and Chinese phrasings like 数据可用性声明、数据可用性、 数据共享、代码可用性、学术写作数据声明、写数据声明、数据存放、数据仓库选择.
+description: "编制、审计或修订 \" 自然 \" 数据可用性说明、数据储存计划、数据集引用和FAIR元数据核对表。"
 metadata:
   github_source: https://github.com/Yuan1z0825/nature-skills
   category: literature
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Nature Data Availability — Router
 
 This skill is split into two layers:

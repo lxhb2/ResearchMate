@@ -1,6 +1,6 @@
 ---
 name: brand-guidelines
-description: "Applies Anthropic's official brand colors and typography to any sort of artifact that may benefit from having Anthropic's look-and-feel. Use it when brand colors or style guidelines, visual formatting, or company design standards apply."
+description: "将 Anthropic 的官方品牌颜色和打字法应用到任何可能从 Anthropic 的外观和画风中获益的文物中。当适用品牌颜色或风格指南、视觉格式化或公司设计标准时使用它。"
 metadata:
   version: ""
   github_source: "https://github.com/anthropics/skills"
@@ -16,7 +16,6 @@ metadata:
     - typography
   enabled: "true"
 ---
-
 ## Trigger Keywords
 brand-guidelines, brand guidelines, applies, anthropic, official, brand, colors, typography
 

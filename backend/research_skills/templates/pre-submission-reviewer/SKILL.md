@@ -1,6 +1,6 @@
 ---
 name: pre-submission-reviewer
-description: 'Runs a pre-submission review of a technical paper across five dimensions: macro logic, writing details, English grammar, LaTeX formatting, and figure quality. Uses a reviewer-style severity taxonomy (CRITICAL / MAJOR / MINOR) and flags banned AI-tone vocabulary and em-dash misuse. Use when the user asks to ''review this paper'', ''audit before submission'', ''check the draft'', ''find issues'', ''proofread'', or within one week of a submission deadline.'
+description: "对一份技术文件进行预先提交审查，涉及五个方面：宏逻辑、写作细节、英语语法、LaTeX格式化和图纸质量。使用审查员式的重度分类法(CRITICAL / MAJOR/ MINOR)和禁止使用AItone词汇的旗帜。当用户要求“审查本文”、“在提交前审计”、“检查草稿”、“查找问题”、“校准读物”或提交期限后一周内使用。"
 license: CC-BY-4.0
 metadata:
   github_source: https://github.com/HKUSTDial/Supervisor-Skills
@@ -21,7 +21,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Pre-Submission Reviewer
 
 ## Overview

@@ -136,3 +136,140 @@ def test_fulltext_and_tasks_endpoints(client: TestClient) -> None:
 
     tasks = client.get("/api/v1/tasks", headers=headers).json()["items"]
     assert any(t["task_type"] == "paper_processing" for t in tasks)
+
+
+def test_bibliometric_graph_endpoint(client: TestClient) -> None:
+    token = client.post("/api/v1/auth/auto").json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    from app.database import SessionLocal
+    from app.models.paper import Paper
+    from app.models.user import User
+
+    with SessionLocal() as db:
+        user = db.query(User).filter(User.username == "researcher").first()
+        for index, authors in enumerate(
+            [["Ann Lee", "Bob Chen"], ["Bob Chen", "Cid Diaz"], ["Ann Lee", "Cid Diaz"]]
+        ):
+            db.add(
+                Paper(
+                    user_id=user.id,
+                    title=f"bibliometric test paper {index}",
+                    authors=authors,
+                    source="bibliometric-test",
+                    status="ready",
+                )
+            )
+        db.commit()
+
+    try:
+        response = client.get(
+            "/api/v1/graph/bibliometric",
+            headers=headers,
+            params={
+                "network_type": "co_authorship",
+                "source": "library",
+                "limit": 20,
+                "cluster_resolution": 1.0,
+            },
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["ok"] is True
+        assert body["paper_count"] >= 3
+        assert len(body["nodes"]) >= 3
+        assert len(body["edges"]) >= 2
+        assert body["nodes"][0]["x"] is not None
+
+        export = client.get(
+            "/api/v1/graph/bibliometric/export",
+            headers=headers,
+            params={
+                "network_type": "co_authorship",
+                "source": "library",
+                "limit": 20,
+                "cluster_resolution": 1.0,
+            },
+        )
+        assert export.status_code == 200
+        assert export.headers["content-type"] == "application/zip"
+        with zipfile.ZipFile(io.BytesIO(export.content)) as archive:
+            assert set(archive.namelist()) == {"vosviewer-map.txt", "vosviewer-network.txt"}
+    finally:
+        with SessionLocal() as db:
+            db.query(Paper).filter(Paper.source == "bibliometric-test").delete()
+            db.commit()
+
+
+def test_doi_related_query_and_metadata_import(client: TestClient, monkeypatch) -> None:
+    token = client.post("/api/v1/auth/auto").json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    def fake_find_related(query: str, limit: int = 24):
+        assert query == "https://doi.org/10.1000/test-paper"
+        assert limit == 24
+        return {
+            "ok": True,
+            "doi": "10.1000/test-paper",
+            "anchor": {
+                "title": "Anchor paper",
+                "authors": ["Ann Lee"],
+                "year": 2024,
+                "doi": "10.1000/test-paper",
+                "journal": "Journal of Tests",
+                "citation_count": 10,
+                "url": "https://doi.org/10.1000/test-paper",
+            },
+            "papers": [
+                {
+                    "id": "doi:10.1000/related-paper",
+                    "title": "Related paper",
+                    "authors": ["Bob Chen"],
+                    "year": 2023,
+                    "doi": "10.1000/related-paper",
+                    "abstract": "A related study.",
+                    "journal": "Journal of Tests",
+                    "citation_count": 4,
+                    "url": "https://doi.org/10.1000/related-paper",
+                    "relations": ["similar", "citation"],
+                    "sources": ["openalex"],
+                }
+            ],
+            "errors": [],
+            "sources": {"openalex": {"ok": True, "count": 1}},
+        }
+
+    from app.routers import papers
+
+    monkeypatch.setattr(papers.doi_related_service, "find_related_papers", fake_find_related)
+    related = client.post(
+        "/api/v1/papers/doi-related",
+        headers=headers,
+        json={"query": "https://doi.org/10.1000/test-paper"},
+    )
+    assert related.status_code == 200
+    body = related.json()
+    assert body["anchor"]["title"] == "Anchor paper"
+    assert body["papers"][0]["relations"] == ["similar", "citation"]
+
+    imported = client.post(
+        "/api/v1/imports/metadata/import",
+        headers=headers,
+        json={"papers": body["papers"]},
+    )
+    assert imported.status_code == 200
+    assert imported.json()["count"] == 1
+
+    duplicate = client.post(
+        "/api/v1/imports/metadata/import",
+        headers=headers,
+        json={"papers": body["papers"]},
+    )
+    assert duplicate.status_code == 200
+    assert duplicate.json()["skipped_duplicates"] == 1
+
+    from app.database import SessionLocal
+    from app.models.paper import Paper
+
+    with SessionLocal() as db:
+        db.query(Paper).filter(Paper.source == "doi_related").delete()
+        db.commit()

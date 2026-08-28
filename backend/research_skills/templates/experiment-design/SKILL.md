@@ -1,6 +1,6 @@
 ---
 name: experiment-design
-description: Use when the user wants to design experiments, plan ablation studies, structure baselines, or create incremental evaluation strategies. Triggers on phrases like "design ablation", "plan experiment", "what experiments should I run", "baseline comparison", or "experiment matrix".
+description: "当用户想要设计实验，计划衰减研究，结构基线，或者创建递增评价策略时使用。"
 metadata:
   github_source: https://github.com/fcakyon/phd-skills
   category: experiment_review
@@ -20,7 +20,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Experiment Design Methodology
 
 You are helping a researcher design rigorous experiments. Follow this methodology systematically.

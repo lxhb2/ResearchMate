@@ -594,12 +594,13 @@ def _fetch_duckduckgo_html(query: str, limit: int, timeout: float = 8.0) -> list
 
 
 def _web_search(ctx: ToolContext, args: dict) -> dict:
-    """联网深度搜索：并行聚合配置源、公共搜索和开放学术源。
+    """联网深度搜索：学术查询走可选学术源，通用查询走公共/自建搜索。
 
     结果会按 URL/标题去重、关键词与来源可信度重排，并读取少量网页正文作为证据。
     任何单一提供方失败都不会阻断整次搜索。
     """
-    query = _clean_search_query(args.get("query") or "")
+    raw_query = str(args.get("query") or "")
+    query = _clean_search_query(raw_query)
     try:
         limit = max(1, min(int(args.get("limit", 5)), 10))
     except (TypeError, ValueError):
@@ -609,6 +610,16 @@ def _web_search(ctx: ToolContext, args: dict) -> dict:
 
     errors: list[str] = []
     from app.services import web_search_providers
+
+    requested_mode = str(args.get("mode") or "auto").lower()
+    if requested_mode not in ("auto", "general", "academic"):
+        requested_mode = "auto"
+    effective_mode = requested_mode
+    if effective_mode == "auto":
+        effective_mode = "academic" if web_search_providers._is_academic_query(raw_query) else "general"
+    selected_sources = args.get("academic_sources")
+    if selected_sources is not None and not isinstance(selected_sources, list):
+        selected_sources = [selected_sources]
 
     search_cfg = None
     if ctx and ctx.db is not None and ctx.user_id:
@@ -620,7 +631,9 @@ def _web_search(ctx: ToolContext, args: dict) -> dict:
         query,
         limit=limit,
         config=search_cfg,
-        read_pages=2,
+        read_pages=1,
+        mode=effective_mode,
+        academic_sources=selected_sources,
     )
     if result.get("items"):
         return result
@@ -1049,12 +1062,32 @@ def _build_registry() -> dict[str, Tool]:
         # ---- 全局能力工具 ----
         "web_search": Tool(
             name="web_search",
-            description="联网深度搜索：并行使用 AnySearch/SearXNG/Bing/DuckDuckGo 与 arXiv/Crossref/OpenAlex，返回去重排序后的链接、摘要、正文证据和来源编号。用于查询实时资料、最新进展和公开学术信息。",
+            description="联网深度搜索：通用查询优先使用 AgentSearch/SearXNG/AnySearch，学术查询只路由到用户选用的 OpenAlex/Crossref/Europe PMC/Semantic Scholar/OpenCitations/WikiData，返回去重排序后的链接、摘要、证据和来源。",
             parameters={
                 "type": "object",
                 "properties": {
                     "query": {"type": "string", "description": "搜索关键词"},
                     "limit": {"type": "integer", "description": "返回条数（默认 5，最多 10）"},
+                    "mode": {
+                        "type": "string",
+                        "enum": ["auto", "general", "academic"],
+                        "description": "路由模式：auto 自动判断，general 通用网页，academic 学术文献",
+                    },
+                    "academic_sources": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "openalex",
+                                "crossref",
+                                "europe_pmc",
+                                "semantic_scholar",
+                                "opencitations",
+                                "wikidata",
+                            ],
+                        },
+                        "description": "临时覆盖学术源；缺省时使用设置页保存的学术源列表",
+                    },
                 },
                 "required": ["query"],
             },

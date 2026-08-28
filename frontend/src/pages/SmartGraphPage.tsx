@@ -42,6 +42,7 @@ import ReactMarkdown from 'react-markdown'
 import { graphApi, type SmartGraph, type AnalyzeSource } from '../api/graph'
 import { getErrorMessage } from '../api/client'
 import { formatMarkdownContent } from '../utils/format'
+import BibliometricGraphView from './BibliometricGraphView'
 
 const DIMENSION_LABELS: Record<string, string> = {
   title_keywords: '关键词',
@@ -246,6 +247,7 @@ export default function SmartGraphPage() {
   const [focusCluster, setFocusCluster] = useState<number | null>(null)
   const [dimensionFilter, setDimensionFilter] = useState<string | null>(null)
   const [paperView, setPaperView] = useState(false)
+  const [moduleMode, setModuleMode] = useState<'semantic' | 'bibliometric'>('semantic')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [analyzing, setAnalyzing] = useState(false)
   const [showEdges, setShowEdges] = useState(true)
@@ -497,24 +499,46 @@ export default function SmartGraphPage() {
     [graph, focusCluster],
   )
 
+  const moduleSwitch = (
+    <Segmented
+      size="small"
+      value={moduleMode}
+      onChange={(value) => setModuleMode(value as 'semantic' | 'bibliometric')}
+      options={[
+        { label: '语义图谱', value: 'semantic' },
+        { label: '文献计量图谱', value: 'bibliometric' },
+      ]}
+    />
+  )
+
   if (loading && !graph) {
     return (
-      <div style={{ textAlign: 'center', padding: 100 }}>
-        <Spin tip="正在构建语义图谱…" size="large" />
+      <div style={{ textAlign: 'center', padding: 72 }}>
+        {moduleSwitch}
+        <div style={{ marginTop: 18 }}>
+          <Spin tip="正在构建语义图谱…" size="large" />
+        </div>
       </div>
     )
   }
 
   if (graph && graph.node_count === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: 100 }}>
-        <Empty description="还没有可分析的文献片段">
-          <Button type="primary" onClick={() => navigate('/library')}>
-            去文献库上传 PDF
-          </Button>
-        </Empty>
+      <div style={{ textAlign: 'center', padding: 72 }}>
+        {moduleSwitch}
+        <div style={{ marginTop: 18 }}>
+          <Empty description="还没有可分析的文献片段">
+            <Button type="primary" onClick={() => navigate('/library')}>
+              去文献库上传 PDF
+            </Button>
+          </Empty>
+        </div>
       </div>
     )
+  }
+
+  if (moduleMode === 'bibliometric') {
+    return <BibliometricGraphView moduleMode={moduleMode} onModuleChange={setModuleMode} />
   }
 
   return (
@@ -522,6 +546,7 @@ export default function SmartGraphPage() {
       {/* 顶部说明与图例（点击簇聚焦，其余淡出） */}
       <Space direction="vertical" size={8} style={{ width: '100%', marginBottom: 12 }}>
         <Space size={12} wrap align="center">
+          {moduleSwitch}
           <Typography.Title level={5} style={{ margin: 0 }}>
             Smart Graph 语义图谱
           </Typography.Title>

@@ -1,6 +1,6 @@
 ---
 name: creative-thinking-for-research
-description: Applies cognitive science frameworks for creative thinking to CS and AI research ideation. Use when seeking genuinely novel research directions by leveraging combinatorial creativity, analogical reasoning, constraint manipulation, and other empirically grounded creative strategies.
+description: "将认知科学框架应用于CS和AI研究思想。在寻求真正新颖的研究方向时，利用组合式的创造力、模拟推理、约束操控和其他基于经验的创造性战略。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -30,7 +30,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # Creative Thinking for Research
 
 Eight empirically grounded frameworks from cognitive science, applied to computer science and AI research. Unlike ad-hoc brainstorming, each framework here is backed by decades of creativity research — from Koestler's bisociation to Kauffman's adjacent possible. They target distinct cognitive operations: combining, reformulating, analogizing, constraining, inverting, abstracting, exploring boundaries, and holding contradictions.

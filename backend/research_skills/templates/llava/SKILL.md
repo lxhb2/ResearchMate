@@ -1,6 +1,6 @@
 ---
 name: llava
-description: Large Language and Vision Assistant. Enables visual instruction tuning and image-based conversations. Combines CLIP vision encoder with Vicuna/LLaMA language models. Supports multi-turn image chat, visual question answering, and instruction following. Use for vision-language chatbots or image understanding tasks. Best for conversational image analysis.
+description: "大型语言和视觉助理。 启用基于图像的视觉指令调制和对话。 将CLIP视觉编码器与Vicuna/LLaMA语言模型合并。 支持多回合图像聊天、 视觉问答和随后的指令。 用于视觉语言聊天或图像理解任务。 最佳对话图像分析 。"
 version: 1.0.0
 author: Orchestra Research
 license: MIT
@@ -38,7 +38,6 @@ metadata:
   prompt_mode: full
   enabled: 'true'
 ---
-
 # LLaVA - Large Language and Vision Assistant
 
 Open-source vision-language model for conversational image understanding.
